@@ -46,7 +46,6 @@ public class TeamService {
     public AgentTeamEntity createTeam(String name, String description, Long leadAgentId,
                                       List<Long> memberAgentIds, String createdBy) {
         requireAgentExists(leadAgentId, "lead");
-        requireReactLead(leadAgentId);
         requireNotInAnyTeam(leadAgentId);
         if (memberAgentIds != null) {
             for (Long memberId : memberAgentIds) {
@@ -225,21 +224,6 @@ public class TeamService {
         }
     }
 
-    /**
-     * The lead must run the ReAct graph. A plan-execute lead orchestrates
-     * through its own serial per-step delegation pipeline, which bypasses the
-     * team board entirely — tasks are never created, members never run in
-     * parallel, and the collaboration silently degrades to solo delegation.
-     */
-    private void requireReactLead(Long agentId) {
-        AgentEntity agent = agentMapper.selectById(agentId);
-        if (agent != null && "plan_execute".equals(agent.getAgentType())) {
-            throw new IllegalArgumentException(
-                    "lead agent must be a ReAct agent: a plan-execute lead plans serial steps "
-                            + "through its own delegation pipeline and never uses the team board. "
-                            + "Switch the agent's type to ReAct, or pick a different lead.");
-        }
-    }
 
     private void requireNotInAnyTeam(Long agentId) {
         // Membership check ignores team status on purpose: an agent parked in a

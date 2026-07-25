@@ -21,9 +21,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Pins team creation guards — most importantly that a plan-execute agent can
- * never become a lead: its own serial delegation pipeline bypasses the team
- * board, so the collaboration would silently degrade to solo delegation.
+ * Pins team creation guards. Any agent type may lead: a plan-execute lead's
+ * multi-step plans hand off to the team board through the plan bridge, so the
+ * former ReAct-only restriction no longer applies.
  */
 class TeamServiceTest {
 
@@ -62,22 +62,10 @@ class TeamServiceTest {
     }
 
     @Test
-    @DisplayName("a plan-execute agent is rejected as lead with an actionable message")
-    void planExecuteLeadRejected() {
+    @DisplayName("a plan-execute agent may lead — its plans hand off to the board via the bridge")
+    void planExecuteLeadAllowed() {
         when(agentMapper.selectById(LEAD_ID)).thenReturn(agent(LEAD_ID, "plan_execute"));
-
-        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
-                () -> service.createTeam("组", null, LEAD_ID, List.of(MEMBER_ID), "admin"));
-
-        assertTrue(e.getMessage().contains("ReAct"));
-        verify(teamMapper, never()).insert(any(AgentTeamEntity.class));
-    }
-
-    @Test
-    @DisplayName("members may be plan-execute — only the lead role is restricted")
-    void planExecuteMemberAllowedByTypeGuard() {
-        when(agentMapper.selectById(LEAD_ID)).thenReturn(agent(LEAD_ID, "react"));
-        when(agentMapper.selectById(MEMBER_ID)).thenReturn(agent(MEMBER_ID, "plan_execute"));
+        when(agentMapper.selectById(MEMBER_ID)).thenReturn(agent(MEMBER_ID, "react"));
         when(memberMapper.selectCount(any())).thenReturn(0L);
 
         assertDoesNotThrow(() ->

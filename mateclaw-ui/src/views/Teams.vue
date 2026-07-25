@@ -78,9 +78,6 @@
                 </span>
                 {{ store.currentTeam.leadName }}
               </span>
-              <span v-if="leadIsPlanExecute" class="lead-warning" :title="t('teams.leadReactHint')">
-                ⚠ {{ t('teams.leadTypeWarning') }}
-              </span>
             </div>
             <div class="detail-header__right">
               <div class="view-switch">
@@ -205,8 +202,6 @@
                   :key="String(agent.id)"
                   class="agent-pill"
                   :class="{ 'is-selected is-lead': createForm.leadAgentId === String(agent.id) }"
-                  :disabled="agent.agentType === 'plan_execute'"
-                  :title="agent.agentType === 'plan_execute' ? t('teams.leadReactHint') : undefined"
                   @click="selectLead(String(agent.id))"
                 >
                   <span class="agent-pill__icon" :style="{ color: agentIconColor(agent.icon) }">
@@ -215,7 +210,6 @@
                   {{ agent.name }}
                 </button>
               </div>
-              <p class="form-hint">{{ t('teams.leadReactHint') }}</p>
             </div>
             <div class="form-group">
               <label>{{ t('teams.membersField') }} <i>*</i></label>
@@ -685,17 +679,6 @@ const memberCandidates = computed(() =>
   agentStore.agents.filter((a) => String(a.id) !== createForm.leadAgentId),
 )
 
-/**
- * A plan-execute lead orchestrates through its own serial delegation pipeline
- * and never touches the team board — surface a standing warning so a lead
- * whose type was switched after team creation doesn't fail silently.
- */
-const leadIsPlanExecute = computed(() => {
-  const leadId = store.currentTeam?.team.leadAgentId
-  if (!leadId) return false
-  const agent = agentStore.agents.find((a) => String(a.id) === String(leadId))
-  return agent?.agentType === 'plan_execute'
-})
 
 function openCreateDialog() {
   createForm.name = ''
@@ -1616,18 +1599,6 @@ async function cancelTask() {
   margin: 0;
   font-size: 12px;
   color: var(--mc-text-tertiary);
-}
-.agent-pill:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-.lead-warning {
-  font-size: 12px;
-  color: var(--mc-danger, #d9534f);
-  background: rgba(217, 83, 79, 0.08);
-  border: 1px solid rgba(217, 83, 79, 0.25);
-  border-radius: 8px;
-  padding: 2px 8px;
 }
 .activity-feed {
   display: flex;

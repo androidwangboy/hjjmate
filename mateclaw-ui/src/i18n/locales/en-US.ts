@@ -52,8 +52,6 @@ export default {
     deliverables: 'Deliverables',
     viewRun: 'View execution',
     timeline: 'Timeline',
-    leadReactHint: 'The lead must be a ReAct agent: plan-execute agents orchestrate through their own serial delegation pipeline and never use the team board',
-    leadTypeWarning: 'Lead is plan-execute — team collaboration will not engage',
     eventType: {
       created: 'Created',
       dispatched: 'Dispatched',

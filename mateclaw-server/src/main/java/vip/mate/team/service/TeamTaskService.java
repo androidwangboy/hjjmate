@@ -563,6 +563,19 @@ public class TeamTaskService {
         return taskMapper.selectById(taskId);
     }
 
+    /**
+     * Tasks created from a delegated plan's steps, ordered by creation. The
+     * plan linkage lives in the task metadata JSON ({@code "planId"} written
+     * as a string), matched with a LIKE — team boards are small and the
+     * pattern includes the quoted key, so false positives are not a concern.
+     */
+    public List<TeamTaskEntity> listTasksByPlan(Long teamId, Long planId) {
+        return taskMapper.selectList(Wrappers.<TeamTaskEntity>lambdaQuery()
+                .eq(TeamTaskEntity::getTeamId, teamId)
+                .like(TeamTaskEntity::getMetadata, "\"planId\":\"" + planId + "\"")
+                .orderByAsc(TeamTaskEntity::getCreateTime));
+    }
+
     public List<TeamTaskEntity> listTasks(Long teamId, List<String> statuses) {
         return taskMapper.selectList(Wrappers.<TeamTaskEntity>lambdaQuery()
                 .eq(TeamTaskEntity::getTeamId, teamId)

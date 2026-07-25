@@ -3,8 +3,10 @@ package vip.mate.team.service;
 import cn.hutool.core.util.IdUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import vip.mate.team.event.TeamTasksDelegatedEvent;
 import vip.mate.agent.AgentService;
 import vip.mate.channel.web.ChatStreamTracker;
 import vip.mate.team.model.AgentTeamEntity;
@@ -76,6 +78,16 @@ public class TeamDispatchService {
 
     /** Members with a run currently in flight in this JVM (belt-and-braces on top of hasActiveTask). */
     private final Set<Long> runningMembers = ConcurrentHashMap.newKeySet();
+
+    /**
+     * Plan hand-off notification: sweep the board as soon as a delegated
+     * plan's tasks land. Event-driven because the hand-off bridge cannot
+     * depend on this service directly (bean cycle through the graph builder).
+     */
+    @EventListener
+    public void onTeamTasksDelegated(TeamTasksDelegatedEvent event) {
+        requestDispatch(event.teamId());
+    }
 
     /** Asynchronously sweep the team's board and dispatch whatever is eligible. */
     public void requestDispatch(Long teamId) {

@@ -52,8 +52,6 @@ export default {
     deliverables: '交付物',
     viewRun: '查看执行过程',
     timeline: '时间线',
-    leadReactHint: 'Lead 需为 ReAct 型员工：计划执行型员工走自身的串行委派管线，不会使用团队任务板',
-    leadTypeWarning: 'Lead 是计划执行型，团队协同不会生效',
     eventType: {
       created: '创建',
       dispatched: '派发',
