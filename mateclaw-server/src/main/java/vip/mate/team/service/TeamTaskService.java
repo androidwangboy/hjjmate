@@ -1,5 +1,7 @@
 package vip.mate.team.service;
 
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +16,7 @@ import vip.mate.team.model.TeamTaskStatus;
 import vip.mate.team.repository.TeamTaskCommentMapper;
 import vip.mate.team.repository.TeamTaskMapper;
 
+import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -74,6 +77,10 @@ public class TeamTaskService {
             throw new IllegalArgumentException("assignee " + assignee + " is not a member of this team");
         }
 
+        // Dependency edges can only reference pre-existing tasks and blockedBy is
+        // immutable after creation, so the dependency graph is acyclic by
+        // construction — adding an edit path for blockedBy would break this
+        // invariant and require real cycle detection.
         List<Long> blockers = cmd.getBlockedBy() == null ? List.of() : cmd.getBlockedBy();
         for (Long blockerId : blockers) {
             TeamTaskEntity blocker = taskMapper.selectById(blockerId);
@@ -307,6 +314,108 @@ public class TeamTaskService {
         return commentMapper.selectList(Wrappers.<TeamTaskCommentEntity>lambdaQuery()
                 .eq(TeamTaskCommentEntity::getTaskId, taskId)
                 .orderByAsc(TeamTaskCommentEntity::getCreateTime));
+    }
+
+    // ==================== deliverables ====================
+
+    /** Maximum deliverables per task; the board is a summary surface, not a file store. */
+    static final int MAX_DELIVERABLES = 10;
+
+    /** Download-path prefix of the generated-file cache — the only accepted deliverable URL form. */
+    static final String GENERATED_FILE_PATH = "/api/v1/files/generated/";
+
+    /** A produced-file reference surfaced on the task card. */
+    public record Deliverable(String name, String url, String time) {
+    }
+
+    /**
+     * Attach a produced-file reference to the task, stored under the
+     * "deliverables" key of the task's metadata JSON.
+     *
+     * Single-writer assumption: only the task owner's run thread calls this
+     * (tool-side gating) and no other code path writes metadata, so a plain
+     * read-modify-write is safe. If a second metadata writer ever appears,
+     * switch to a SQL-level JSON merge or optimistic locking.
+     */
+    @Transactional
+    public void addDeliverable(Long taskId, Long agentId, String name, String url) {
+        TeamTaskEntity task = requireTask(taskId);
+        if (TeamTaskStatus.isTerminal(task.getStatus())) {
+            throw new IllegalStateException("task #" + task.getTaskNumber() + " is "
+                    + task.getStatus() + "; deliverables can only be attached while it is active");
+        }
+        if (agentId != null && task.getOwnerAgentId() != null
+                && !agentId.equals(task.getOwnerAgentId())) {
+            throw new IllegalStateException("task #" + task.getTaskNumber()
+                    + " is owned by another agent; only the owner can attach deliverables");
+        }
+        if (name == null || name.isBlank() || url == null || url.isBlank()) {
+            throw new IllegalArgumentException("both name and url are required for a deliverable");
+        }
+        String trimmedUrl = url.trim();
+        if (!isGeneratedFileUrl(trimmedUrl)) {
+            throw new IllegalArgumentException("url must be a " + GENERATED_FILE_PATH
+                    + " download link produced by a render tool; external links are not accepted");
+        }
+
+        JSONObject metadata = task.getMetadata() == null || task.getMetadata().isBlank()
+                ? new JSONObject()
+                : JSONUtil.parseObj(task.getMetadata());
+        JSONArray deliverables = metadata.getJSONArray("deliverables");
+        if (deliverables == null) {
+            deliverables = new JSONArray();
+        }
+        if (deliverables.size() >= MAX_DELIVERABLES) {
+            throw new IllegalStateException("task #" + task.getTaskNumber() + " already has "
+                    + MAX_DELIVERABLES + " deliverables; consolidate outputs instead of adding more");
+        }
+        deliverables.add(new JSONObject()
+                .set("name", name.trim())
+                .set("url", trimmedUrl)
+                .set("time", LocalDateTime.now().toString()));
+        metadata.set("deliverables", deliverables);
+        taskMapper.update(null, Wrappers.<TeamTaskEntity>lambdaUpdate()
+                .eq(TeamTaskEntity::getId, taskId)
+                .set(TeamTaskEntity::getMetadata, metadata.toString()));
+        log.info("Team task {} deliverable attached: {}", taskId, name.trim());
+    }
+
+    /** Parse the task's deliverable list; empty on missing/malformed metadata. */
+    public List<Deliverable> listDeliverables(TeamTaskEntity task) {
+        if (task == null || task.getMetadata() == null || task.getMetadata().isBlank()) {
+            return List.of();
+        }
+        try {
+            JSONArray arr = JSONUtil.parseObj(task.getMetadata())
+                    .getJSONArray("deliverables");
+            if (arr == null) {
+                return List.of();
+            }
+            List<Deliverable> result = new ArrayList<>();
+            for (Object entry : arr) {
+                JSONObject obj = (JSONObject) entry;
+                result.add(new Deliverable(obj.getStr("name"), obj.getStr("url"), obj.getStr("time")));
+            }
+            return result;
+        } catch (Exception e) {
+            return List.of();
+        }
+    }
+
+    /** Accept the cache's relative download path, or an absolute URL whose path is one. */
+    private static boolean isGeneratedFileUrl(String url) {
+        if (url.startsWith(GENERATED_FILE_PATH)) {
+            return true;
+        }
+        if (url.startsWith("http://") || url.startsWith("https://")) {
+            try {
+                String path = URI.create(url).getPath();
+                return path != null && path.startsWith(GENERATED_FILE_PATH);
+            } catch (Exception e) {
+                return false;
+            }
+        }
+        return false;
     }
 
     // ==================== dispatch support ====================

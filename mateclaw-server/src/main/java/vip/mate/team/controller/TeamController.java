@@ -189,8 +189,10 @@ public class TeamController {
     @PostMapping("/{id}/tasks/{taskId}/cancel")
     public R<TaskVO> cancel(@PathVariable Long id, @PathVariable Long taskId,
                             @RequestBody(required = false) ReasonRequest req) {
-        requireTask(id, taskId);
+        TeamTaskEntity task = requireTask(id, taskId);
         List<Long> released = taskService.cancelTask(taskId, req == null ? null : req.getReason());
+        // Stop the member run mid-flight instead of letting it burn to the end.
+        dispatchService.interruptRun(task);
         if (!released.isEmpty()) {
             dispatchService.requestDispatch(id);
         }

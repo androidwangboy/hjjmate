@@ -853,8 +853,15 @@ export interface TeamTask {
   dispatchCount: number
   conversationId: string | null
   leadConversationId: string | null
+  metadata: string | null
   createTime?: string
   updateTime?: string
+}
+
+export interface TeamTaskDeliverable {
+  name: string
+  url: string
+  time?: string
 }
 
 export interface TeamTaskVO {

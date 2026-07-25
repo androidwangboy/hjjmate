@@ -16,6 +16,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.*;
 
 /**
@@ -160,6 +161,84 @@ class TeamDispatchServiceTest {
 
         verify(taskService, never()).completeTask(any(), any(), anyString());
         verify(streamTracker).broadcastObject(eq("lead-conv"), eq("team_task_failed"), any());
+    }
+
+    // ==================== run tracking & interrupt ====================
+
+    @Test
+    @DisplayName("a member run is registered with the stream tracker and completed afterwards")
+    void runTaskTracksChildConversation() {
+        TeamTaskEntity assigned = task(1L, MEMBER_A);
+        assigned.setStatus(TeamTaskStatus.IN_PROGRESS);
+        TeamTaskEntity done = task(1L, MEMBER_A);
+        done.setStatus(TeamTaskStatus.COMPLETED);
+        when(taskService.getTask(1L)).thenReturn(assigned, done, done);
+        when(taskService.completeTask(eq(1L), isNull(), anyString())).thenReturn(List.of());
+        when(agentService.chatWithUsage(eq(MEMBER_A), anyString(), anyString()))
+                .thenReturn(AgentService.ChatResult.contentOnly("all done"));
+
+        service.runTask(TEAM_ID, assigned);
+
+        // The child run must be trackable so requestStop() can interrupt it.
+        verify(streamTracker).register(startsWith("team-task-"));
+        verify(streamTracker).incrementFlux(startsWith("team-task-"));
+        verify(streamTracker).complete(startsWith("team-task-"));
+        // Both sides of the run persist, so the task card's transcript view has content.
+        verify(conversationService).saveMessage(startsWith("team-task-"), eq("user"), anyString());
+        verify(conversationService).saveMessage(startsWith("team-task-"), eq("assistant"), eq("all done"));
+    }
+
+    @Test
+    @DisplayName("an interrupted run whose task was cancelled produces no failed event")
+    void interruptedCancelledRunStaysSilent() {
+        TeamTaskEntity assigned = task(1L, MEMBER_A);
+        assigned.setStatus(TeamTaskStatus.IN_PROGRESS);
+        when(agentService.chatWithUsage(eq(MEMBER_A), anyString(), anyString()))
+                .thenThrow(new RuntimeException("run interrupted"));
+        // The guarded transition refuses: the task is already terminal (cancelled).
+        when(taskService.failTask(eq(1L), anyString())).thenReturn(false);
+
+        service.runTask(TEAM_ID, assigned);
+
+        verify(streamTracker, never())
+                .broadcastObject(anyString(), eq("team_task_failed"), any());
+        verify(announceService, never()).announceTaskSettled(any());
+        // Tracking still ends cleanly.
+        verify(streamTracker).complete(startsWith("team-task-"));
+    }
+
+    @Test
+    @DisplayName("a genuine member run error still fails the task and notifies the lead")
+    void genuineRunErrorStillAnnounced() {
+        TeamTaskEntity assigned = task(1L, MEMBER_A);
+        assigned.setStatus(TeamTaskStatus.IN_PROGRESS);
+        when(agentService.chatWithUsage(eq(MEMBER_A), anyString(), anyString()))
+                .thenThrow(new RuntimeException("model unavailable"));
+        when(taskService.failTask(eq(1L), anyString())).thenReturn(true);
+        TeamTaskEntity failed = task(1L, MEMBER_A);
+        failed.setStatus(TeamTaskStatus.FAILED);
+        when(taskService.getTask(1L)).thenReturn(failed);
+
+        service.runTask(TEAM_ID, assigned);
+
+        verify(streamTracker).broadcastObject(eq("lead-conv"), eq("team_task_failed"), any());
+        verify(announceService).announceTaskSettled(failed);
+    }
+
+    @Test
+    @DisplayName("interruptRun stops the attached member conversation and tolerates idle tasks")
+    void interruptRunStopsAttachedConversation() {
+        TeamTaskEntity running = task(1L, MEMBER_A);
+        running.setConversationId("team-task-abc");
+        when(streamTracker.requestStop("team-task-abc")).thenReturn(true);
+
+        service.interruptRun(running);
+        verify(streamTracker).requestStop("team-task-abc");
+
+        // Never-dispatched task and null task are silent no-ops.
+        service.interruptRun(task(2L, MEMBER_A));
+        service.interruptRun(null);
+        verifyNoMoreInteractions(streamTracker);
     }
 
     @Test

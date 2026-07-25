@@ -20,6 +20,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Dispatches board tasks to their assigned member agents and closes the
@@ -46,6 +49,21 @@ public class TeamDispatchService {
     /** One JDK 21 virtual thread per member-agent run. */
     private static final ExecutorService DISPATCH_EXECUTOR =
             Executors.newVirtualThreadPerTaskExecutor();
+
+    /**
+     * Lease-renewal cadence while a member run is in flight: a third of the
+     * lease keeps two renewal chances in hand even if one write is lost, so a
+     * long-running member is never reclaimed as stale while still working.
+     */
+    private static final long HEARTBEAT_MINUTES = TeamTaskService.LOCK_MINUTES / 3;
+
+    /** Single daemon thread firing lease-renewal heartbeats for all running tasks. */
+    private static final ScheduledExecutorService HEARTBEAT_SCHEDULER =
+            Executors.newSingleThreadScheduledExecutor(r -> {
+                Thread t = new Thread(r, "team-task-heartbeat");
+                t.setDaemon(true);
+                return t;
+            });
 
     private final TeamService teamService;
     private final TeamTaskService taskService;
@@ -120,7 +138,7 @@ public class TeamDispatchService {
     }
 
     /** Execute one dispatched task on its member agent, then settle the outcome. */
-    private void runTask(Long teamId, TeamTaskEntity task) {
+    void runTask(Long teamId, TeamTaskEntity task) {
         Long memberId = task.getAssigneeAgentId();
         if (!runningMembers.add(memberId)) {
             // Same member picked up concurrently in this JVM; put the task back.
@@ -128,28 +146,74 @@ public class TeamDispatchService {
             return;
         }
         String childConvId = "team-task-" + IdUtil.fastSimpleUUID();
+        ScheduledFuture<?> heartbeat = null;
         try {
             conversationService.createChildConversation(childConvId, memberId, "system",
                     null, task.getLeadConversationId());
             taskService.attachConversation(task.getId(), childConvId);
+            // Track the child run so graph nodes honor requestStop() — without a
+            // registered RunState, cancelling the task could never interrupt the
+            // member mid-run.
+            streamTracker.register(childConvId);
+            streamTracker.incrementFlux(childConvId);
+            // Renew the execution lease while the member works; the conditional
+            // UPDATE inside renewLock makes this a no-op once the task settles.
+            heartbeat = HEARTBEAT_SCHEDULER.scheduleAtFixedRate(
+                    () -> taskService.renewLock(task.getId()),
+                    HEARTBEAT_MINUTES, HEARTBEAT_MINUTES, TimeUnit.MINUTES);
             broadcast(task, "team_task_dispatched", Map.of());
             log.info("Team {} task #{} dispatched to agent {} (conv {})",
                     teamId, task.getTaskNumber(), memberId, childConvId);
 
+            // Message persistence is the caller's contract (the graph expects the
+            // current user message to already be the conversation's last row),
+            // and the persisted pair is what makes the run's transcript
+            // reviewable from the task card.
+            String dispatchContent = buildDispatchContent(task);
+            conversationService.saveMessage(childConvId, "user", dispatchContent);
             AgentService.ChatResult result = agentService.chatWithUsage(
-                    memberId, buildDispatchContent(task), childConvId);
+                    memberId, dispatchContent, childConvId);
+            String reply = result == null ? null : result.content();
+            if (reply != null && !reply.isBlank()) {
+                conversationService.saveMessage(childConvId, "assistant", reply);
+            }
 
-            settleOutcome(task, result == null ? null : result.content());
+            settleOutcome(task, reply);
         } catch (Exception e) {
-            log.warn("Team {} task #{} member run failed: {}", teamId, task.getTaskNumber(),
-                    e.getMessage());
-            taskService.failTask(task.getId(), truncate("member run error: " + e.getMessage(), 1000));
-            broadcast(task, "team_task_failed", Map.of("reason", String.valueOf(e.getMessage())));
-            announceService.announceTaskSettled(taskService.getTask(task.getId()));
+            log.warn("Team {} task #{} member run ended exceptionally: {}", teamId,
+                    task.getTaskNumber(), e.getMessage());
+            // Only report a failure the guarded transition actually applied — an
+            // interrupted run whose task is already cancelled must not produce a
+            // misleading failed event on top of the terminal state.
+            boolean failed = taskService.failTask(task.getId(),
+                    truncate("member run error: " + e.getMessage(), 1000));
+            if (failed) {
+                broadcast(task, "team_task_failed", Map.of("reason", String.valueOf(e.getMessage())));
+                announceService.announceTaskSettled(taskService.getTask(task.getId()));
+            }
         } finally {
+            if (heartbeat != null) {
+                heartbeat.cancel(false);
+            }
+            streamTracker.complete(childConvId);
             runningMembers.remove(memberId);
             // Chain: dispatch released dependents and the member's next task.
             requestDispatch(teamId);
+        }
+    }
+
+    /**
+     * Ask the member conversation executing this task to stop at the next graph
+     * node boundary (cancel path). No-op when the task never dispatched or the
+     * run already ended.
+     */
+    public void interruptRun(TeamTaskEntity task) {
+        if (task == null || task.getConversationId() == null) {
+            return;
+        }
+        if (streamTracker.requestStop(task.getConversationId())) {
+            log.info("Team task #{} member run interrupted (conv {})",
+                    task.getTaskNumber(), task.getConversationId());
         }
     }
 
@@ -202,8 +266,9 @@ public class TeamDispatchService {
                 [Instructions]
                 - Execute this task now. Your final reply becomes the task result reported to the team lead, so end with a complete, self-contained summary of what you produced.
                 - Report milestones with team_tasks(action="progress", taskId=%s, percent=..., step=...).
+                - If the output is a document, spreadsheet or presentation, generate a real file (renderDocx / renderXlsx / renderPptx or the docx/pptx/xlsx skills) and register it with team_tasks(action="attach", taskId=%s, name="<file name>", url=<the download link the render tool returned>). Keep the result a summary — do not paste file contents.
                 - If you are missing an input you cannot obtain yourself, call team_tasks(action="comment", taskId=%s, type="blocker", text="what you need") and stop.
-                """.formatted(task.getId(), task.getId()));
+                """.formatted(task.getId(), task.getId(), task.getId()));
         return sb.toString();
     }
 

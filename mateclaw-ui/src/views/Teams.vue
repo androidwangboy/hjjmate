@@ -92,6 +92,11 @@
                   @click="activeTab = 'members'"
                 >{{ t('teams.members') }}</button>
               </div>
+              <button
+                v-if="activeTab === 'board'"
+                class="btn-primary"
+                @click="openTaskCreateDialog"
+              >+ {{ t('teams.createTask') }}</button>
               <button class="btn-secondary" @click="refreshBoard">{{ t('common.refresh') }}</button>
               <button class="btn-danger" @click="removeTeam">{{ t('common.delete') }}</button>
             </div>
@@ -278,6 +283,82 @@
       </div>
     </Teleport>
 
+    <!-- ==================== Create task dialog ==================== -->
+    <Teleport to="body">
+      <div v-if="taskCreateDialogVisible" class="modal-overlay" @click.self="taskCreateDialogVisible = false">
+        <div class="modal modal--wide">
+          <div class="modal-header">
+            <h3>{{ t('teams.createTask') }}</h3>
+            <button class="modal-close" @click="taskCreateDialogVisible = false">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label>{{ t('teams.taskSubject') }} <i>*</i></label>
+              <input v-model.trim="taskForm.subject" class="form-input" maxlength="256" />
+            </div>
+            <div class="form-group">
+              <label>{{ t('teams.taskDescription') }}</label>
+              <textarea v-model="taskForm.description" class="form-input form-textarea" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+              <label>{{ t('teams.assignee') }} <i>*</i></label>
+              <div class="agent-picker">
+                <button
+                  v-for="m in assigneeCandidates"
+                  :key="m.agentId"
+                  class="agent-pill"
+                  :class="{ 'is-selected': taskForm.assigneeAgentId === String(m.agentId) }"
+                  @click="taskForm.assigneeAgentId = String(m.agentId)"
+                >
+                  <span v-if="taskForm.assigneeAgentId === String(m.agentId)" class="agent-pill__check">✓</span>
+                  <span class="agent-pill__icon" :style="{ color: agentIconColor(agentIcon(m.agentId, m.icon)) }">
+                    <SkillIcon :value="agentIcon(m.agentId, m.icon)" :size="14" />
+                  </span>
+                  {{ m.name }}
+                </button>
+              </div>
+            </div>
+            <div v-if="blockerCandidates.length > 0" class="form-group">
+              <label>{{ t('teams.blockedBy') }}</label>
+              <div class="agent-picker">
+                <button
+                  v-for="vo in blockerCandidates"
+                  :key="vo.task.id"
+                  class="agent-pill"
+                  :class="{ 'is-selected': taskForm.blockedBy.includes(String(vo.task.id)) }"
+                  @click="toggleBlocker(String(vo.task.id))"
+                >
+                  <span v-if="taskForm.blockedBy.includes(String(vo.task.id))" class="agent-pill__check">✓</span>
+                  #{{ vo.task.taskNumber }} {{ vo.task.subject }}
+                </button>
+              </div>
+              <p class="form-hint">{{ t('teams.blockedByHint') }}</p>
+            </div>
+            <div class="form-group form-group--inline">
+              <label>{{ t('teams.priority') }}</label>
+              <input
+                v-model.number="taskForm.priority"
+                type="number"
+                class="form-input form-input--narrow"
+                min="0"
+                max="99"
+              />
+              <label class="form-check">
+                <input v-model="taskForm.requireApproval" type="checkbox" />
+                {{ t('teams.requireApprovalField') }}
+              </label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-secondary" @click="taskCreateDialogVisible = false">{{ t('common.cancel') }}</button>
+            <button class="btn-primary" :disabled="taskCreating" @click="submitTaskCreate">
+              {{ taskCreating ? t('common.processing') : t('common.confirm') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
     <!-- ==================== Task detail dialog ==================== -->
     <Teleport to="body">
       <div v-if="taskDialogVisible && currentTask" class="modal-overlay" @click.self="taskDialogVisible = false">
@@ -311,6 +392,22 @@
             <div v-if="currentTask.task.reason" class="task-detail__reason">
               {{ currentTask.task.reason }}
             </div>
+            <div v-if="currentDeliverables.length > 0" class="task-detail__block">
+              <div class="task-detail__label">{{ t('teams.deliverables') }}</div>
+              <div class="deliverable-list">
+                <a
+                  v-for="(file, idx) in currentDeliverables"
+                  :key="idx"
+                  class="deliverable-row"
+                  :href="file.url"
+                  target="_blank"
+                  rel="noopener"
+                >
+                  <span class="deliverable-row__icon">📄</span>
+                  <span class="deliverable-row__name">{{ file.name }}</span>
+                </a>
+              </div>
+            </div>
             <div class="task-detail__block">
               <div class="task-detail__label">{{ t('teams.comments') }}</div>
               <div v-if="comments.length === 0" class="task-detail__muted">—</div>
@@ -335,6 +432,11 @@
             </div>
           </div>
           <div class="modal-footer">
+            <button
+              v-if="currentTask.task.conversationId"
+              class="btn-secondary modal-footer__left"
+              @click="openTaskRun"
+            >{{ t('teams.viewRun') }}</button>
             <button
               v-if="currentTask.task.status === 'in_review'"
               class="btn-success"
@@ -365,15 +467,17 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { teamApi } from '@/api/index'
-import type { TeamMemberVO, TeamTaskComment, TeamTaskVO } from '@/api/index'
+import type { TeamMemberVO, TeamTaskComment, TeamTaskDeliverable, TeamTaskVO } from '@/api/index'
 import SkillIcon from '@/components/common/SkillIcon.vue'
 import { agentIconColor } from '@/utils/agentIconColor'
 import { useAgentStore } from '@/stores/useAgentStore'
 import { useTeamStore } from '@/stores/useTeamStore'
 
 const { t } = useI18n()
+const router = useRouter()
 const store = useTeamStore()
 const agentStore = useAgentStore()
 
@@ -532,6 +636,73 @@ async function submitCreate() {
   }
 }
 
+// ==================== create task ====================
+
+const TERMINAL_TASK_STATUSES = ['completed', 'failed', 'cancelled']
+
+const taskCreateDialogVisible = ref(false)
+const taskCreating = ref(false)
+const taskForm = reactive({
+  subject: '',
+  description: '',
+  assigneeAgentId: '',
+  priority: 0,
+  requireApproval: false,
+  blockedBy: [] as string[],
+})
+
+// The lead orchestrates and cannot execute tasks — assignable members only.
+const assigneeCandidates = computed(() => store.members.filter((m) => m.role !== 'lead'))
+
+const blockerCandidates = computed(() =>
+  store.tasks.filter((vo) => !TERMINAL_TASK_STATUSES.includes(vo.task.status)),
+)
+
+function openTaskCreateDialog() {
+  taskForm.subject = ''
+  taskForm.description = ''
+  taskForm.assigneeAgentId = ''
+  taskForm.priority = 0
+  taskForm.requireApproval = false
+  taskForm.blockedBy = []
+  taskCreateDialogVisible.value = true
+}
+
+function toggleBlocker(taskId: string) {
+  const idx = taskForm.blockedBy.indexOf(taskId)
+  if (idx >= 0) {
+    taskForm.blockedBy.splice(idx, 1)
+  } else {
+    taskForm.blockedBy.push(taskId)
+  }
+}
+
+async function submitTaskCreate() {
+  if (!store.currentTeam) return
+  if (!taskForm.subject || !taskForm.assigneeAgentId) {
+    ElMessage.warning(t('teams.taskCreateIncomplete'))
+    return
+  }
+  taskCreating.value = true
+  try {
+    await teamApi.createTask(store.currentTeam.team.id, {
+      subject: taskForm.subject,
+      description: taskForm.description || undefined,
+      assigneeAgentId: taskForm.assigneeAgentId,
+      priority: taskForm.priority,
+      requireApproval: taskForm.requireApproval,
+      blockedBy: taskForm.blockedBy.length ? [...taskForm.blockedBy] : undefined,
+    })
+    taskCreateDialogVisible.value = false
+    ElMessage.success(t('common.success'))
+    refreshBoard()
+  } catch (e: any) {
+    ElMessage.error(e?.message || 'failed')
+  } finally {
+    taskCreating.value = false
+  }
+}
+
 // ==================== members ====================
 
 const memberDialogVisible = ref(false)
@@ -570,6 +741,28 @@ const taskDialogVisible = ref(false)
 const currentTask = ref<TeamTaskVO | null>(null)
 const comments = ref<TeamTaskComment[]>([])
 const newComment = ref('')
+
+/** Deliverables live under the "deliverables" key of the task's metadata JSON. */
+const currentDeliverables = computed<TeamTaskDeliverable[]>(() => {
+  const raw = currentTask.value?.task.metadata
+  if (!raw) return []
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed?.deliverables) ? parsed.deliverables : []
+  } catch {
+    return []
+  }
+})
+
+/** Open the member's execution transcript (its child conversation) in the chat console. */
+function openTaskRun() {
+  const task = currentTask.value?.task
+  if (!task?.conversationId) return
+  router.push({
+    path: '/chat',
+    query: { agentId: task.assigneeAgentId ?? undefined, conversationId: task.conversationId },
+  })
+}
 
 async function openTask(vo: TeamTaskVO) {
   if (!store.currentTeam) return
@@ -1313,6 +1506,49 @@ async function cancelTask() {
   margin: 0;
   font-size: 12px;
   color: var(--mc-text-tertiary);
+}
+.deliverable-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.deliverable-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--mc-border);
+  border-radius: 10px;
+  background: var(--mc-bg-sunken);
+  color: var(--mc-text-primary);
+  font-size: 13px;
+  text-decoration: none;
+  transition: border-color 0.15s;
+}
+.deliverable-row:hover {
+  border-color: var(--mc-primary);
+}
+.deliverable-row__name {
+  font-weight: 600;
+}
+.modal-footer__left {
+  margin-right: auto;
+}
+.form-group--inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+.form-input--narrow {
+  width: 90px;
+}
+.form-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--mc-text-secondary);
+  cursor: pointer;
 }
 
 /* ==================== agent chip picker ==================== */

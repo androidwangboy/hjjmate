@@ -962,6 +962,9 @@ public class AgentGraphBuilder {
             // C4: wire the environment-notification registry so ReasoningNode
             // can drain pending MCP/skill events and inject them as a SystemMessage.
             reasoningNode.setRunningConversationRegistry(runningConversationRegistry);
+            // Live team-board snapshot for leads, injected per turn as a meta
+            // user message; no-op for agents outside any team.
+            reasoningNode.setTeamContextBuilder(teamContextBuilder);
             ActionNode actionNode = new ActionNode(executor, streamTracker);
             // B2/B5: wire optional collaborators so ActionNode can pin skill
             // constraints and auto-record tool completions into ProgressLedger.
