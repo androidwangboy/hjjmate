@@ -37,6 +37,7 @@ class TeamDispatchServiceTest {
     private ConversationService conversationService;
     private ChatStreamTracker streamTracker;
     private TeamAnnounceService announceService;
+    private TeamEventChannel eventChannel;
     private TeamDispatchService service;
 
     @BeforeEach
@@ -47,8 +48,9 @@ class TeamDispatchServiceTest {
         conversationService = mock(ConversationService.class);
         streamTracker = mock(ChatStreamTracker.class);
         announceService = mock(TeamAnnounceService.class);
+        eventChannel = mock(TeamEventChannel.class);
         service = new TeamDispatchService(teamService, taskService, agentService,
-                conversationService, streamTracker, announceService);
+                conversationService, streamTracker, announceService, eventChannel);
     }
 
     private TeamTaskEntity task(Long id, Long assignee) {
@@ -145,7 +147,7 @@ class TeamDispatchServiceTest {
         service.settleOutcome(running, "analysis finished");
 
         verify(taskService).completeTask(1L, null, "analysis finished");
-        verify(streamTracker).broadcastObject(eq("lead-conv"), eq("team_task_completed"), any());
+        verify(eventChannel).publishTaskEvent(any(), eq("team_task_completed"), any());
         verify(announceService).announceTaskSettled(done);
     }
 
@@ -160,7 +162,7 @@ class TeamDispatchServiceTest {
         service.settleOutcome(failed, "irrelevant reply");
 
         verify(taskService, never()).completeTask(any(), any(), anyString());
-        verify(streamTracker).broadcastObject(eq("lead-conv"), eq("team_task_failed"), any());
+        verify(eventChannel).publishTaskEvent(any(), eq("team_task_failed"), any());
     }
 
     // ==================== run tracking & interrupt ====================
@@ -200,8 +202,8 @@ class TeamDispatchServiceTest {
 
         service.runTask(TEAM_ID, assigned);
 
-        verify(streamTracker, never())
-                .broadcastObject(anyString(), eq("team_task_failed"), any());
+        verify(eventChannel, never())
+                .publishTaskEvent(any(), eq("team_task_failed"), any());
         verify(announceService, never()).announceTaskSettled(any());
         // Tracking still ends cleanly.
         verify(streamTracker).complete(startsWith("team-task-"));
@@ -221,7 +223,7 @@ class TeamDispatchServiceTest {
 
         service.runTask(TEAM_ID, assigned);
 
-        verify(streamTracker).broadcastObject(eq("lead-conv"), eq("team_task_failed"), any());
+        verify(eventChannel).publishTaskEvent(any(), eq("team_task_failed"), any());
         verify(announceService).announceTaskSettled(failed);
     }
 
@@ -239,6 +241,36 @@ class TeamDispatchServiceTest {
         service.interruptRun(task(2L, MEMBER_A));
         service.interruptRun(null);
         verifyNoMoreInteractions(streamTracker);
+    }
+
+    // ==================== prerequisite hand-off ====================
+
+    @Test
+    @DisplayName("the dispatch envelope carries prerequisite results and deliverables")
+    void envelopeCarriesPrerequisiteResults() {
+        TeamTaskEntity dependent = task(3L, MEMBER_B);
+        dependent.setBlockedBy("[\"1\",\"2\"]");
+        TeamTaskEntity done = task(1L, MEMBER_A);
+        done.setStatus(TeamTaskStatus.COMPLETED);
+        done.setResult("pricing collected: 3 competitors");
+        when(taskService.getTask(1L)).thenReturn(done);
+        when(taskService.getTask(2L)).thenReturn(null); // vanished blocker is skipped
+        when(taskService.listDeliverables(done)).thenReturn(List.of(
+                new TeamTaskService.Deliverable("prices.xlsx", "/api/v1/files/generated/x", null)));
+
+        StringBuilder sb = new StringBuilder();
+        service.appendPrerequisiteResults(sb, dependent);
+        String section = sb.toString();
+
+        assertTrue(section.contains("[Prerequisite results]"));
+        assertTrue(section.contains("pricing collected: 3 competitors"));
+        assertTrue(section.contains("prices.xlsx → /api/v1/files/generated/x"));
+        assertFalse(section.contains("#2"), "vanished blockers leave no trace");
+
+        // No blockers → no section at all.
+        StringBuilder plain = new StringBuilder();
+        service.appendPrerequisiteResults(plain, task(4L, MEMBER_A));
+        assertEquals(0, plain.length());
     }
 
     @Test

@@ -78,6 +78,9 @@
                 </span>
                 {{ store.currentTeam.leadName }}
               </span>
+              <span v-if="leadIsPlanExecute" class="lead-warning" :title="t('teams.leadReactHint')">
+                ⚠ {{ t('teams.leadTypeWarning') }}
+              </span>
             </div>
             <div class="detail-header__right">
               <div class="view-switch">
@@ -101,6 +104,18 @@
               <button class="btn-danger" @click="removeTeam">{{ t('common.delete') }}</button>
             </div>
           </div>
+
+          <!-- Live activity feed -->
+          <transition-group
+            v-if="activeTab === 'board' && activityFeed.length > 0"
+            name="activity"
+            tag="div"
+            class="activity-feed"
+          >
+            <div v-for="item in activityFeed" :key="item.key" class="activity-line">
+              {{ item.text }}
+            </div>
+          </transition-group>
 
           <!-- Kanban board -->
           <div v-if="activeTab === 'board'" class="board-grid">
@@ -190,6 +205,8 @@
                   :key="String(agent.id)"
                   class="agent-pill"
                   :class="{ 'is-selected is-lead': createForm.leadAgentId === String(agent.id) }"
+                  :disabled="agent.agentType === 'plan_execute'"
+                  :title="agent.agentType === 'plan_execute' ? t('teams.leadReactHint') : undefined"
                   @click="selectLead(String(agent.id))"
                 >
                   <span class="agent-pill__icon" :style="{ color: agentIconColor(agent.icon) }">
@@ -198,6 +215,7 @@
                   {{ agent.name }}
                 </button>
               </div>
+              <p class="form-hint">{{ t('teams.leadReactHint') }}</p>
             </div>
             <div class="form-group">
               <label>{{ t('teams.membersField') }} <i>*</i></label>
@@ -408,6 +426,21 @@
                 </a>
               </div>
             </div>
+            <div v-if="taskEvents.length > 0" class="task-detail__block">
+              <div class="task-detail__label">{{ t('teams.timeline') }}</div>
+              <div class="timeline">
+                <div v-for="ev in taskEvents" :key="ev.id" class="timeline-row">
+                  <span class="timeline-row__dot" :class="`dot-ev--${ev.eventType}`"></span>
+                  <span class="timeline-row__time">{{ (ev.createTime || '').slice(5, 16) }}</span>
+                  <span class="timeline-row__type">{{ t(`teams.eventType.${ev.eventType}`, ev.eventType) }}</span>
+                  <span v-if="ev.actorType === 'agent'" class="timeline-row__actor">
+                    {{ agentStore.agents.find(a => String(a.id) === String(ev.actorId))?.name || ev.actorId }}
+                  </span>
+                  <span v-else-if="ev.actorId" class="timeline-row__actor">{{ ev.actorId }}</span>
+                  <span v-if="ev.detail" class="timeline-row__detail">{{ ev.detail }}</span>
+                </div>
+              </div>
+            </div>
             <div class="task-detail__block">
               <div class="task-detail__label">{{ t('teams.comments') }}</div>
               <div v-if="comments.length === 0" class="task-detail__muted">—</div>
@@ -470,7 +503,8 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { teamApi } from '@/api/index'
-import type { TeamMemberVO, TeamTaskComment, TeamTaskDeliverable, TeamTaskVO } from '@/api/index'
+import type { TeamMemberVO, TeamTaskComment, TeamTaskDeliverable, TeamTaskEvent, TeamTaskVO } from '@/api/index'
+import { subscribeTeamEvents } from '@/composables/useTeamEvents'
 import SkillIcon from '@/components/common/SkillIcon.vue'
 import { agentIconColor } from '@/utils/agentIconColor'
 import { useAgentStore } from '@/stores/useAgentStore'
@@ -518,6 +552,50 @@ function agentIcon(agentId?: string | null, apiIcon?: string | null): string {
   return agent?.icon || 'pi:user'
 }
 
+// ==================== live board events ====================
+
+/** Recent activity lines shown above the board; each expires after a few seconds. */
+const activityFeed = ref<{ key: number; text: string }[]>([])
+let activityKey = 0
+let unsubscribeEvents: (() => void) | null = null
+let refreshDebounce: ReturnType<typeof setTimeout> | null = null
+
+function onBoardEvent(e: { event: string; data: Record<string, unknown> }) {
+  if (!e.event.startsWith('team_task_')) return
+  // Event-driven refresh, debounced so bursts collapse into one fetch.
+  if (refreshDebounce) clearTimeout(refreshDebounce)
+  refreshDebounce = setTimeout(() => {
+    refreshDebounce = null
+    refreshBoard()
+  }, 300)
+
+  const type = e.event.slice('team_task_'.length)
+  const subject = String(e.data.subject ?? '')
+  const taskNumber = e.data.taskNumber != null ? `#${e.data.taskNumber} ` : ''
+  const key = ++activityKey
+  activityFeed.value.push({
+    key,
+    text: `${taskNumber}${subject} · ${t(`teams.eventType.${type}`, type)}`,
+  })
+  if (activityFeed.value.length > 3) activityFeed.value.shift()
+  setTimeout(() => {
+    activityFeed.value = activityFeed.value.filter((item) => item.key !== key)
+  }, 8000)
+}
+
+function startEventSubscription(teamId: string) {
+  stopEventSubscription()
+  unsubscribeEvents = subscribeTeamEvents(teamId, onBoardEvent)
+}
+
+function stopEventSubscription() {
+  if (unsubscribeEvents) {
+    unsubscribeEvents()
+    unsubscribeEvents = null
+  }
+  activityFeed.value = []
+}
+
 // ==================== polling ====================
 
 let pollTimer: ReturnType<typeof setInterval> | null = null
@@ -541,7 +619,15 @@ function stopPolling() {
 
 watch(
   () => store.currentTeam,
-  (team) => (team ? startPolling() : stopPolling()),
+  (team) => {
+    if (team) {
+      startPolling()
+      startEventSubscription(String(team.team.id))
+    } else {
+      stopPolling()
+      stopEventSubscription()
+    }
+  },
 )
 
 onMounted(() => {
@@ -551,7 +637,10 @@ onMounted(() => {
   }
 })
 
-onBeforeUnmount(() => stopPolling())
+onBeforeUnmount(() => {
+  stopPolling()
+  stopEventSubscription()
+})
 
 // ==================== team actions ====================
 
@@ -595,6 +684,18 @@ const createForm = reactive({
 const memberCandidates = computed(() =>
   agentStore.agents.filter((a) => String(a.id) !== createForm.leadAgentId),
 )
+
+/**
+ * A plan-execute lead orchestrates through its own serial delegation pipeline
+ * and never touches the team board — surface a standing warning so a lead
+ * whose type was switched after team creation doesn't fail silently.
+ */
+const leadIsPlanExecute = computed(() => {
+  const leadId = store.currentTeam?.team.leadAgentId
+  if (!leadId) return false
+  const agent = agentStore.agents.find((a) => String(a.id) === String(leadId))
+  return agent?.agentType === 'plan_execute'
+})
 
 function openCreateDialog() {
   createForm.name = ''
@@ -764,6 +865,8 @@ function openTaskRun() {
   })
 }
 
+const taskEvents = ref<TeamTaskEvent[]>([])
+
 async function openTask(vo: TeamTaskVO) {
   if (!store.currentTeam) return
   try {
@@ -771,6 +874,13 @@ async function openTask(vo: TeamTaskVO) {
     currentTask.value = res.data?.task || vo
     comments.value = res.data?.comments || []
     taskDialogVisible.value = true
+    // Timeline loads after the dialog opens; a failure just leaves it empty.
+    taskEvents.value = []
+    teamApi.listTaskEvents(store.currentTeam.team.id, vo.task.id)
+      .then((eventsRes: any) => {
+        taskEvents.value = eventsRes.data || []
+      })
+      .catch(() => {})
   } catch (e: any) {
     ElMessage.error(e?.message || 'failed')
   }
@@ -1506,6 +1616,88 @@ async function cancelTask() {
   margin: 0;
   font-size: 12px;
   color: var(--mc-text-tertiary);
+}
+.agent-pill:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.lead-warning {
+  font-size: 12px;
+  color: var(--mc-danger, #d9534f);
+  background: rgba(217, 83, 79, 0.08);
+  border: 1px solid rgba(217, 83, 79, 0.25);
+  border-radius: 8px;
+  padding: 2px 8px;
+}
+.activity-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+.activity-line {
+  font-size: 12px;
+  color: var(--mc-text-secondary);
+  background: var(--mc-bg-sunken);
+  border: 1px solid var(--mc-border);
+  border-radius: 8px;
+  padding: 5px 10px;
+}
+.activity-enter-active,
+.activity-leave-active {
+  transition: opacity 0.3s, transform 0.3s;
+}
+.activity-enter-from,
+.activity-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.timeline-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--mc-text-secondary);
+}
+.timeline-row__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--mc-border);
+  flex-shrink: 0;
+  align-self: center;
+}
+.dot-ev--completed,
+.dot-ev--approved { background: var(--mc-success, #67c23a); }
+.dot-ev--failed,
+.dot-ev--blocker,
+.dot-ev--cancelled,
+.dot-ev--rejected { background: var(--mc-danger, #d9534f); }
+.dot-ev--dispatched,
+.dot-ev--progress { background: var(--mc-primary); }
+.timeline-row__time {
+  font-variant-numeric: tabular-nums;
+  color: var(--mc-text-tertiary);
+  flex-shrink: 0;
+}
+.timeline-row__type {
+  font-weight: 600;
+  color: var(--mc-text-primary);
+  flex-shrink: 0;
+}
+.timeline-row__actor {
+  color: var(--mc-text-secondary);
+  flex-shrink: 0;
+}
+.timeline-row__detail {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .deliverable-list {
   display: flex;

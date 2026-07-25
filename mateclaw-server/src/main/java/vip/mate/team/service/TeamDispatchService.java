@@ -9,6 +9,7 @@ import vip.mate.agent.AgentService;
 import vip.mate.channel.web.ChatStreamTracker;
 import vip.mate.team.model.AgentTeamEntity;
 import vip.mate.team.model.TeamTaskEntity;
+import vip.mate.team.model.TeamTaskEventEntity;
 import vip.mate.team.model.TeamTaskStatus;
 import vip.mate.workspace.conversation.ConversationService;
 
@@ -71,6 +72,7 @@ public class TeamDispatchService {
     private final ConversationService conversationService;
     private final ChatStreamTracker streamTracker;
     private final TeamAnnounceService announceService;
+    private final TeamEventChannel eventChannel;
 
     /** Members with a run currently in flight in this JVM (belt-and-braces on top of hasActiveTask). */
     private final Set<Long> runningMembers = ConcurrentHashMap.newKeySet();
@@ -125,6 +127,8 @@ public class TeamDispatchService {
             if (!taskService.assignTask(task.getId(), assignee)) {
                 continue; // another sweep won the race, or status moved on
             }
+            taskService.recordEvent(teamId, task.getId(), TeamTaskEventEntity.DISPATCHED,
+                    TeamTaskService.AUTHOR_SYSTEM, null, "agent " + assignee);
             if (!taskService.tryAcquireDispatch(task.getId())) {
                 // Circuit breaker tripped; the task was auto-failed — the lead
                 // must hear about it or the work silently disappears.
@@ -252,6 +256,10 @@ public class TeamDispatchService {
         announceService.announceTaskSettled(current);
     }
 
+    /** Per-prerequisite and whole-section caps keeping the envelope bounded. */
+    static final int MAX_PREREQ_RESULT_CHARS = 1500;
+    static final int MAX_PREREQ_SECTION_CHARS = 6000;
+
     /** The full instruction envelope the member receives; it cannot see the lead's conversation. */
     private String buildDispatchContent(TeamTaskEntity task) {
         StringBuilder sb = new StringBuilder(1024);
@@ -261,6 +269,7 @@ public class TeamDispatchService {
         if (task.getDescription() != null && !task.getDescription().isBlank()) {
             sb.append("\n").append(task.getDescription()).append('\n');
         }
+        appendPrerequisiteResults(sb, task);
         sb.append("""
 
                 [Instructions]
@@ -272,22 +281,47 @@ public class TeamDispatchService {
         return sb.toString();
     }
 
-    /** Push a task event onto the lead conversation's SSE stream (UI + observability). */
-    private void broadcast(TeamTaskEntity task, String event, Map<String, Object> extra) {
-        if (task.getLeadConversationId() == null) {
+    /**
+     * Hand the member everything its prerequisites produced: result summaries
+     * and deliverable links, so upstream output flows downstream without the
+     * lead re-typing it. Bounded by per-item and whole-section caps — the
+     * member can fetch the full record with team_tasks(action="get").
+     */
+    void appendPrerequisiteResults(StringBuilder sb, TeamTaskEntity task) {
+        List<Long> blockerIds = TeamTaskService.parseIdArray(task.getBlockedBy());
+        if (blockerIds.isEmpty()) {
             return;
         }
-        try {
-            Map<String, Object> payload = new HashMap<>(extra);
-            payload.put("taskId", String.valueOf(task.getId()));
-            payload.put("taskNumber", task.getTaskNumber());
-            payload.put("subject", task.getSubject());
-            payload.put("teamId", String.valueOf(task.getTeamId()));
-            payload.put("assigneeAgentId", String.valueOf(task.getAssigneeAgentId()));
-            streamTracker.broadcastObject(task.getLeadConversationId(), event, payload);
-        } catch (Exception e) {
-            log.debug("Team task event broadcast skipped: {}", e.getMessage());
+        StringBuilder section = new StringBuilder();
+        for (Long blockerId : blockerIds) {
+            TeamTaskEntity blocker = taskService.getTask(blockerId);
+            if (blocker == null) {
+                continue;
+            }
+            section.append("- #").append(blocker.getTaskNumber())
+                    .append(" \"").append(blocker.getSubject()).append("\" (")
+                    .append(blocker.getStatus()).append(')');
+            if (blocker.getResult() != null && !blocker.getResult().isBlank()) {
+                section.append(": ").append(truncate(blocker.getResult().strip(),
+                        MAX_PREREQ_RESULT_CHARS));
+            }
+            section.append('\n');
+            for (TeamTaskService.Deliverable file : taskService.listDeliverables(blocker)) {
+                section.append("  File: ").append(file.name()).append(" → ")
+                        .append(file.url()).append('\n');
+            }
         }
+        if (section.isEmpty()) {
+            return;
+        }
+        sb.append("\n[Prerequisite results]\n")
+                .append(truncate(section.toString(), MAX_PREREQ_SECTION_CHARS))
+                .append("Use team_tasks(action=\"get\", taskId=...) for any full record.\n");
+    }
+
+    /** Push a task event onto the team channel and the lead conversation's stream. */
+    private void broadcast(TeamTaskEntity task, String event, Map<String, Object> extra) {
+        eventChannel.publishTaskEvent(task, event, extra);
     }
 
     private static String truncate(String s, int max) {

@@ -13,8 +13,10 @@ import vip.mate.team.model.AgentTeamEntity;
 import vip.mate.team.model.TeamTaskCommentEntity;
 import vip.mate.team.model.TeamTaskCreateCommand;
 import vip.mate.team.model.TeamTaskEntity;
+import vip.mate.team.model.TeamTaskEventEntity;
 import vip.mate.team.model.TeamTaskStatus;
 import vip.mate.team.service.TeamDispatchService;
+import vip.mate.team.service.TeamEventChannel;
 import vip.mate.team.service.TeamService;
 import vip.mate.team.service.TeamTaskService;
 import vip.mate.tool.builtin.ToolExecutionContext;
@@ -22,7 +24,9 @@ import vip.mate.workspace.conversation.ConversationService;
 import vip.mate.workspace.conversation.model.ConversationEntity;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -44,6 +48,7 @@ public class TeamTasksTool {
     private final TeamService teamService;
     private final TeamTaskService taskService;
     private final TeamDispatchService dispatchService;
+    private final TeamEventChannel eventChannel;
     private final ConversationService conversationService;
     private final AgentMapper agentMapper;
 
@@ -119,8 +124,8 @@ public class TeamTasksTool {
                 case "progress" -> progress(team, agentId, parseId(taskId, "taskId"), percent, step);
                 case "comment" -> comment(team, agentId, parseId(taskId, "taskId"), type, text);
                 case "attach" -> attach(team, agentId, parseId(taskId, "taskId"), name, url);
-                case "cancel" -> cancel(team, isLead, parseId(taskId, "taskId"), text);
-                case "retry" -> retry(team, isLead, parseId(taskId, "taskId"));
+                case "cancel" -> cancel(team, agentId, isLead, parseId(taskId, "taskId"), text);
+                case "retry" -> retry(team, agentId, isLead, parseId(taskId, "taskId"));
                 default -> "Error: unknown action '" + action
                         + "'. Use one of: list, get, create, complete, progress, comment, attach, cancel, retry.";
             };
@@ -154,6 +159,7 @@ public class TeamTasksTool {
                 .requireApproval(Boolean.TRUE.equals(requireApproval))
                 .leadConversationId(conversationId)
                 .build());
+        eventChannel.publishTaskEvent(task, "team_task_created", Map.of());
         if (TeamTaskStatus.PENDING.equals(task.getStatus())) {
             dispatchService.requestDispatch(team.getId());
         }
@@ -193,6 +199,16 @@ public class TeamTasksTool {
             return "Error: percent must be between 0 and 100.";
         }
         boolean ok = taskService.updateProgress(taskId, agentId, percent, step);
+        if (ok) {
+            Map<String, Object> extra = new HashMap<>();
+            if (percent != null) {
+                extra.put("progressPercent", percent);
+            }
+            if (step != null) {
+                extra.put("progressStep", step);
+            }
+            eventChannel.publishTaskEvent(taskService.getTask(taskId), "team_task_progress", extra);
+        }
         return ok ? "✓ Progress recorded."
                 : "Error: task is not in progress under your ownership; progress not recorded.";
     }
@@ -217,12 +233,16 @@ public class TeamTasksTool {
                 + ". It now shows on the task card; keep your result a summary instead of pasting file contents.";
     }
 
-    private String cancel(AgentTeamEntity team, boolean isLead, Long taskId, String reason) {
+    private String cancel(AgentTeamEntity team, Long agentId, boolean isLead,
+                          Long taskId, String reason) {
         if (!isLead) {
             return "Error: only the team lead can cancel tasks.";
         }
         TeamTaskEntity task = requireTaskInTeam(team, taskId);
         List<Long> released = taskService.cancelTask(taskId, reason);
+        taskService.recordEvent(team.getId(), taskId, TeamTaskEventEntity.CANCELLED,
+                TeamTaskService.AUTHOR_AGENT, String.valueOf(agentId), reason);
+        eventChannel.publishTaskEvent(taskService.getTask(taskId), "team_task_cancelled", Map.of());
         // Stop the member run mid-flight instead of letting it burn to the end.
         dispatchService.interruptRun(task);
         if (!released.isEmpty()) {
@@ -231,7 +251,7 @@ public class TeamTasksTool {
         return "✓ Task cancelled.";
     }
 
-    private String retry(AgentTeamEntity team, boolean isLead, Long taskId) {
+    private String retry(AgentTeamEntity team, Long agentId, boolean isLead, Long taskId) {
         if (!isLead) {
             return "Error: only the team lead can retry tasks.";
         }
@@ -239,6 +259,9 @@ public class TeamTasksTool {
         if (!taskService.retryTask(taskId)) {
             return "Error: only failed or stale tasks can be retried.";
         }
+        taskService.recordEvent(team.getId(), taskId, TeamTaskEventEntity.RETRIED,
+                TeamTaskService.AUTHOR_AGENT, String.valueOf(agentId), null);
+        eventChannel.publishTaskEvent(taskService.getTask(taskId), "team_task_retried", Map.of());
         dispatchService.requestDispatch(team.getId());
         return "✓ Task reset to pending; it will be re-dispatched.";
     }

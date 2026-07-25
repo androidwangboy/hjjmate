@@ -13,7 +13,9 @@ import vip.mate.team.model.TeamTaskCommentEntity;
 import vip.mate.team.model.TeamTaskCreateCommand;
 import vip.mate.team.model.TeamTaskEntity;
 import vip.mate.team.model.TeamTaskStatus;
+import vip.mate.team.model.TeamTaskEventEntity;
 import vip.mate.team.repository.TeamTaskCommentMapper;
+import vip.mate.team.repository.TeamTaskEventMapper;
 import vip.mate.team.repository.TeamTaskMapper;
 
 import java.net.URI;
@@ -51,6 +53,7 @@ public class TeamTaskService {
 
     private final TeamTaskMapper taskMapper;
     private final TeamTaskCommentMapper commentMapper;
+    private final TeamTaskEventMapper eventMapper;
     private final TeamService teamService;
 
     // ==================== creation ====================
@@ -112,6 +115,12 @@ public class TeamTaskService {
         task.setChannel(cmd.getChannel());
         task.setMetadata(cmd.getMetadata());
         taskMapper.insert(task);
+        recordEvent(cmd.getTeamId(), task.getId(), TeamTaskEventEntity.CREATED,
+                cmd.getCreatedByAgentId() != null ? AUTHOR_AGENT
+                        : cmd.getUsername() != null ? AUTHOR_USER : AUTHOR_SYSTEM,
+                cmd.getCreatedByAgentId() != null ? String.valueOf(cmd.getCreatedByAgentId())
+                        : cmd.getUsername(),
+                "assignee: agent " + assignee);
         log.info("Team {} task #{} created ({}), assignee={} status={}",
                 cmd.getTeamId(), task.getTaskNumber(), task.getId(), assignee, task.getStatus());
         return task;
@@ -186,6 +195,10 @@ public class TeamTaskService {
             throw new IllegalStateException("task #" + task.getTaskNumber()
                     + " is " + task.getStatus() + " and cannot be completed");
         }
+        recordEvent(task.getTeamId(), taskId,
+                toReview ? TeamTaskEventEntity.IN_REVIEW : TeamTaskEventEntity.COMPLETED,
+                agentId != null ? AUTHOR_AGENT : AUTHOR_SYSTEM,
+                agentId != null ? String.valueOf(agentId) : null, null);
         return toReview ? List.of() : releaseDependents(task);
     }
 
@@ -220,13 +233,19 @@ public class TeamTaskService {
 
     /** Fail a task (blocker escalation, runner error, circuit breaker). Does NOT release dependents. */
     public boolean failTask(Long taskId, String reason) {
-        return taskMapper.update(null, Wrappers.<TeamTaskEntity>lambdaUpdate()
+        boolean failed = taskMapper.update(null, Wrappers.<TeamTaskEntity>lambdaUpdate()
                 .eq(TeamTaskEntity::getId, taskId)
                 .in(TeamTaskEntity::getStatus,
                         TeamTaskStatus.PENDING, TeamTaskStatus.IN_PROGRESS, TeamTaskStatus.STALE)
                 .set(TeamTaskEntity::getStatus, TeamTaskStatus.FAILED)
                 .set(TeamTaskEntity::getReason, reason)
                 .set(TeamTaskEntity::getLockExpiresAt, null)) == 1;
+        if (failed) {
+            TeamTaskEntity task = taskMapper.selectById(taskId);
+            recordEvent(task == null ? null : task.getTeamId(), taskId,
+                    TeamTaskEventEntity.FAILED, AUTHOR_SYSTEM, null, reason);
+        }
+        return failed;
     }
 
     /** Cancel a non-terminal task; releases dependents so siblings are not deadlocked. */
@@ -262,13 +281,21 @@ public class TeamTaskService {
 
     /** Update progress and renew the execution lease in one shot. */
     public boolean updateProgress(Long taskId, Long agentId, Integer percent, String step) {
-        return taskMapper.update(null, Wrappers.<TeamTaskEntity>lambdaUpdate()
+        boolean updated = taskMapper.update(null, Wrappers.<TeamTaskEntity>lambdaUpdate()
                 .eq(TeamTaskEntity::getId, taskId)
                 .eq(TeamTaskEntity::getStatus, TeamTaskStatus.IN_PROGRESS)
                 .eq(agentId != null, TeamTaskEntity::getOwnerAgentId, agentId)
                 .set(percent != null, TeamTaskEntity::getProgressPercent, percent)
                 .set(step != null, TeamTaskEntity::getProgressStep, step)
                 .set(TeamTaskEntity::getLockExpiresAt, newLease())) == 1;
+        if (updated) {
+            TeamTaskEntity task = taskMapper.selectById(taskId);
+            recordEvent(task == null ? null : task.getTeamId(), taskId,
+                    TeamTaskEventEntity.PROGRESS, AUTHOR_AGENT,
+                    agentId != null ? String.valueOf(agentId) : null,
+                    (percent != null ? percent + "%" : "") + (step != null ? " — " + step : ""));
+        }
+        return updated;
     }
 
     /** Extend the execution lease (runner heartbeat). */
@@ -298,6 +325,10 @@ public class TeamTaskService {
         comment.setCommentType(commentType == null ? COMMENT_NOTE : commentType);
         comment.setContent(content);
         commentMapper.insert(comment);
+        recordEvent(task.getTeamId(), taskId,
+                COMMENT_BLOCKER.equals(comment.getCommentType())
+                        ? TeamTaskEventEntity.BLOCKER : TeamTaskEventEntity.COMMENT,
+                authorType, authorId, content);
 
         if (COMMENT_BLOCKER.equals(comment.getCommentType())) {
             boolean failed = failTask(taskId, "blocked: " + content);
@@ -314,6 +345,42 @@ public class TeamTaskService {
         return commentMapper.selectList(Wrappers.<TeamTaskCommentEntity>lambdaQuery()
                 .eq(TeamTaskCommentEntity::getTaskId, taskId)
                 .orderByAsc(TeamTaskCommentEntity::getCreateTime));
+    }
+
+    // ==================== timeline events ====================
+
+    /** Timeline detail cap, matching the column width. */
+    static final int MAX_EVENT_DETAIL_CHARS = 1000;
+
+    /**
+     * Record a lifecycle moment on the task's timeline. Best-effort side
+     * channel: any failure is logged and swallowed — a missing timeline row
+     * is acceptable, a task transition broken by the audit trail is not.
+     */
+    public void recordEvent(Long teamId, Long taskId, String eventType,
+                            String actorType, String actorId, String detail) {
+        try {
+            TeamTaskEventEntity event = new TeamTaskEventEntity();
+            event.setTeamId(teamId);
+            event.setTaskId(taskId);
+            event.setEventType(eventType);
+            event.setActorType(actorType);
+            event.setActorId(actorId);
+            event.setDetail(detail == null || detail.length() <= MAX_EVENT_DETAIL_CHARS
+                    ? detail : detail.substring(0, MAX_EVENT_DETAIL_CHARS));
+            eventMapper.insert(event);
+        } catch (Exception e) {
+            log.warn("Team task {} timeline event '{}' not recorded: {}",
+                    taskId, eventType, e.getMessage());
+        }
+    }
+
+    /** The task's timeline, oldest first. */
+    public List<TeamTaskEventEntity> listEvents(Long taskId) {
+        return eventMapper.selectList(Wrappers.<TeamTaskEventEntity>lambdaQuery()
+                .eq(TeamTaskEventEntity::getTaskId, taskId)
+                .orderByAsc(TeamTaskEventEntity::getCreateTime)
+                .orderByAsc(TeamTaskEventEntity::getId));
     }
 
     // ==================== deliverables ====================
@@ -377,6 +444,8 @@ public class TeamTaskService {
         taskMapper.update(null, Wrappers.<TeamTaskEntity>lambdaUpdate()
                 .eq(TeamTaskEntity::getId, taskId)
                 .set(TeamTaskEntity::getMetadata, metadata.toString()));
+        recordEvent(task.getTeamId(), taskId, TeamTaskEventEntity.DELIVERABLE,
+                AUTHOR_AGENT, agentId != null ? String.valueOf(agentId) : null, name.trim());
         log.info("Team task {} deliverable attached: {}", taskId, name.trim());
     }
 
@@ -479,6 +548,8 @@ public class TeamTaskService {
                     .eq(TeamTaskEntity::getStatus, TeamTaskStatus.IN_PROGRESS)
                     .set(TeamTaskEntity::getStatus, TeamTaskStatus.STALE)
                     .set(TeamTaskEntity::getReason, "execution lease expired"));
+            recordEvent(task.getTeamId(), task.getId(), TeamTaskEventEntity.STALE,
+                    AUTHOR_SYSTEM, null, "execution lease expired");
         }
         if (!expired.isEmpty()) {
             log.warn("Marked {} team task(s) stale after lease expiry", expired.size());

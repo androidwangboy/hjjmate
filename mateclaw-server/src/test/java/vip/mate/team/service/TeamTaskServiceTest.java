@@ -13,8 +13,10 @@ import vip.mate.team.model.AgentTeamEntity;
 import vip.mate.team.model.TeamTaskCommentEntity;
 import vip.mate.team.model.TeamTaskCreateCommand;
 import vip.mate.team.model.TeamTaskEntity;
+import vip.mate.team.model.TeamTaskEventEntity;
 import vip.mate.team.model.TeamTaskStatus;
 import vip.mate.team.repository.TeamTaskCommentMapper;
+import vip.mate.team.repository.TeamTaskEventMapper;
 import vip.mate.team.repository.TeamTaskMapper;
 
 import java.util.List;
@@ -37,6 +39,7 @@ class TeamTaskServiceTest {
 
     private TeamTaskMapper taskMapper;
     private TeamTaskCommentMapper commentMapper;
+    private TeamTaskEventMapper eventMapper;
     private TeamService teamService;
     private TeamTaskService service;
 
@@ -48,14 +51,16 @@ class TeamTaskServiceTest {
         MapperBuilderAssistant assistant = new MapperBuilderAssistant(new Configuration(), "");
         TableInfoHelper.initTableInfo(assistant, TeamTaskEntity.class);
         TableInfoHelper.initTableInfo(assistant, TeamTaskCommentEntity.class);
+        TableInfoHelper.initTableInfo(assistant, TeamTaskEventEntity.class);
     }
 
     @BeforeEach
     void setUp() {
         taskMapper = mock(TeamTaskMapper.class);
         commentMapper = mock(TeamTaskCommentMapper.class);
+        eventMapper = mock(TeamTaskEventMapper.class);
         teamService = mock(TeamService.class);
-        service = new TeamTaskService(taskMapper, commentMapper, teamService);
+        service = new TeamTaskService(taskMapper, commentMapper, eventMapper, teamService);
 
         AgentTeamEntity team = new AgentTeamEntity();
         team.setId(TEAM_ID);

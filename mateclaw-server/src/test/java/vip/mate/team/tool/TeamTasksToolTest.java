@@ -12,6 +12,7 @@ import vip.mate.team.model.TeamTaskCreateCommand;
 import vip.mate.team.model.TeamTaskEntity;
 import vip.mate.team.model.TeamTaskStatus;
 import vip.mate.team.service.TeamDispatchService;
+import vip.mate.team.service.TeamEventChannel;
 import vip.mate.team.service.TeamService;
 import vip.mate.team.service.TeamTaskService;
 import vip.mate.tool.builtin.ToolExecutionContext;
@@ -42,6 +43,7 @@ class TeamTasksToolTest {
     private TeamService teamService;
     private TeamTaskService taskService;
     private TeamDispatchService dispatchService;
+    private TeamEventChannel eventChannel;
     private ConversationService conversationService;
     private AgentMapper agentMapper;
     private TeamTasksTool tool;
@@ -52,10 +54,11 @@ class TeamTasksToolTest {
         teamService = mock(TeamService.class);
         taskService = mock(TeamTaskService.class);
         dispatchService = mock(TeamDispatchService.class);
+        eventChannel = mock(TeamEventChannel.class);
         conversationService = mock(ConversationService.class);
         agentMapper = mock(AgentMapper.class);
         tool = new TeamTasksTool(teamService, taskService, dispatchService,
-                conversationService, agentMapper);
+                eventChannel, conversationService, agentMapper);
 
         team = new AgentTeamEntity();
         team.setId(TEAM_ID);
