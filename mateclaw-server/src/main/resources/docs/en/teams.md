@@ -11,7 +11,7 @@ head:
 
 > **Before: one employee with sub-tasks. Now: a team around a shared task board.**
 
-Sub-agent delegation (`delegate_agent`) solves "one person temporarily calls a helper": synchronous, one-to-one, black-box. But real complex delivery looks like a project: **break down tasks, declare dependencies, run in parallel, gate on approvals, archive deliverables, and see who is doing what at any time**.
+Sub-agent delegation (`delegateToAgent`) solves "one person temporarily calls a helper": synchronous, one-to-one, black-box. But real complex delivery looks like a project: **break down tasks, declare dependencies, run in parallel, gate on approvals, archive deliverables, and see who is doing what at any time**.
 
 Agent Teams bring that project machinery into MateClaw: you create a **team**, assign one **lead** employee and several **members**; tell the lead a goal, it breaks the goal into tasks on a **shared task board**; the dispatch engine hands tasks to members and runs them **in parallel**; settled results are announced back to the lead, which reviews, re-dispatches, and drives the whole thing to done. You watch it all from the Teams page — or drop tasks onto the board yourself.
 
@@ -98,6 +98,8 @@ Leads aren't restricted by agent type. A **ReAct lead** creates tasks one by one
 - after hand-off the plan parks (`delegated`) and the lead's turn ends normally; the dispatch/announce loop takes over;
 - once all tasks settle, the wake-up passes a **parked-plan resume gate** that deterministically routes to the plan summary node, rebuilding context from task results and deliverables — the same "park in DB, resume in a fresh turn" shape the tool-approval flow already uses, with no checkpoint machinery.
 
+The hand-off is **all-or-nothing**: the plan goes to the board only when every step resolves to a team member; if any step can't be assigned, the whole plan falls back to the original serial delegation pipeline, behaving exactly as before.
+
 In short: **a lead that can plan turns its planning into team orchestration.**
 
 ---
@@ -137,9 +139,9 @@ Data lives in five tables: `mate_agent_team`, `mate_agent_team_member`, `mate_te
 
 ---
 
-## Teams vs. sub-agent delegation (`delegate_agent`)
+## Teams vs. sub-agent delegation (`delegateToAgent`)
 
-| | `delegate_agent` | Team task board |
+| | `delegateToAgent` | Team task board |
 |---|---|---|
 | Shape | One-off helper call | Standing team + shared board |
 | Parallelism | Single async call | Member-level parallelism + dependency orchestration |
@@ -147,7 +149,7 @@ Data lives in five tables: `mate_agent_team`, `mate_agent_team_member`, `mate_te
 | Interrupt/recover | Tied to parent turn | Leases, cancel-interrupt, retry |
 | Fits | Outsourcing one sub-problem | Multi-role, multi-step project delivery |
 
-They coexist: a team member can still call `delegate_agent` inside its own task.
+They coexist: a team member can still call `delegateToAgent` inside its own task.
 
 ---
 

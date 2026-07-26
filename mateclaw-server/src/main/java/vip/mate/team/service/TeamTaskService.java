@@ -168,8 +168,10 @@ public class TeamTaskService {
 
     /**
      * Complete a task with a result summary. A pending task is auto-claimed
-     * first (single-call convenience; safe because the claim is atomic). When
-     * the task requires approval it parks in in_review instead of completed.
+     * first (single-call convenience; safe because the claim is atomic), but
+     * only by its assignee — otherwise any team member could complete another
+     * member's not-yet-dispatched task. When the task requires approval it
+     * parks in in_review instead of completed.
      *
      * @return ids of dependent tasks released to pending by this completion
      */
@@ -177,6 +179,10 @@ public class TeamTaskService {
     public List<Long> completeTask(Long taskId, Long agentId, String result) {
         TeamTaskEntity task = requireTask(taskId);
         if (TeamTaskStatus.PENDING.equals(task.getStatus()) && agentId != null) {
+            if (task.getAssigneeAgentId() != null && !agentId.equals(task.getAssigneeAgentId())) {
+                throw new IllegalStateException("task #" + task.getTaskNumber()
+                        + " is assigned to another agent; only the assignee can claim and complete it");
+            }
             claimTask(taskId, agentId);
             task = requireTask(taskId);
         }

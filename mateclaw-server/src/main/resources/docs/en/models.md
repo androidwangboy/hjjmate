@@ -412,7 +412,7 @@ Failover decides *who to switch to*; 2.0.0 also makes *how each error recovers* 
 - **"Server overloaded" and "my key is rate-limited" are treated differently.** A new OVERLOADED class: 503/529-style **server overload** means everyone is queuing — switching providers just burns the whole chain for nothing (and single-key users have nowhere to switch) — so the right move is **back off on the same provider**; a 429 on **your own key** is what deserves a fast rotation. These used to be conflated with opposite policies.
 - **When the provider says when it recovers, we believe it.** `Retry-After` / ratelimit-reset response headers used to go only to logs; they now **feed directly into backoff duration and health cooldown** — no more blind backoff against a known rate-limit window.
 - **Eviction is a TTL cooldown, not a death sentence.** Providers hard-evicted for auth failures or billing now get TTL-based readmission (swap in a new key or top up the account and the system heals itself, no restart required); a provider-stated recovery time overrides the default.
-- **Jittered backoff prevents retry storms.** Concurrent conversations hitting the same rate-limited provider back off with decorrelated jitter — no more lockstep mass retries that keep re-triggering the limit.
+- **Randomized jitter prevents retry storms.** Concurrent conversations hitting the same rate-limited provider back off with randomized jitter (±30% on the overload backoff tiers, exponential backoff plus a random component on the generic path) — no more lockstep mass retries that keep re-triggering the limit.
 
 ### Preferred provider drives the primary model (1.5.0)
 

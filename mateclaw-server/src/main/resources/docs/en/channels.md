@@ -664,10 +664,10 @@ In any IM channel, a message that is entirely a `/`-prefixed command is intercep
 | `/clear` | Clear the current conversation's context (the conversation itself survives; the 1.8-era clear command folds into this framework) |
 | `/status` | Show the conversation's state — bound employee, model, whether a task is running |
 | `/stop` | Stop the running task — intercepted at the enqueue gate, so it preempts a long task mid-flight |
-| `/model` | List available models / switch **this conversation's** model by name; the switch affects only the current conversation |
+| `/model` | With no argument, list available models (current pin marked); `/model <name>` or `/model <provider>:<name>` switches **this conversation's** model, effective from the next message; `/model reset` restores the default. Fuzzy names get suggestion lists |
 | `/help` | List all commands with descriptions |
 
-Every command carries Chinese and English aliases, is case-insensitive, and matches the whole message exactly — a normal message that merely contains `/stop` never misfires. Command confirmations go through the channel's normal render-and-send path, so an already-posted "thinking…" placeholder bubble is properly consumed instead of spinning forever.
+Every command carries Chinese and English aliases (e.g. `清空` / `新会话` / `状态`) and is case-insensitive. Matching is two-layered: **bare aliases match only as the entire message** ("help me write a report" is a normal prompt, not `/help`); **the slash form matches on the first token with arguments passed through** (which is how `/model qwen-max` carries its argument). A normal message that merely contains `/stop` mid-sentence never misfires. Command confirmations go through the channel's normal render-and-send path, so an already-posted "thinking…" placeholder bubble is properly consumed instead of spinning forever.
 
 ---
 
