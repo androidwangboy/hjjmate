@@ -59,6 +59,14 @@ public class PluginMemoryBridge implements MemoryProvider {
     }
 
     @Override
+    public void syncTurn(Long agentId, String conversationId,
+                         String userMessage, String assistantReply, String ownerKey) {
+        // Forward ownerKey to the plugin provider; plugins that don't override the
+        // five-arg variant fall back to the four-arg default (ownerKey dropped).
+        delegate.syncTurn(agentId, conversationId, userMessage, assistantReply, ownerKey);
+    }
+
+    @Override
     public List<Object> getToolBeans() {
         List<Object> beans = delegate.getToolBeans();
         return beans != null ? beans : Collections.emptyList();

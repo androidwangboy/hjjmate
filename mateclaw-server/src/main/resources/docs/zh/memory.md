@@ -577,7 +577,7 @@ Mem0 集成是**可选的社区贡献项**，不在 MateClaw 的默认安装里�
 |------|------|
 | `systemPromptBlock` | 返回空——常驻 system prompt 不动，避免每轮 token 膨胀 |
 | `prefetch(agentId, query, ownerKey)` | 当 `searchEnabled=true` 且 `ownerKey` 非空时，调 `POST {baseUrl}/memories/search/`，返回一个 `[Mem0 Recall]` 块拼进本轮上下文 |
-| `syncTurn(agentId, conversationId, userMessage, assistantReply)` | 当 `syncEnabled=true` 时，**异步**把这一轮的 user/assistant 消息推到 `POST {baseUrl}/memories/`，失败只记日志、不阻塞响应 |
+| `syncTurn(agentId, conversationId, userMessage, assistantReply, ownerKey)` | 当 `syncEnabled=true` 且 `ownerKey` 非空时，**异步**把这一轮的 user/assistant 消息以 `user_id = ownerKey` 推到 `POST {baseUrl}/memories/` —— 与召回查询用同一个标识。失败只记日志、不阻塞响应 |
 | `getToolBeans` | 空列表——v1 不暴露 Agent 可调用的工具 |
 
 **故障隔离**：recall 或 sync 任何一边抛异常，插件自己吞掉、写日志，平台继续走其他 provider。Mem0 挂了不会影响 MateClaw 的本地记忆。
@@ -591,7 +591,7 @@ Mem0 用 `user_id` + `agent_id` 做隔离。MateClaw 的映射：
 | `ownerKey`（如 `user:42` / `feishu:sender_abc`） | `user_id` | 透传，原样作为 user_id |
 | `agentId` | `agent_id` | 数字员工 ID |
 
-只有 `prefetch` 的三参版能拿到 `ownerKey`。两参版（无 ownerKey）会直接返回空——Mem0 要求 `user_id`，没它无法隔离。
+`prefetch` 和 `syncTurn` 都能从平台拿到 `ownerKey`，写入和召回用同一个 `user_id`。拿不到 `ownerKey` 的变体会直接跳过（召回返回空 / 放弃写入）——Mem0 要求 `user_id`，没它无法隔离。
 
 ### 安装步骤
 
@@ -615,7 +615,7 @@ Mem0 用 `user_id` + `agent_id` 做隔离。MateClaw 的映射：
 
 ### 已知限制（v1）
 
-- **`syncTurn` 拿不到 `ownerKey`**：插件 SPI 的 `syncTurn` 签名只有 `(agentId, conversationId, userMessage, assistantReply)`，所以推送 Mem0 时只能用 `agentId` 作为 `user_id` 降级。这比 prefetch（有 ownerKey）的隔离粒度粗。如果你需要严格的 per-owner 同步，把 `syncEnabled=false`，只依赖 prefetch 做召回，由你自己的 Mem0 客户端负责写入。
+- **没有解析出 owner 的轮次不会同步**：`syncTurn` 要求 `ownerKey`；平台解析不出 owner 的轮次（如系统触发的运行）会直接跳过，而不是用一个召回永远查不到的降级标识写入。
 - **没有 token 预算控制**：prefetch 返回的 `[Mem0 Recall]` 块直接拼进上下文，不受 `system-block-max-chars` 那套注入预算约束（那套只管 `user`/`feedback` 结构化条目）。`maxResults` 是唯一的尺寸闸门。
 - **没有 Agent 工具**：v1 不暴露 `mem0_search` / `mem0_add` 之类的工具给 Agent 主动调用。Agent 只能被动接收 prefetch 的结果。
 

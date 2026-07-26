@@ -81,6 +81,28 @@ public interface PluginMemoryProvider {
     }
 
     /**
+     * Post-turn sync with per-owner isolation. Called by the platform with the
+     * same {@code ownerKey} that was resolved for this turn's prefetch, so
+     * providers can persist the turn under the same per-user identifier they
+     * recall by.
+     * <p>
+     * Default implementation degrades to the four-arg variant, dropping the
+     * owner key. External providers that isolate memory per end-user should
+     * override this so that written memories stay reachable by owner-scoped
+     * recall.
+     *
+     * @param agentId        the agent ID
+     * @param conversationId the conversation ID
+     * @param userMessage    user's message text
+     * @param assistantReply assistant's reply text
+     * @param ownerKey       memory owner key (e.g. {@code "user:42"}), or null if unknown
+     */
+    default void syncTurn(Long agentId, String conversationId,
+                          String userMessage, String assistantReply, String ownerKey) {
+        syncTurn(agentId, conversationId, userMessage, assistantReply);
+    }
+
+    /**
      * Tool beans this provider wants to expose to the agent.
      */
     default List<Object> getToolBeans() {

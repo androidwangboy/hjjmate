@@ -19,9 +19,13 @@ import java.util.concurrent.Executors;
  *       and {@code ownerKey} is non-blank, calls {@code POST /memories/search/}
  *       and returns a {@code [Mem0 Recall]} block. Returns "" on any failure
  *       or when disabled.</li>
- *   <li>{@code syncTurn} — when {@code syncEnabled} and {@code ownerKey} is
- *       non-blank, asynchronously pushes the turn to {@code POST /memories/}.
- *       Failures are logged and swallowed; never blocks the response path.</li>
+ *   <li>{@code syncTurn(agentId, conversationId, messages, ownerKey)} — when
+ *       {@code syncEnabled} and {@code ownerKey} is non-blank, asynchronously
+ *       pushes the turn to {@code POST /memories/} under {@code user_id =
+ *       ownerKey}, the same identifier prefetch recalls by. Failures are
+ *       logged and swallowed; never blocks the response path. The four-arg
+ *       variant (no ownerKey) skips — writing under any other identifier
+ *       would produce memories that owner-scoped recall can never surface.</li>
  *   <li>{@code getToolBeans} — empty (no agent-facing tools in v1)</li>
  * </ul>
  *
@@ -119,19 +123,20 @@ class Mem0Provider implements PluginMemoryProvider {
     @Override
     public void syncTurn(Long agentId, String conversationId,
                          String userMessage, String assistantReply) {
+        // Four-arg variant: no owner key → skip. Mem0 keys memories by user_id;
+        // writing under any fallback identifier (e.g. agentId) would store
+        // memories that owner-scoped prefetch can never recall.
+    }
+
+    @Override
+    public void syncTurn(Long agentId, String conversationId,
+                         String userMessage, String assistantReply, String ownerKey) {
         if (!config.syncEnabled()) {
             return;
         }
-        // ownerKey is NOT available in the two-arg syncTurn signature
-        // (PlatformMemoryProvider only passes agentId + conversationId + messages).
-        // We push the turn using agentId as the user_id fallback — this is
-        // weaker isolation than prefetch (which has ownerKey), but better than
-        // dropping the turn. If users need strict per-owner sync, configure
-        // syncEnabled=false and rely on prefetch-only recall.
-        // NOTE: this is a known v1 limitation; a future SPI extension would
-        // pass ownerKey into syncTurn as well.
-        String userId = agentId == null ? null : agentId.toString();
-        if (userId == null || userId.isBlank()) {
+        if (ownerKey == null || ownerKey.isBlank()) {
+            // Same guard as prefetch: Mem0 requires user_id; without the owner
+            // key the write would break per-owner isolation.
             return;
         }
         if ((userMessage == null || userMessage.isBlank())
@@ -140,10 +145,11 @@ class Mem0Provider implements PluginMemoryProvider {
         }
         CompletableFuture.runAsync(() -> {
             try {
-                client.addMemories(userId, agentId == null ? null : agentId.toString(),
+                client.addMemories(ownerKey, agentId == null ? null : agentId.toString(),
                         conversationId, userMessage, assistantReply);
             } catch (Exception e) {
-                log.debug("[Mem0] syncTurn failed for agent={}: {}", agentId, e.getMessage());
+                log.debug("[Mem0] syncTurn failed for agent={} owner={}: {}",
+                        agentId, ownerKey, e.getMessage());
             }
         }, async);
     }

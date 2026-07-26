@@ -189,6 +189,64 @@ class MemoryManagerPluginPrefetchTest {
         assertFalse(result.contains("[Plugin Recall]"));
     }
 
+    @Test
+    @DisplayName("syncAll with ownerKey reaches the plugin's five-arg syncTurn verbatim")
+    void syncAllForwardsOwnerKeyToPlugin() {
+        AtomicReference<String> receivedOwner = new AtomicReference<>("sentinel");
+        AtomicReference<String> receivedConversation = new AtomicReference<>();
+
+        PluginMemoryProvider plugin = new PluginMemoryProvider() {
+            @Override
+            public String id() { return "test-plugin-mem"; }
+
+            @Override
+            public boolean isAvailable() { return true; }
+
+            @Override
+            public void syncTurn(Long agentId, String conversationId,
+                                 String userMessage, String assistantReply, String ownerKey) {
+                receivedOwner.set(ownerKey);
+                receivedConversation.set(conversationId);
+            }
+        };
+
+        MemoryManager manager = newManager(new PluginMemoryBridge(plugin));
+        manager.syncAll(7L, "conv-1", "hello", "world", "user:42");
+
+        assertEquals("user:42", receivedOwner.get(),
+                "ownerKey must reach the plugin's five-arg syncTurn — synced memories "
+                        + "must be keyed by the same identifier prefetch recalls by");
+        assertEquals("conv-1", receivedConversation.get());
+    }
+
+    @Test
+    @DisplayName("syncAll without ownerKey delegates to the five-arg path with null — "
+            + "owner-aware plugins see null and can opt out of the write")
+    void syncAllWithoutOwnerKeyPassesNullToFiveArg() {
+        AtomicReference<String> receivedOwner = new AtomicReference<>("sentinel");
+        PluginMemoryProvider plugin = new PluginMemoryProvider() {
+            @Override
+            public String id() { return "test-plugin-mem"; }
+
+            @Override
+            public boolean isAvailable() { return true; }
+
+            @Override
+            public void syncTurn(Long agentId, String conversationId,
+                                 String userMessage, String assistantReply, String ownerKey) {
+                receivedOwner.set(ownerKey);
+            }
+        };
+
+        MemoryManager manager = newManager(new PluginMemoryBridge(plugin));
+        manager.syncAll(7L, "conv-1", "hello", "world");
+
+        assertEquals(null, receivedOwner.get(),
+                "four-arg syncAll must surface as null ownerKey to the plugin's "
+                        + "five-arg variant — the contract signal that lets owner-aware "
+                        + "plugins skip writes they could never recall");
+    }
+
     // ---- helpers ----
 
     private static MemoryProvider stubBuiltin() {

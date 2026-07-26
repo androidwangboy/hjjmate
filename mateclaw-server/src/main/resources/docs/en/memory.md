@@ -583,7 +583,7 @@ Mem0 integration is an **optional community contribution** — it is NOT part of
 |------|----------|
 | `systemPromptBlock` | Returns empty — leaves the resident system prompt alone, avoids per-turn token bloat |
 | `prefetch(agentId, query, ownerKey)` | When `searchEnabled=true` and `ownerKey` is non-blank, calls `POST {baseUrl}/memories/search/` and returns a `[Mem0 Recall]` block concatenated into the current turn's context |
-| `syncTurn(agentId, conversationId, userMessage, assistantReply)` | When `syncEnabled=true`, **asynchronously** pushes this turn's user/assistant messages to `POST {baseUrl}/memories/`. Failures are logged only, never block the response |
+| `syncTurn(agentId, conversationId, userMessage, assistantReply, ownerKey)` | When `syncEnabled=true` and `ownerKey` is non-blank, **asynchronously** pushes this turn's user/assistant messages to `POST {baseUrl}/memories/` under `user_id = ownerKey` — the same identifier recall queries by. Failures are logged only, never block the response |
 | `getToolBeans` | Empty list — v1 exposes no agent-callable tools |
 
 **Fault isolation**: any exception in recall or sync is swallowed and logged by the plugin itself; the platform keeps going with the other providers. Mem0 being down does not affect MateClaw's local memory.
@@ -597,7 +597,7 @@ Mem0 isolates by `user_id` + `agent_id`. MateClaw maps them as:
 | `ownerKey` (e.g. `user:42` / `feishu:sender_abc`) | `user_id` | Passed through verbatim |
 | `agentId` | `agent_id` | The digital employee ID |
 
-Only the three-arg `prefetch` variant receives `ownerKey`. The two-arg variant (no ownerKey) returns empty — Mem0 requires `user_id`, without it isolation is impossible.
+Both `prefetch` and `syncTurn` receive `ownerKey` from the platform, so writes and recalls are keyed by the same `user_id`. The variants without `ownerKey` skip (empty recall / dropped write) — Mem0 requires `user_id`, without it isolation is impossible.
 
 ### Installation
 
@@ -621,7 +621,7 @@ Config is read once at plugin load — changes require a plugin reload to take e
 
 ### Known limitations (v1)
 
-- **`syncTurn` has no `ownerKey`**: the plugin SPI's `syncTurn` signature is only `(agentId, conversationId, userMessage, assistantReply)`, so when pushing to Mem0 the plugin falls back to using `agentId` as `user_id`. This is coarser isolation than prefetch (which has ownerKey). If you need strict per-owner sync, set `syncEnabled=false` and rely on prefetch-only recall, with writes handled by your own Mem0 client.
+- **Turns without a resolved owner are not synced**: `syncTurn` requires `ownerKey`; turns where the platform cannot resolve one (e.g. system-triggered runs) are skipped rather than written under a fallback identifier that recall could never surface.
 - **No token budget control**: the `[Mem0 Recall]` block returned by prefetch is concatenated into the context directly — it is NOT subject to the `system-block-max-chars` injection budget (that budget only governs `user`/`feedback` structured entries). `maxResults` is the only size knob.
 - **No agent tools**: v1 does not expose `mem0_search` / `mem0_add` style tools for the agent to call proactively. The agent only passively receives prefetch results.
 

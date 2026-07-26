@@ -112,6 +112,50 @@ class PluginMemoryBridgeTest {
     }
 
     @Test
+    @DisplayName("five-arg syncTurn forwards ownerKey verbatim to the delegate")
+    void fiveArgSyncTurnForwardsOwnerKey() {
+        AtomicReference<String> receivedOwner = new AtomicReference<>("not-called");
+        PluginMemoryProvider delegate = new ForwardingPluginProvider(stub()) {
+            @Override
+            public void syncTurn(Long agentId, String conversationId,
+                                 String userMessage, String assistantReply, String ownerKey) {
+                receivedOwner.set(ownerKey);
+            }
+        };
+
+        PluginMemoryBridge bridge = new PluginMemoryBridge(delegate);
+        bridge.syncTurn(42L, "conv-1", "hello", "world", "user:42");
+
+        assertEquals("user:42", receivedOwner.get(),
+                "ownerKey must reach the delegate — synced memories must be keyed by "
+                        + "the same identifier owner-scoped prefetch recalls by");
+    }
+
+    @Test
+    @DisplayName("when the plugin does not override the five-arg syncTurn, "
+            + "the SPI default degrades to four-arg (ownerKey dropped, not crashed)")
+    void fiveArgSyncTurnDegradesToFourArgWhenPluginDoesNotOverride() {
+        AtomicReference<String> fourArgCalled = new AtomicReference<>("not-called");
+        PluginMemoryProvider pluginOnlyFourArg = new PluginMemoryProvider() {
+            @Override
+            public String id() { return "four-arg-only"; }
+
+            @Override
+            public void syncTurn(Long agentId, String conversationId,
+                                 String userMessage, String assistantReply) {
+                fourArgCalled.set("called");
+            }
+        };
+
+        PluginMemoryBridge bridge = new PluginMemoryBridge(pluginOnlyFourArg);
+        bridge.syncTurn(42L, "conv-1", "hello", "world", "user:42");
+
+        assertEquals("called", fourArgCalled.get(),
+                "SPI default should drop ownerKey and route to the four-arg impl, "
+                        + "not crash with AbstractMethodError");
+    }
+
+    @Test
     @DisplayName("metadata (id/order/isAvailable) and lifecycle hooks pass through")
     void metadataAndLifecyclePassthrough() {
         PluginMemoryProvider delegate = stub();
@@ -198,6 +242,10 @@ class PluginMemoryBridgeTest {
         @Override public void syncTurn(Long agentId, String conversationId,
                                        String userMessage, String assistantReply) {
             delegate.syncTurn(agentId, conversationId, userMessage, assistantReply);
+        }
+        @Override public void syncTurn(Long agentId, String conversationId,
+                                       String userMessage, String assistantReply, String ownerKey) {
+            delegate.syncTurn(agentId, conversationId, userMessage, assistantReply, ownerKey);
         }
         @Override public List<Object> getToolBeans() { return delegate.getToolBeans(); }
         @Override public void onSessionEnd(Long agentId, String conversationId) {

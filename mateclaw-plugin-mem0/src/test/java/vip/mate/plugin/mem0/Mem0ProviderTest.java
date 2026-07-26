@@ -13,6 +13,7 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -22,11 +23,13 @@ class Mem0ProviderTest {
     private Mem0Provider provider;
     private final AtomicInteger addCount = new AtomicInteger();
     private final AtomicInteger searchCount = new AtomicInteger();
+    private final AtomicReference<String> lastAddBody = new AtomicReference<>();
 
     @BeforeEach
     void setUp() throws IOException {
         addCount.set(0);
         searchCount.set(0);
+        lastAddBody.set(null);
         HttpHandler handler = this::handle;
         server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         server.createContext("/", handler);
@@ -44,13 +47,15 @@ class Mem0ProviderTest {
     }
 
     private void handle(HttpExchange exchange) throws IOException {
+        String body;
         try (InputStream in = exchange.getRequestBody()) {
-            in.readAllBytes(); // drain
+            body = new String(in.readAllBytes(), StandardCharsets.UTF_8);
         }
         String path = exchange.getRequestURI().getPath();
         byte[] resp;
         if ("/memories/".equals(path)) {
             addCount.incrementAndGet();
+            lastAddBody.set(body);
             resp = "{\"results\":[]}".getBytes(StandardCharsets.UTF_8);
         } else if ("/memories/search/".equals(path)) {
             searchCount.incrementAndGet();
@@ -137,8 +142,8 @@ class Mem0ProviderTest {
     }
 
     @Test
-    void syncTurn_pushesAsynchronouslyWithoutBlocking() throws Exception {
-        provider.syncTurn(1L, "conv-1", "hello", "world");
+    void syncTurn_pushesAsynchronouslyWithOwnerKeyAsUserId() throws Exception {
+        provider.syncTurn(1L, "conv-1", "hello", "world", "user:42");
 
         // Wait briefly for the async executor to fire the POST.
         long deadline = System.currentTimeMillis() + 2000;
@@ -146,11 +151,31 @@ class Mem0ProviderTest {
             Thread.sleep(20);
         }
         assertThat(addCount.get()).isEqualTo(1);
+        // The write must land under the same user_id that prefetch recalls by.
+        assertThat(lastAddBody.get()).contains("\"user_id\":\"user:42\"");
+        assertThat(lastAddBody.get()).contains("\"agent_id\":\"1\"");
+    }
+
+    @Test
+    void fourArgSyncTurn_skipsBecauseNoOwnerKey() throws Exception {
+        // Without ownerKey, a write would be keyed by an identifier that
+        // owner-scoped prefetch never queries; the provider must skip.
+        provider.syncTurn(1L, "conv-1", "hello", "world");
+        Thread.sleep(200); // give async a chance to (not) fire
+        assertThat(addCount.get()).isZero();
+    }
+
+    @Test
+    void syncTurn_skipsWhenOwnerKeyBlank() throws Exception {
+        provider.syncTurn(1L, "conv-1", "hello", "world", "");
+        provider.syncTurn(1L, "conv-1", "hello", "world", null);
+        Thread.sleep(200);
+        assertThat(addCount.get()).isZero();
     }
 
     @Test
     void syncTurn_skipsWhenBothMessagesBlank() throws Exception {
-        provider.syncTurn(1L, "conv-1", "   ", "");
+        provider.syncTurn(1L, "conv-1", "   ", "", "user:42");
         Thread.sleep(200); // give async a chance to (not) fire
         assertThat(addCount.get()).isZero();
     }
@@ -165,7 +190,7 @@ class Mem0ProviderTest {
         server.createContext("/", ex -> { ex.sendResponseHeaders(200, 0); ex.close(); });
         // Note: client still points at the old port → connection refused.
 
-        provider.syncTurn(1L, "conv-1", "hi", "there");
+        provider.syncTurn(1L, "conv-1", "hi", "there", "user:42");
         Thread.sleep(500);
         // No exception thrown; nothing to assert beyond "test didn't blow up".
     }
@@ -177,7 +202,7 @@ class Mem0ProviderTest {
                 "http://127.0.0.1:" + server.getAddress().getPort(),
                 null, true, false, 3, 3000);
         Mem0Provider p = new Mem0Provider(cfg, new Mem0Client(cfg), LoggerFactory.getLogger("test"));
-        p.syncTurn(1L, "conv-1", "hi", "there");
+        p.syncTurn(1L, "conv-1", "hi", "there", "user:42");
         Thread.sleep(200);
         assertThat(addCount.get()).isZero();
     }
