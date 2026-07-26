@@ -22,7 +22,9 @@ import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -577,11 +579,38 @@ public class TeamTaskService {
     }
 
     public List<TeamTaskEntity> listTasks(Long teamId, List<String> statuses) {
+        return listTasks(teamId, statuses, null, null);
+    }
+
+    /**
+     * Board query with optional windowing. Terminal columns grow without
+     * bound on long-lived teams, so the UI pages them (newest first) while
+     * active columns stay unwindowed. LIMIT/OFFSET is valid across all three
+     * supported dialects.
+     */
+    public List<TeamTaskEntity> listTasks(Long teamId, List<String> statuses,
+                                          Integer limit, Integer offset) {
         return taskMapper.selectList(Wrappers.<TeamTaskEntity>lambdaQuery()
                 .eq(TeamTaskEntity::getTeamId, teamId)
                 .in(statuses != null && !statuses.isEmpty(), TeamTaskEntity::getStatus, statuses)
                 .orderByDesc(TeamTaskEntity::getPriority)
-                .orderByDesc(TeamTaskEntity::getCreateTime));
+                .orderByDesc(TeamTaskEntity::getCreateTime)
+                .last(limit != null,
+                        "LIMIT " + (limit == null ? 0 : Math.max(1, limit))
+                                + " OFFSET " + (offset == null ? 0 : Math.max(0, offset))));
+    }
+
+    /** Per-status task counts for the board header, computed in the database. */
+    public Map<String, Long> countByStatus(Long teamId) {
+        Map<String, Long> counts = new HashMap<>();
+        taskMapper.selectMaps(Wrappers.<TeamTaskEntity>query()
+                        .select("status", "count(*) as cnt")
+                        .eq("team_id", teamId)
+                        .eq("deleted", 0)
+                        .groupBy("status"))
+                .forEach(row -> counts.put(String.valueOf(row.get("status")),
+                        ((Number) row.get("cnt")).longValue()));
+        return counts;
     }
 
     // ==================== dependency release ====================
