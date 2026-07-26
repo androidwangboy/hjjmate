@@ -30,7 +30,7 @@ import java.util.concurrent.Executors;
  * When {@code ownerKey} is null/blank, both recall and sync are skipped — Mem0
  * requires {@code user_id}.
  *
- * <p>Asynchronous sync: a single-thread virtual-thread-per-task executor is used
+ * <p>Asynchronous sync: a single-thread daemon executor is used
  * so that bursts of turns don't pile up on the platform's request thread.
  *
  * @author MateClaw Team

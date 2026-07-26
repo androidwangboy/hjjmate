@@ -3,13 +3,18 @@ package vip.mate.plugin.mem0;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.tool.ToolCallback;
 import vip.mate.plugin.api.PluginContext;
 import vip.mate.plugin.api.PluginException;
+import vip.mate.plugin.api.channel.PluginChannelAdapter;
 import vip.mate.plugin.api.memory.PluginMemoryProvider;
+import vip.mate.plugin.api.search.PluginSearchProvider;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -132,10 +137,10 @@ class Mem0PluginTest {
 
         // The remaining methods are not used by Mem0Plugin; stub them out.
 
-        @Override public void registerTool(org.springframework.ai.tool.ToolCallback tool) { throw new UnsupportedOperationException(); }
-        @Override public void registerTool(org.springframework.ai.tool.ToolCallback tool, java.util.function.Supplier<Boolean> availabilityCheck) { throw new UnsupportedOperationException(); }
-        @Override public void registerProvider(String providerId, org.springframework.ai.chat.model.ChatModel chatModel) { throw new UnsupportedOperationException(); }
-        @Override public void registerChannel(vip.mate.plugin.api.channel.PluginChannelAdapter channel) { throw new UnsupportedOperationException(); }
-        @Override public void registerSearchProvider(vip.mate.plugin.api.search.PluginSearchProvider provider) { throw new UnsupportedOperationException(); }
+        @Override public void registerTool(ToolCallback tool) { throw new UnsupportedOperationException(); }
+        @Override public void registerTool(ToolCallback tool, Supplier<Boolean> availabilityCheck) { throw new UnsupportedOperationException(); }
+        @Override public void registerProvider(String providerId, ChatModel chatModel) { throw new UnsupportedOperationException(); }
+        @Override public void registerChannel(PluginChannelAdapter channel) { throw new UnsupportedOperationException(); }
+        @Override public void registerSearchProvider(PluginSearchProvider provider) { throw new UnsupportedOperationException(); }
     }
 }

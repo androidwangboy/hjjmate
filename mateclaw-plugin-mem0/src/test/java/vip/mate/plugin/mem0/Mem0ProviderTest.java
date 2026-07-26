@@ -140,7 +140,7 @@ class Mem0ProviderTest {
     void syncTurn_pushesAsynchronouslyWithoutBlocking() throws Exception {
         provider.syncTurn(1L, "conv-1", "hello", "world");
 
-        // Wait briefly for the virtual thread to fire the POST.
+        // Wait briefly for the async executor to fire the POST.
         long deadline = System.currentTimeMillis() + 2000;
         while (addCount.get() == 0 && System.currentTimeMillis() < deadline) {
             Thread.sleep(20);

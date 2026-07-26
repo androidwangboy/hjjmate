@@ -47,7 +47,8 @@ public class PluginMemoryBridge implements MemoryProvider {
 
     @Override
     public String prefetch(Long agentId, String userQuery, String ownerKey) {
-        // 透传 ownerKey 到插件 provider；插件若未 override 三参版会走 default 退化到两参
+        // Forward ownerKey to the plugin provider; plugins that don't override the
+        // three-arg variant fall back to the two-arg default (ownerKey dropped).
         return delegate.prefetch(agentId, userQuery, ownerKey);
     }
 

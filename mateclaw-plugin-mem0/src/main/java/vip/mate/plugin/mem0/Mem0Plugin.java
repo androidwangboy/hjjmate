@@ -4,6 +4,8 @@ import org.slf4j.Logger;
 import vip.mate.plugin.api.MateClawPlugin;
 import vip.mate.plugin.api.PluginContext;
 
+import java.net.URI;
+
 /**
  * MateClaw plugin entrypoint that registers {@link Mem0Provider} with the
  * platform's memory subsystem.
@@ -94,7 +96,7 @@ public class Mem0Plugin implements MateClawPlugin {
     private static String maskUrl(String url) {
         if (url == null || url.isBlank()) return "(unset)";
         try {
-            java.net.URI u = java.net.URI.create(url);
+            URI u = URI.create(url);
             String host = u.getHost();
             int port = u.getPort();
             return u.getScheme() + "://" + host + (port > 0 ? ":" + port : "");
