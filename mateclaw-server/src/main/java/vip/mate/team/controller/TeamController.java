@@ -255,7 +255,11 @@ public class TeamController {
     public SseEmitter events(@PathVariable Long id,
                              @RequestHeader(value = "Last-Event-ID", required = false) Long lastEventId) {
         SseEmitter emitter = new SseEmitter(0L);
-        eventChannel.attach(id, emitter, lastEventId == null ? 0L : lastEventId);
+        // A fresh subscription is an activity ticker, not a transcript: skip
+        // the ring-buffer replay (stale events would render as breaking news)
+        // and deliver live events only. A reconnect carrying Last-Event-ID
+        // keeps the resume-from-where-I-left semantics.
+        eventChannel.attach(id, emitter, lastEventId == null ? Long.MAX_VALUE : lastEventId);
         return emitter;
     }
 
