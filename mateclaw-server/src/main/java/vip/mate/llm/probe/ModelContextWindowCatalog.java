@@ -60,8 +60,27 @@ final class ModelContextWindowCatalog {
         m.put("o4-mini", 200_000);
 
         // ===== Alibaba Qwen =====
+        // The Max line stays at 256k while Plus / Turbo / Flash and the coder
+        // flagship run the 1M window; qwen-long is the dedicated 10M model.
+        m.put("qwen-max", 262_144);
         m.put("qwen3-max", 262_144);
+        m.put("qwen-plus", 1_000_000);
+        m.put("qwen-turbo", 1_000_000);
         m.put("qwen-long", 10_000_000);
+        m.put("qwen-coder-plus", 1_000_000);
+        m.put("qwen3-coder-plus", 1_000_000);
+        m.put("qwen3-coder-next", 262_144);
+        m.put("qwen3.5-plus", 1_000_000);
+        m.put("qwen3.5-flash", 1_000_000);
+        m.put("qwen3.6-plus", 1_000_000);
+        m.put("qwen3.6-flash", 1_000_000);
+        m.put("qwen3.6-max", 260_000);
+        // Open-weight releases: 256k native, larger only with rope scaling the
+        // hosting provider may or may not have enabled.
+        m.put("qwen3-vl", 262_144);
+        m.put("qwen3-235b", 262_144);
+        m.put("qwen3-30b", 262_144);
+        m.put("qwen3.5-122b", 262_144);
 
         // ===== Moonshot Kimi =====
         m.put("kimi-k2", 262_144);
@@ -69,12 +88,30 @@ final class ModelContextWindowCatalog {
         // ===== Zhipu GLM =====
         m.put("glm-4.7", 204_800);
         m.put("glm-4-7", 204_800);
+        // 200k across the GLM-5 line (5 / 5.1 / turbo variants); 5.2 lifted it to 1M.
+        m.put("glm-5", 204_800);
         m.put("glm-5.2", 1_000_000);
+        // The 9B open weights ship at 128k (the separate -1m build is its own id).
+        m.put("glm-4-9b", 131_072);
 
         // ===== Volcengine Doubao / Ark =====
         m.put("doubao-seed-1-8", 262_144);
         m.put("doubao-seed-code", 262_144);
+        // Seed 2.0 pro / lite / mini / code all ship 256k; the console uses
+        // dotted ids and the dated snapshots use dashes.
+        m.put("doubao-seed-2.0", 262_144);
+        m.put("doubao-seed-2-0", 262_144);
         m.put("ark-code-latest", 262_144);
+
+        // ===== MiniMax =====
+        // M2.x documents 204,800 as the combined input+output budget.
+        m.put("minimax-m2", 204_800);
+        m.put("minimax-m3", 1_000_000);
+
+        // ===== Xiaomi MiMo =====
+        m.put("mimo-v2-flash", 262_144);
+        m.put("mimo-v2-pro", 1_048_576);
+        m.put("mimo-v2.5", 1_000_000);
 
         // ===== xAI Grok =====
         m.put("grok-3", 131_072);
