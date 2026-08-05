@@ -531,7 +531,8 @@ export default {
     // 按轮次分组渲染
     iterationEmpty: '第 {index} 轮被中断（无输出）',
     contentRepetitionWarning: '检测到内容尾部重复（疑似模型输出 artifact）',
-    supersededPreviewCollapsed: '过程预演已被实际工具结果替换',
+    supersededPreviewCollapsed: '已折叠：模型在工具执行前预写的内容（可能与实际结果不符）',
+    pendingReply: '正在准备回复…',
     expand: '展开',
     // INCOMPLETE 截断卡片（finishReason=incomplete）
     incompleteTitle: '回答因检测到重复输出已被自动截断',

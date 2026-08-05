@@ -531,7 +531,8 @@ export default {
     // Per-iteration grouping
     iterationEmpty: 'Iteration {index} interrupted (no output)',
     contentRepetitionWarning: 'Repetitive content detected near the end (model artifact)',
-    supersededPreviewCollapsed: 'Model preview replaced by the actual tool result',
+    supersededPreviewCollapsed: 'Collapsed: content drafted before tool execution (may not match actual results)',
+    pendingReply: 'Preparing a reply…',
     expand: 'Expand',
     // INCOMPLETE truncation card (finishReason=incomplete)
     incompleteTitle: 'Answer auto-truncated after repeated output was detected',
