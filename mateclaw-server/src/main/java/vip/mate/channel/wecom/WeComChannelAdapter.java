@@ -1532,14 +1532,12 @@ public class WeComChannelAdapter extends AbstractChannelAdapter implements Strea
         // the final answer always lands in the newest bubble.
         AtomicReference<WeComReplyContext> liveCtx = new AtomicReference<>(initialCtx);
         ProvisionalContentTracker tracker = new ProvisionalContentTracker("wecom");
-        AtomicInteger toolResults = new AtomicInteger();
-        final int[] lastNarrationToolMark = {0};
         final long[] lastFlushAt = {0L};
         stream.doOnNext(delta -> {
             boolean flushNow = false;
             if (delta.isEvent()) {
                 if ("tool_call_completed".equals(delta.eventType())) {
-                    toolResults.incrementAndGet();
+                    tracker.onToolObservation();
                 }
                 flushNow = progress.onEvent(delta.eventType(), delta.eventData());
                 if (standaloneToolMessages) {
@@ -1563,11 +1561,8 @@ public class WeComChannelAdapter extends AbstractChannelAdapter implements Strea
                 // means this one was written with real output in hand).
                 String narration = delta.content() != null ? delta.content().trim() : "";
                 if (!narration.isEmpty()) {
-                    int mark = toolResults.get();
-                    boolean observedSinceLast = mark > lastNarrationToolMark[0];
-                    lastNarrationToolMark[0] = mark;
                     progress.onNarration(narration);
-                    String publishable = tracker.stageNarration(narration, delta.kind(), observedSinceLast);
+                    String publishable = tracker.stageNarration(narration, delta.kind());
                     if (publishable != null) {
                         WeComReplyContext ctx = liveCtx.get();
                         if (replyContexts.get(replyTarget) == ctx) {

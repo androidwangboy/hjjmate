@@ -29,9 +29,10 @@ class ProvisionalContentTrackerTest {
     void preToolNarrationSupersededByNextNarration() {
         ProvisionalContentTracker t = new ProvisionalContentTracker("test");
 
-        assertNull(t.stageNarration("先查询会议室数据。", ContentKind.PRE_TOOL_NARRATION, false),
+        assertNull(t.stageNarration("先查询会议室数据。", ContentKind.PRE_TOOL_NARRATION),
                 "first narration has no predecessor to publish");
-        String publishable = t.stageNarration("第一间空闲，继续。", ContentKind.GROUNDED_NARRATION, true);
+        t.onToolObservation();
+        String publishable = t.stageNarration("第一间空闲，继续。", ContentKind.GROUNDED_NARRATION);
         assertNull(publishable, "provisional predecessor is superseded, not published");
 
         assertEquals("第一间空闲，继续。", t.settle(true),
@@ -43,8 +44,10 @@ class ProvisionalContentTrackerTest {
     void groundedNarrationPublishesOnNext() {
         ProvisionalContentTracker t = new ProvisionalContentTracker("test");
 
-        t.stageNarration("时间拿到了，再查会议室：", ContentKind.GROUNDED_NARRATION, true);
-        String publishable = t.stageNarration("会议室也查完了。", ContentKind.GROUNDED_NARRATION, true);
+        t.onToolObservation();
+        t.stageNarration("时间拿到了，再查会议室：", ContentKind.GROUNDED_NARRATION);
+        t.onToolObservation();
+        String publishable = t.stageNarration("会议室也查完了。", ContentKind.GROUNDED_NARRATION);
         assertEquals("时间拿到了，再查会议室：", publishable);
     }
 
@@ -53,7 +56,8 @@ class ProvisionalContentTrackerTest {
     void preToolNarrationSupersededByFinalAnswer() {
         ProvisionalContentTracker t = new ProvisionalContentTracker("test");
 
-        t.stageNarration("环境监测结果：温度 29.0°C。", ContentKind.PRE_TOOL_NARRATION, false);
+        t.stageNarration("环境监测结果：温度 29.0°C。", ContentKind.PRE_TOOL_NARRATION);
+        t.onToolObservation();
         assertNull(t.settle(true), "fabricated rehearsal must not survive once a grounded answer exists");
     }
 
@@ -62,16 +66,28 @@ class ProvisionalContentTrackerTest {
     void preToolNarrationCommitsWithoutAnswer() {
         ProvisionalContentTracker t = new ProvisionalContentTracker("test");
 
-        t.stageNarration("我先调用工具查询状态：", ContentKind.PRE_TOOL_NARRATION, false);
+        t.stageNarration("我先调用工具查询状态：", ContentKind.PRE_TOOL_NARRATION);
+        t.onToolObservation();
         assertEquals("我先调用工具查询状态：", t.settle(false),
                 "with no replacement content the narration is everything the user gets");
+    }
+
+    @Test
+    @DisplayName("pre-tool narration with no tool run after it survives settle — nothing replaced it")
+    void preToolNarrationWithoutToolsAfterSurvives() {
+        ProvisionalContentTracker t = new ProvisionalContentTracker("test");
+
+        t.stageNarration("我先调用工具：", ContentKind.PRE_TOOL_NARRATION);
+        assertEquals("我先调用工具：", t.settle(true),
+                "supersede requires an observation after staging — e.g. all tools denied leaves nothing to defer to");
     }
 
     @Test
     @DisplayName("grounded narration always settles publishable")
     void groundedNarrationSettles() {
         ProvisionalContentTracker t = new ProvisionalContentTracker("test");
-        t.stageNarration("查完了，结果如下。", ContentKind.GROUNDED_NARRATION, true);
+        t.onToolObservation();
+        t.stageNarration("查完了，结果如下。", ContentKind.GROUNDED_NARRATION);
         assertEquals("查完了，结果如下。", t.settle(true));
     }
 
@@ -79,7 +95,7 @@ class ProvisionalContentTrackerTest {
     @DisplayName("settle clears state — second settle finds nothing")
     void settleClearsState() {
         ProvisionalContentTracker t = new ProvisionalContentTracker("test");
-        t.stageNarration("x", ContentKind.GROUNDED_NARRATION, true);
+        t.stageNarration("x", ContentKind.GROUNDED_NARRATION);
         t.settle(true);
         assertNull(t.settle(true));
     }
@@ -87,26 +103,40 @@ class ProvisionalContentTrackerTest {
     @Test
     @DisplayName("null kind falls back to the observation-counter rule")
     void nullKindFallsBackToCounter() {
+        // No observation before staging → provisional; a tool ran after → superseded.
         ProvisionalContentTracker t = new ProvisionalContentTracker("test");
-
-        // No observation since turn start → provisional (pre-tag online rule).
-        t.stageNarration("我先查一下：", null, false);
+        t.stageNarration("我先查一下：", null);
+        t.onToolObservation();
         assertNull(t.settle(true), "untagged pre-tool narration still dropped for a grounded answer");
 
-        // Observation completed since last narration → grounded.
+        // Observation completed before staging → grounded, publishes.
         ProvisionalContentTracker t2 = new ProvisionalContentTracker("test");
-        t2.stageNarration("拿到结果了。", null, true);
+        t2.onToolObservation();
+        t2.stageNarration("拿到结果了。", null);
         assertEquals("拿到结果了。", t2.settle(true));
+    }
+
+    @Test
+    @DisplayName("untagged narrations with no tool activity between them all publish — legacy relay preserved")
+    void untaggedNoToolStreamKeepsRelay() {
+        ProvisionalContentTracker t = new ProvisionalContentTracker("test");
+        t.stageNarration("我先查一下天气", null);
+        assertEquals("我先查一下天气", t.stageNarration("再帮你汇总结果", null),
+                "no observation between the two — the predecessor was not replaced by anything grounded");
+        assertEquals("再帮你汇总结果", t.settle(true));
     }
 
     @Test
     @DisplayName("producer kind outranks the counter signal when both are present")
     void kindOutranksCounter() {
-        // The counter says an observation happened, but the producer knows the
-        // text was emitted before any observation of this turn (the two can
-        // disagree when multiple narrations land between two completions).
+        // The counter says an observation preceded the narration, but the
+        // producer knows the text was emitted before any observation of this
+        // turn (the two can disagree when multiple narrations land between
+        // two completions). Kind wins.
         ProvisionalContentTracker t = new ProvisionalContentTracker("test");
-        t.stageNarration("预演内容", ContentKind.PRE_TOOL_NARRATION, true);
+        t.onToolObservation();
+        t.stageNarration("预演内容", ContentKind.PRE_TOOL_NARRATION);
+        t.onToolObservation();
         assertNull(t.settle(true), "kind is authoritative — counter signal ignored when tagged");
     }
 

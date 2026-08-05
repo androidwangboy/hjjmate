@@ -48,38 +48,53 @@ public final class ProvisionalContentTracker {
     /** Where the supersede happened — metric tag, one value per surface. */
     private final String surface;
 
+    /** Tool observations completed so far this turn (caller-reported). */
+    private int observations;
+    /** Observation count at the time of the most recent staging. */
+    private int lastStageMark;
+
     private String pendingText;
     private boolean pendingProvisional;
+    /** Observation count when the pending narration was staged. */
+    private int pendingMark;
 
     public ProvisionalContentTracker(String surface) {
         this.surface = surface;
+    }
+
+    /** Report a completed tool observation (a {@code tool_call_completed} event). */
+    public void onToolObservation() {
+        observations++;
     }
 
     /**
      * Stage a per-round narration. Returns the <em>previous</em> staged
      * narration if the new arrival makes it publishable, or {@code null} when
      * there is nothing to publish (no previous, or the previous was
-     * provisional and is now superseded by this later content).
+     * provisional and tool observations since its staging mean this later
+     * content supersedes it).
      *
-     * @param kind               producer-assigned kind; {@code null} for
-     *                           pre-tag producers
-     * @param observedSinceLast  structural fallback used only when {@code kind}
-     *                           is null: whether a tool observation completed
-     *                           since the previous narration (the pre-tag
-     *                           online rule)
+     * @param kind producer-assigned kind; {@code null} for pre-tag producers,
+     *             in which case a narration counts as provisional when no
+     *             observation completed since the previous staging (the
+     *             pre-tag online rule)
      */
-    public String stageNarration(String text, ContentKind kind, boolean observedSinceLast) {
+    public String stageNarration(String text, ContentKind kind) {
+        boolean observedSinceLast = observations > lastStageMark;
         boolean provisional = kind != null
                 ? kind == ContentKind.PRE_TOOL_NARRATION
                 : !observedSinceLast;
         String previous = pendingText;
         boolean previousProvisional = pendingProvisional;
+        int previousMark = pendingMark;
         pendingText = text;
         pendingProvisional = provisional;
+        pendingMark = observations;
+        lastStageMark = observations;
         if (previous == null) {
             return null;
         }
-        if (previousProvisional) {
+        if (previousProvisional && observations > previousMark) {
             recordSuperseded(previous);
             return null;
         }
@@ -89,7 +104,8 @@ public final class ProvisionalContentTracker {
     /**
      * Resolve the staged narration at turn end. Returns the text to publish,
      * or {@code null} when nothing remains (no staged narration, or it was
-     * provisional and the turn produced final content that replaces it).
+     * provisional, tools ran after it, and the turn produced final content
+     * that replaces it).
      *
      * @param hasFinalContent whether the turn produced a final answer — with
      *                        one, a provisional narration is superseded; with
@@ -99,12 +115,14 @@ public final class ProvisionalContentTracker {
     public String settle(boolean hasFinalContent) {
         String text = pendingText;
         boolean provisional = pendingProvisional;
+        int mark = pendingMark;
         pendingText = null;
         pendingProvisional = false;
+        pendingMark = 0;
         if (text == null) {
             return null;
         }
-        if (provisional && hasFinalContent) {
+        if (provisional && hasFinalContent && observations > mark) {
             recordSuperseded(text);
             return null;
         }
