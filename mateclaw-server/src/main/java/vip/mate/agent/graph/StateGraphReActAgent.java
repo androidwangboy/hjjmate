@@ -13,6 +13,7 @@ import reactor.core.publisher.Mono;
 import vip.mate.agent.AgentService;
 import vip.mate.agent.AgentState;
 import vip.mate.agent.BaseAgent;
+import vip.mate.agent.ContentKind;
 import vip.mate.agent.delegation.DelegatedUsageAccumulator;
 import vip.mate.agent.GraphEventPublisher;
 import vip.mate.agent.StructuredStreamCapable;
@@ -251,15 +252,16 @@ public class StateGraphReActAgent extends BaseAgent implements StructuredStreamC
                         String streamed = output.state().<String>value(STREAMED_CONTENT).orElse("");
                         if (!streamed.isEmpty() && !streamed.equals(lastEmittedStreamedContent.get())) {
                             lastEmittedStreamedContent.set(streamed);
-                            deltas.add(streamedContentDelta(isFinalAnswerTurn, streamed));
+                            deltas.add(streamedContentDelta(isFinalAnswerTurn,
+                                    output.state().value(NEEDS_TOOL_CALL, false),
+                                    output.state().value(CURRENT_ITERATION, 0),
+                                    streamed));
                         }
 
                         if (isFinalAnswerTurn && finalAnswerEmitted.compareAndSet(false, true)) {
                             String answer = extractFinalAnswer(output);
                             if (answer != null && !answer.isEmpty()) {
-                                deltas.add(contentAlreadyStreamed
-                                        ? AgentService.StreamDelta.persistOnly(answer, null)
-                                        : new AgentService.StreamDelta(answer, null));
+                                deltas.add(AgentService.StreamDelta.finalAnswer(answer, contentAlreadyStreamed));
                             }
                         }
                         String thinking = extractFinalThinking(output);
@@ -422,15 +424,16 @@ public class StateGraphReActAgent extends BaseAgent implements StructuredStreamC
                         String streamed = output.state().<String>value(STREAMED_CONTENT).orElse("");
                         if (!streamed.isEmpty() && !streamed.equals(lastEmittedStreamedContent.get())) {
                             lastEmittedStreamedContent.set(streamed);
-                            deltas.add(streamedContentDelta(isFinalAnswerTurn, streamed));
+                            deltas.add(streamedContentDelta(isFinalAnswerTurn,
+                                    output.state().value(NEEDS_TOOL_CALL, false),
+                                    output.state().value(CURRENT_ITERATION, 0),
+                                    streamed));
                         }
 
                         if (isFinalAnswerTurn && finalAnswerEmitted.compareAndSet(false, true)) {
                             String answer = extractFinalAnswer(output);
                             if (answer != null && !answer.isEmpty()) {
-                                deltas.add(contentAlreadyStreamed
-                                        ? AgentService.StreamDelta.persistOnly(answer, null)
-                                        : new AgentService.StreamDelta(answer, null));
+                                deltas.add(AgentService.StreamDelta.finalAnswer(answer, contentAlreadyStreamed));
                             }
                         }
 
@@ -641,15 +644,37 @@ public class StateGraphReActAgent extends BaseAgent implements StructuredStreamC
      *       renderers (copy / TTS / history reload) showing the full text.</li>
      * </ul>
      *
+     * <p>Beyond flavor, this is the single assignment point for the delta's
+     * {@link ContentKind}: the graph is the only layer that definitively knows
+     * whether the completion carried tool calls ({@code NEEDS_TOOL_CALL}) and
+     * whether any tool observation preceded the text this turn
+     * ({@code CURRENT_ITERATION} — ObservationNode increments it after each
+     * observed round, so iteration 0 means "no observation yet"). Downstream
+     * consumers read the tag instead of re-deriving it from stream structure.
+     *
+     * <ul>
+     *   <li>terminal turn → {@code FINAL_ANSWER};</li>
+     *   <li>completion carries tool calls and no observation happened yet this
+     *       turn → {@code PRE_TOOL_NARRATION} (provisional, may be replaced by
+     *       the turn's next content);</li>
+     *   <li>otherwise → {@code GROUNDED_NARRATION} (follows an observation, or
+     *       closed its completion without tool calls — never replaced).</li>
+     * </ul>
+     *
      * <p>Package-private so the unit test can pin the decision without standing
      * up a full StateGraph fixture. Returning {@code null} for blank input is the
      * caller's responsibility — this helper just decides flavor for non-blank
      * content.
      */
-    static AgentService.StreamDelta streamedContentDelta(boolean isFinalAnswerTurn, String streamed) {
-        return isFinalAnswerTurn
-                ? AgentService.StreamDelta.persistOnly(streamed, null)
-                : AgentService.StreamDelta.segmentOnly(streamed, null);
+    static AgentService.StreamDelta streamedContentDelta(boolean isFinalAnswerTurn, boolean carriesToolCalls,
+                                                         int iteration, String streamed) {
+        if (isFinalAnswerTurn) {
+            return AgentService.StreamDelta.persistOnly(streamed, null, ContentKind.FINAL_ANSWER);
+        }
+        ContentKind kind = carriesToolCalls && iteration == 0
+                ? ContentKind.PRE_TOOL_NARRATION
+                : ContentKind.GROUNDED_NARRATION;
+        return AgentService.StreamDelta.segmentOnly(streamed, null, kind);
     }
 
     private boolean hasFinalAnswer(NodeOutput output) {

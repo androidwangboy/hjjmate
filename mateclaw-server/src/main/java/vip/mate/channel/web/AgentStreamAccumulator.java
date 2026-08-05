@@ -192,13 +192,20 @@ public final class AgentStreamAccumulator {
             }
             // segments: 追加到当前 running content segment，或创建新的
             var seg = findLastRunning("content");
-            if (seg != null) {
-                seg.put("text", seg.getOrDefault("text", "") + delta.content());
-            } else {
+            if (seg == null) {
                 finalizeRunningSegments("thinking");
-                var s = newSegment("content");
-                s.put("text", delta.content());
-                segments.add(s);
+                seg = newSegment("content");
+                seg.put("text", delta.content());
+                segments.add(seg);
+            } else {
+                seg.put("text", seg.getOrDefault("text", "") + delta.content());
+            }
+            // Producer-assigned content semantics (first writer wins — a
+            // segment never legitimately changes kind mid-flight). Absent on
+            // deltas from producers that predate the tag; consumers fall back
+            // to structural detection for such segments.
+            if (delta.kind() != null && !seg.containsKey("kind")) {
+                seg.put("kind", delta.kind().wireName());
             }
         }
 
