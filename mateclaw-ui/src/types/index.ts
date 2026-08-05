@@ -1102,9 +1102,19 @@ export interface CronJob {
   // channelId / deliveryConfig: round-trippable on create/update.
   // lastDeliveryStatus / lastDeliveryError: read-only, populated by
   // selectListWithDeliveryStatus / selectByIdWithDeliveryStatus on the backend.
-  channelId?: number | null
+  // Runtime is always a string (global Long→String serialization); keep the
+  // union so pre-existing number literals in callers still type-check.
+  channelId?: string | number | null
   channelName?: string | null
-  deliveryConfig?: { targetId?: string | null; threadId?: string | null; accountId?: string | null } | null
+  deliveryConfig?: {
+    targetId?: string | null
+    threadId?: string | null
+    accountId?: string | null
+    /** IM senderId of the delivery target user — used for session matching. */
+    userId?: string | null
+    /** True = run the job but don't push the result to the channel. */
+    suppressAgentReply?: boolean | null
+  } | null
   lastDeliveryStatus?: 'NONE' | 'PENDING' | 'DELIVERED' | 'NOT_DELIVERED'
   lastDeliveryError?: string | null
 }
