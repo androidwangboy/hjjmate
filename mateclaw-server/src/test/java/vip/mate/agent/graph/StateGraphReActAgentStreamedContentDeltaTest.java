@@ -114,4 +114,28 @@ class StateGraphReActAgentStreamedContentDeltaTest {
         assertNull(StateGraphReActAgent.streamedContentDelta(false, true, 0, "x").thinking());
         assertNull(StateGraphReActAgent.streamedContentDelta(true, false, 1, "x").thinking());
     }
+
+    @Test
+    @DisplayName("kind-carrying delta is followed by a segment_kind broadcast event")
+    void kindDeltaEmitsSegmentKindEvent() {
+        java.util.List<AgentService.StreamDelta> deltas = new java.util.ArrayList<>();
+        StateGraphReActAgent.addWithKindEvent(deltas,
+                StateGraphReActAgent.streamedContentDelta(false, true, 0, "先查询。"));
+
+        assertEquals(2, deltas.size());
+        AgentService.StreamDelta event = deltas.get(1);
+        assertTrue(event.isEvent());
+        assertEquals("segment_kind", event.eventType());
+        assertEquals("pre_tool_narration", event.eventData().get("kind"));
+    }
+
+    @Test
+    @DisplayName("untagged delta emits no segment_kind event")
+    void untaggedDeltaEmitsNoEvent() {
+        java.util.List<AgentService.StreamDelta> deltas = new java.util.ArrayList<>();
+        StateGraphReActAgent.addWithKindEvent(deltas, AgentService.StreamDelta.segmentOnly("x", null));
+
+        assertEquals(1, deltas.size());
+        assertFalse(deltas.get(0).isEvent());
+    }
 }

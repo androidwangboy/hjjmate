@@ -252,7 +252,7 @@ public class StateGraphReActAgent extends BaseAgent implements StructuredStreamC
                         String streamed = output.state().<String>value(STREAMED_CONTENT).orElse("");
                         if (!streamed.isEmpty() && !streamed.equals(lastEmittedStreamedContent.get())) {
                             lastEmittedStreamedContent.set(streamed);
-                            deltas.add(streamedContentDelta(isFinalAnswerTurn,
+                            addWithKindEvent(deltas, streamedContentDelta(isFinalAnswerTurn,
                                     output.state().value(NEEDS_TOOL_CALL, false),
                                     output.state().value(CURRENT_ITERATION, 0),
                                     streamed));
@@ -261,7 +261,7 @@ public class StateGraphReActAgent extends BaseAgent implements StructuredStreamC
                         if (isFinalAnswerTurn && finalAnswerEmitted.compareAndSet(false, true)) {
                             String answer = extractFinalAnswer(output);
                             if (answer != null && !answer.isEmpty()) {
-                                deltas.add(AgentService.StreamDelta.finalAnswer(answer, contentAlreadyStreamed));
+                                addWithKindEvent(deltas, AgentService.StreamDelta.finalAnswer(answer, contentAlreadyStreamed));
                             }
                         }
                         String thinking = extractFinalThinking(output);
@@ -424,7 +424,7 @@ public class StateGraphReActAgent extends BaseAgent implements StructuredStreamC
                         String streamed = output.state().<String>value(STREAMED_CONTENT).orElse("");
                         if (!streamed.isEmpty() && !streamed.equals(lastEmittedStreamedContent.get())) {
                             lastEmittedStreamedContent.set(streamed);
-                            deltas.add(streamedContentDelta(isFinalAnswerTurn,
+                            addWithKindEvent(deltas, streamedContentDelta(isFinalAnswerTurn,
                                     output.state().value(NEEDS_TOOL_CALL, false),
                                     output.state().value(CURRENT_ITERATION, 0),
                                     streamed));
@@ -433,7 +433,7 @@ public class StateGraphReActAgent extends BaseAgent implements StructuredStreamC
                         if (isFinalAnswerTurn && finalAnswerEmitted.compareAndSet(false, true)) {
                             String answer = extractFinalAnswer(output);
                             if (answer != null && !answer.isEmpty()) {
-                                deltas.add(AgentService.StreamDelta.finalAnswer(answer, contentAlreadyStreamed));
+                                addWithKindEvent(deltas, AgentService.StreamDelta.finalAnswer(answer, contentAlreadyStreamed));
                             }
                         }
 
@@ -666,6 +666,24 @@ public class StateGraphReActAgent extends BaseAgent implements StructuredStreamC
      * caller's responsibility — this helper just decides flavor for non-blank
      * content.
      */
+    /**
+     * Append a content-bearing delta plus, when it carries a producer-assigned
+     * kind, a {@code segment_kind} broadcast event tagging the just-emitted
+     * content span. The kind cannot ride on the live {@code content_delta}
+     * broadcasts — text streams before the producer knows whether the
+     * completion carries tool calls — so it is delivered as a follow-up event
+     * once the completion resolves, letting the client tag its running content
+     * segment and collapse a provisional narration the moment later content
+     * arrives, without waiting for the persisted-metadata round-trip.
+     */
+    static void addWithKindEvent(List<AgentService.StreamDelta> deltas, AgentService.StreamDelta delta) {
+        deltas.add(delta);
+        if (delta.kind() != null) {
+            deltas.add(AgentService.StreamDelta.event("segment_kind",
+                    Map.of("kind", delta.kind().wireName())));
+        }
+    }
+
     static AgentService.StreamDelta streamedContentDelta(boolean isFinalAnswerTurn, boolean carriesToolCalls,
                                                          int iteration, String streamed) {
         if (isFinalAnswerTurn) {

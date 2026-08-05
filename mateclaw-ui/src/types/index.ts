@@ -265,6 +265,14 @@ export interface MessageSegment {
   repetitionWarning?: 'char_pattern' | 'sentence_repetition'
   /** Number of trailing characters dropped when the repetition guard fired. */
   truncatedChars?: number
+  /**
+   * Producer-assigned content semantics from the backend agent graph:
+   * 'pre_tool_narration' (provisional — text emitted alongside tool calls
+   * before any observation this turn), 'grounded_narration', or
+   * 'final_answer'. Delivered live via the segment_kind SSE event and
+   * persisted in metadata.segments; absent on legacy messages.
+   */
+  kind?: string
   /** Backend marked this model-predicted tool result as replaced by a later actual tool result. */
   superseded?: boolean
   /** Segment ID that replaced this pre-tool prediction. */
