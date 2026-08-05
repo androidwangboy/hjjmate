@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import vip.mate.agent.AgentService;
 import vip.mate.agent.GraphEventPublisher;
+import vip.mate.channel.ProvisionalContentTracker;
 import vip.mate.workspace.conversation.model.MessageContentPart;
 
 import java.util.ArrayList;
@@ -472,7 +473,14 @@ public final class AgentStreamAccumulator {
     public synchronized String toMetadataJson() {
         finalizeToolCalls();
         finalizeRunningSegments("thinking", "content", "tool_call");
-        SegmentSupersedeDetector.markSuperseded(segments);
+        // Producer-tagged timelines use the kind-driven authority; untagged
+        // ones (pre-tag producers, replayed legacy turns) keep the structural
+        // scan as fallback.
+        if (ProvisionalContentTracker.hasKindTags(segments)) {
+            ProvisionalContentTracker.markSuperseded(segments, "web");
+        } else {
+            SegmentSupersedeDetector.markSuperseded(segments);
+        }
         try {
             Map<String, Object> metadata = new LinkedHashMap<>();
             if (!toolCalls.isEmpty()) {
