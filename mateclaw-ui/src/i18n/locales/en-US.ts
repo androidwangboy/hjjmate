@@ -533,6 +533,7 @@ export default {
     contentRepetitionWarning: 'Repetitive content detected near the end (model artifact)',
     supersededPreviewCollapsed: 'Collapsed: content drafted before tool execution (may not match actual results)',
     supersededPreviewExpanded: 'Below is content drafted before tool execution (may not match actual results)',
+    earlierThinkingCollapsed: '{count} earlier reasoning span(s) collapsed — enable "Keep Full Reasoning" in settings to show them by default',
     pendingReply: 'Preparing a reply…',
     expand: 'Expand',
     // INCOMPLETE truncation card (finishReason=incomplete)

@@ -533,6 +533,7 @@ export default {
     contentRepetitionWarning: '检测到内容尾部重复（疑似模型输出 artifact）',
     supersededPreviewCollapsed: '已折叠：模型在工具执行前预写的内容（可能与实际结果不符）',
     supersededPreviewExpanded: '以下是模型在工具执行前预写的内容（可能与实际结果不符）',
+    earlierThinkingCollapsed: '更早的 {count} 段思考已折叠（设置里开启「保留完整推理」可默认展开）',
     pendingReply: '正在准备回复…',
     expand: '展开',
     // INCOMPLETE 截断卡片（finishReason=incomplete）

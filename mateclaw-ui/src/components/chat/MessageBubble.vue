@@ -47,6 +47,18 @@
         <!-- ===== 分段式渲染模式（Claude Code 风格）===== -->
         <template v-if="useSegmentedView">
           <div class="segments-view">
+            <!-- The "full reasoning" preference is hiding earlier spans. Say so:
+                 silently removing them reads as reasoning that went missing. -->
+            <button
+              v-if="hiddenThinkingCount > 0 && showThinking"
+              class="superseded-toggle"
+              type="button"
+              @click="earlyThinkingExpanded = true"
+            >
+              <el-icon><InfoFilled /></el-icon>
+              <span>{{ $t('chat.earlierThinkingCollapsed', { count: hiddenThinkingCount }) }}</span>
+              <span class="superseded-toggle__action">{{ $t('chat.expand') }}</span>
+            </button>
             <template v-for="iter in groupedIterations" :key="iter.key">
               <!-- Iteration interrupted before any output landed — surface a chip
                    so the user knows the agent moved on instead of silently
@@ -1098,15 +1110,23 @@ const parsedMetadata = computed(() => {
   return raw
 })
 
+/** Per-message override of the "full reasoning" preference (the collapse banner). */
+const earlyThinkingExpanded = ref(false)
+
 /**
  * Apply the "full reasoning" preference. When off, only the reasoning span
  * that produced the answer survives — the last one in the timeline. Everything
  * is still persisted and still exported by the trajectory endpoint; this is
  * purely how much of it the bubble shows. A running span is never dropped, so
  * a live turn still shows the model thinking as it goes.
+ *
+ * Whatever this hides is announced by the banner above the timeline and can be
+ * expanded in place. Dropping spans with no trace is indistinguishable from
+ * losing them — the reader sees reasoning that was there mid-turn simply gone,
+ * and a preference stuck in the off state has no symptom to follow back.
  */
 function applyThinkingDetail(segs: MessageSegment[]): MessageSegment[] {
-  if (thinkingFull.value) return segs
+  if (thinkingFull.value || earlyThinkingExpanded.value) return segs
   const keepIdx = segs.map((s, i) => (s.type === 'thinking' ? i : -1))
     .filter(i => i >= 0)
     .pop()
@@ -1114,6 +1134,15 @@ function applyThinkingDetail(segs: MessageSegment[]): MessageSegment[] {
   return segs.filter((s, i) =>
     s.type !== 'thinking' || i === keepIdx || s.status === 'running')
 }
+
+/** How many reasoning spans the preference is currently hiding on this message. */
+const hiddenThinkingCount = computed(() => {
+  if (thinkingFull.value || earlyThinkingExpanded.value) return 0
+  const all = (parsedMetadata.value?.segments as MessageSegment[] | undefined) || []
+  const total = all.filter(s => s.type === 'thinking').length
+  const shown = segments.value.filter(s => s.type === 'thinking').length
+  return Math.max(0, total - shown)
+})
 
 const segments = computed<MessageSegment[]>(() => {
   if (props.message.role !== 'assistant') return []

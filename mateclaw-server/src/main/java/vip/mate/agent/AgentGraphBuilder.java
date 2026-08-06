@@ -702,6 +702,7 @@ public class AgentGraphBuilder {
                     // Thinking 键
                     .addStrategy(PlanStateKeys.FINAL_SUMMARY_THINKING, KeyStrategy.REPLACE)
                     .addStrategy(PlanStateKeys.CURRENT_STEP_THINKING, KeyStrategy.REPLACE)
+                    .addStrategy(PlanStateKeys.PLAN_THINKING, KeyStrategy.REPLACE)
                     // 流式防重键
                     .addStrategy(MateClawStateKeys.CONTENT_STREAMED, KeyStrategy.REPLACE)
                     .addStrategy(MateClawStateKeys.THINKING_STREAMED, KeyStrategy.REPLACE)
