@@ -179,14 +179,9 @@ public class StateGraphPlanExecuteAgent extends BaseAgent implements StructuredS
                     // 2a. 各步骤执行结果（StepExecutionNode 已通过 NodeStreamingChatHelper 直推 SSE，
                     //     这里仅作为 persistOnly 送入 Accumulator，确保写入 mate_message）
                     //     利用内容本身去重，避免 PlanSummaryNode 输出时重复 emit 上一步残留在 state 的值
-                    output.state().<String>value(PlanStateKeys.CURRENT_STEP_RESULT)
-                            .filter(s -> !s.isEmpty())
-                            .filter(s -> !s.equals(lastPersistedStepResult.get()))
-                            .ifPresent(stepContent -> {
-                                deltas.add(AgentService.StreamDelta.persistOnly(stepContent, null));
-                                lastPersistedStepResult.set(stepContent);
-                            });
-
+                    //     Within each pair the thinking is emitted first: the
+                    //     accumulator orders its segment timeline by delta arrival,
+                    //     and the reasoning behind a step precedes the step's result.
                     output.state().<String>value(PlanStateKeys.CURRENT_STEP_THINKING)
                             .filter(s -> !s.isEmpty())
                             .filter(s -> !s.equals(lastPersistedStepThinking.get()))
@@ -195,18 +190,26 @@ public class StateGraphPlanExecuteAgent extends BaseAgent implements StructuredS
                                 lastPersistedStepThinking.set(stepThinking);
                             });
 
-                    // 2b. 最终汇总
-                    output.state().<String>value(PlanStateKeys.FINAL_SUMMARY)
+                    output.state().<String>value(PlanStateKeys.CURRENT_STEP_RESULT)
                             .filter(s -> !s.isEmpty())
-                            .ifPresent(summary -> deltas.add(contentAlreadyStreamed
-                                    ? AgentService.StreamDelta.persistOnly(summary, null)
-                                    : new AgentService.StreamDelta(summary, null)));
+                            .filter(s -> !s.equals(lastPersistedStepResult.get()))
+                            .ifPresent(stepContent -> {
+                                deltas.add(AgentService.StreamDelta.persistOnly(stepContent, null));
+                                lastPersistedStepResult.set(stepContent);
+                            });
 
+                    // 2b. 最终汇总（同样 thinking 先于 content）
                     output.state().<String>value(PlanStateKeys.FINAL_SUMMARY_THINKING)
                             .filter(s -> !s.isEmpty())
                             .ifPresent(thinking -> deltas.add(thinkingAlreadyStreamed
                                     ? AgentService.StreamDelta.persistOnly(null, thinking)
                                     : new AgentService.StreamDelta(null, thinking)));
+
+                    output.state().<String>value(PlanStateKeys.FINAL_SUMMARY)
+                            .filter(s -> !s.isEmpty())
+                            .ifPresent(summary -> deltas.add(contentAlreadyStreamed
+                                    ? AgentService.StreamDelta.persistOnly(summary, null)
+                                    : new AgentService.StreamDelta(summary, null)));
 
                     // 3. 更新最新累计 token usage
                     finalPromptTokens.set(output.state().value(MateClawStateKeys.PROMPT_TOKENS, 0));

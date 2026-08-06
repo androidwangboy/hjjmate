@@ -208,6 +208,12 @@ export interface MessageSegment {
   id: string
   type: 'thinking' | 'tool_call' | 'content' | 'phase' | 'approval' | 'plan'
   status: 'running' | 'completed' | 'error'
+  /**
+   * Producer-assigned emission index, monotonic within a turn. Present on
+   * persisted segments; absent on live ones, which are already appended in
+   * event order. Renderers sort by it instead of relocating segments by type.
+   */
+  seq?: number
   /** type=thinking */
   thinkingText?: string
   /** type=tool_call */

@@ -532,6 +532,7 @@ export default {
     iterationEmpty: 'Iteration {index} interrupted (no output)',
     contentRepetitionWarning: 'Repetitive content detected near the end (model artifact)',
     supersededPreviewCollapsed: 'Collapsed: content drafted before tool execution (may not match actual results)',
+    supersededPreviewExpanded: 'Below is content drafted before tool execution (may not match actual results)',
     pendingReply: 'Preparing a reply…',
     expand: 'Expand',
     // INCOMPLETE truncation card (finishReason=incomplete)
