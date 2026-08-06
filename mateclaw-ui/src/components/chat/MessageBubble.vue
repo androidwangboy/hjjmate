@@ -733,7 +733,7 @@ const hasContent = computed(() => {
 // The segments auto-collapse when a thinking phase completes, so the final
 // answer stays the focal point even with reasoning visible. debugMode remains
 // a separate switch for tool-call internals and other diagnostics.
-const { showThinking } = storeToRefs(useSystemSettingsStore())
+const { showThinking, thinkingFull } = storeToRefs(useSystemSettingsStore())
 
 const showThinkingPanel = computed(() => showThinking.value && !!thinkingContent.value)
 
@@ -1098,6 +1098,23 @@ const parsedMetadata = computed(() => {
   return raw
 })
 
+/**
+ * Apply the "full reasoning" preference. When off, only the reasoning span
+ * that produced the answer survives — the last one in the timeline. Everything
+ * is still persisted and still exported by the trajectory endpoint; this is
+ * purely how much of it the bubble shows. A running span is never dropped, so
+ * a live turn still shows the model thinking as it goes.
+ */
+function applyThinkingDetail(segs: MessageSegment[]): MessageSegment[] {
+  if (thinkingFull.value) return segs
+  const keepIdx = segs.map((s, i) => (s.type === 'thinking' ? i : -1))
+    .filter(i => i >= 0)
+    .pop()
+  if (keepIdx === undefined) return segs
+  return segs.filter((s, i) =>
+    s.type !== 'thinking' || i === keepIdx || s.status === 'running')
+}
+
 const segments = computed<MessageSegment[]>(() => {
   if (props.message.role !== 'assistant') return []
   const meta = parsedMetadata.value
@@ -1159,7 +1176,7 @@ const segments = computed<MessageSegment[]>(() => {
       segs.sort((a, b) => (a.seq as number) - (b.seq as number))
     }
 
-    return segs
+    return applyThinkingDetail(segs)
   }
 
   // Fallback：从 toolCalls + contentParts 做 best-effort 重建（旧消息兼容）

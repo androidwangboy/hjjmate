@@ -835,6 +835,9 @@ export interface SystemSettings {
   debugMode: boolean
   // Whether chat renders the model's reasoning ("thinking") blocks; default true
   showThinking: boolean
+  // Whether chat renders every iteration's reasoning or only the span that
+  // produced the answer; default true. Only meaningful while showThinking is on.
+  thinkingFull: boolean
   // Default workspace storage root; '' = use the server-side default
   workspaceStorageRoot?: string
   // 搜索服务配置

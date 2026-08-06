@@ -63,6 +63,20 @@ public class StateGraphReActAgent extends BaseAgent implements StructuredStreamC
      */
     private final vip.mate.agent.AgentToolSet toolSet;
 
+    /**
+     * Whether every iteration's reasoning is persisted, or only the terminal
+     * one. Set from {@code mate.agent.reasoning.retention}; defaults to keeping
+     * everything so a turn stays replayable without operator opt-in. A setter
+     * rather than a constructor argument — the agent is built per request in a
+     * builder that already threads a dozen collaborators, and this is a single
+     * boolean with a safe default.
+     */
+    private boolean persistEveryIterationReasoning = true;
+
+    public void setPersistEveryIterationReasoning(boolean persistEveryIterationReasoning) {
+        this.persistEveryIterationReasoning = persistEveryIterationReasoning;
+    }
+
     public StateGraphReActAgent(ChatClient chatClient, ConversationService conversationService,
                                 CompiledGraph compiledGraph,
                                 org.springframework.ai.chat.model.ChatModel chatModel,
@@ -256,7 +270,8 @@ public class StateGraphReActAgent extends BaseAgent implements StructuredStreamC
                         // span was emitted a second time — after the final answer,
                         // since the later nodes run after the answer was streamed.
                         String iterationThinking = output.state().<String>value(STREAMED_THINKING).orElse("");
-                        if (!iterationThinking.isEmpty()
+                        if (persistEveryIterationReasoning
+                                && !iterationThinking.isEmpty()
                                 && !iterationThinking.equals(lastEmittedIterationThinking.get())) {
                             lastEmittedIterationThinking.set(iterationThinking);
                             deltas.add(AgentService.StreamDelta.persistOnly(null, iterationThinking));
@@ -450,7 +465,8 @@ public class StateGraphReActAgent extends BaseAgent implements StructuredStreamC
                         //     see the note in chatStructuredStream for why the
                         //     terminal one alone is not enough.
                         String iterationThinking = output.state().<String>value(STREAMED_THINKING).orElse("");
-                        if (!iterationThinking.isEmpty()
+                        if (persistEveryIterationReasoning
+                                && !iterationThinking.isEmpty()
                                 && !iterationThinking.equals(lastEmittedIterationThinking.get())) {
                             lastEmittedIterationThinking.set(iterationThinking);
                             deltas.add(AgentService.StreamDelta.persistOnly(null, iterationThinking));

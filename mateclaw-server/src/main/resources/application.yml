@@ -380,6 +380,13 @@ mate:
     # ---, table pipe alignment) before persistence / channel delivery. Set to
     # false to pass model output through verbatim.
     markdown-normalize-enabled: true
+    reasoning:
+      # How much of a turn's reasoning reaches the message record.
+      #   all      — every iteration's reasoning, kept where it happened. The
+      #              reasoning behind each tool call is what a replay needs.
+      #   terminal — only the iteration that produced the final answer. Smaller
+      #              rows, but a long tool loop persists as a bare conclusion.
+      retention: all
     graph:
       observation:
         # 与 GraphObservationProperties.java 默认值对齐，参考 openclaw token-budget 设计
