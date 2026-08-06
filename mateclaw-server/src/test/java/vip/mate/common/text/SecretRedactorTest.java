@@ -23,8 +23,8 @@ class SecretRedactorTest {
     @Test
     @DisplayName("OpenAI-style keys are masked, including project keys")
     void masksOpenAiKeys() {
-        String out = SecretRedactor.redact("use sk-proj-abcdef1234567890abcdef1234567890 now");
-        assertFalse(out.contains("abcdef1234567890"), out);
+        String out = SecretRedactor.redact("use sk-proj-PLACEHOLDEREXAMPLEVALUE now");
+        assertFalse(out.contains("PLACEHOLDEREXAMPLEVALUE"), out);
         assertTrue(out.contains(SecretRedactor.MASK), out);
         assertTrue(out.startsWith("use ") && out.endsWith(" now"), out);
     }
@@ -32,19 +32,25 @@ class SecretRedactorTest {
     @Test
     @DisplayName("an assignment keeps the field name and masks only the value")
     void masksAssignmentValueOnly() {
-        String out = SecretRedactor.redact("api_key = \"sk-proj-abcdef1234567890abcdef\"");
+        String out = SecretRedactor.redact("api_key = \"sk-proj-PLACEHOLDEREXAMPLEVALUE\"");
         assertTrue(out.contains("api_key"), "the field name is what makes the text readable: " + out);
-        assertFalse(out.contains("abcdef"), out);
+        assertFalse(out.contains("PLACEHOLDER"), out);
     }
 
     @Test
     @DisplayName("bearer headers, GitHub, Slack, Google and AWS keys are masked")
     void masksCommonProviderShapes() {
+        // Fixture bodies spell out PLACEHOLDER rather than mimicking real key
+        // material. They still exercise every pattern, but a repository secret
+        // scanner reads a test fixture and a leaked credential the same way —
+        // a realistic-looking fixture blocks the push and teaches contributors
+        // to allowlist scanner hits, which is the habit that lets a real one
+        // through.
         for (String secret : new String[]{
-                "Bearer eyJhbGciOiJIUzI1NiJ9.abcdefghijklmnop",
-                "ghp_abcdefghijklmnopqrstuvwxyz012345",
-                "xoxb-123456789012-abcdefghijklmno",
-                "AIzaSyABCDEFGHIJKLMNOPQRSTUVWXYZ01234",
+                "Bearer PLACEHOLDER.PLACEHOLDER.EXAMPLEVALUE",
+                "ghp_PLACEHOLDEREXAMPLEVALUENOTAREALKEY",
+                "xoxb-PLACEHOLDER-EXAMPLE-VALUE-NOT-A-REAL-KEY",
+                "AIzaPLACEHOLDEREXAMPLEVALUENOTAREALKEY",
                 "AKIAIOSFODNN7EXAMPLE",
         }) {
             String out = SecretRedactor.redact("prefix " + secret + " suffix");
