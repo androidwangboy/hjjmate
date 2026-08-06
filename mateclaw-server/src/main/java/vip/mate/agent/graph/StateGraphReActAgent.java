@@ -254,7 +254,7 @@ public class StateGraphReActAgent extends BaseAgent implements StructuredStreamC
                             lastEmittedStreamedContent.set(streamed);
                             addWithKindEvent(deltas, streamedContentDelta(isFinalAnswerTurn,
                                     output.state().value(NEEDS_TOOL_CALL, false),
-                                    output.state().value(CURRENT_ITERATION, 0),
+                                    output.state().value(TOOL_CALL_COUNT, 0),
                                     streamed));
                         }
 
@@ -426,7 +426,7 @@ public class StateGraphReActAgent extends BaseAgent implements StructuredStreamC
                             lastEmittedStreamedContent.set(streamed);
                             addWithKindEvent(deltas, streamedContentDelta(isFinalAnswerTurn,
                                     output.state().value(NEEDS_TOOL_CALL, false),
-                                    output.state().value(CURRENT_ITERATION, 0),
+                                    output.state().value(TOOL_CALL_COUNT, 0),
                                     streamed));
                         }
 
@@ -648,15 +648,23 @@ public class StateGraphReActAgent extends BaseAgent implements StructuredStreamC
      * {@link ContentKind}: the graph is the only layer that definitively knows
      * whether the completion carried tool calls ({@code NEEDS_TOOL_CALL}) and
      * whether any tool observation preceded the text this turn
-     * ({@code CURRENT_ITERATION} — ObservationNode increments it after each
-     * observed round, so iteration 0 means "no observation yet"). Downstream
-     * consumers read the tag instead of re-deriving it from stream structure.
+     * ({@code TOOL_CALL_COUNT} — ObservationNode adds each round's observed
+     * results to it, so 0 means "no observation yet"). Downstream consumers
+     * read the tag instead of re-deriving it from stream structure.
+     *
+     * <p>The observation signal MUST be the observation counter, not
+     * {@code CURRENT_ITERATION}: the latter is an iteration <em>budget</em>
+     * counter that ObservationNode refunds for progressive-disclosure rounds
+     * (load_skill / enable_tool) and GoalEvaluationNode resets to 0 on a hard
+     * continuation. Either path leaves the budget at 0 after real observations
+     * already landed, which tagged grounded narration as provisional and made
+     * renderers collapse it.
      *
      * <ul>
      *   <li>terminal turn → {@code FINAL_ANSWER};</li>
-     *   <li>completion carries tool calls and no observation happened yet this
-     *       turn → {@code PRE_TOOL_NARRATION} (provisional, may be replaced by
-     *       the turn's next content);</li>
+     *   <li>completion carries tool calls and no tool observation happened yet
+     *       this turn → {@code PRE_TOOL_NARRATION} (provisional, may be
+     *       replaced by the turn's next content);</li>
      *   <li>otherwise → {@code GROUNDED_NARRATION} (follows an observation, or
      *       closed its completion without tool calls — never replaced).</li>
      * </ul>
@@ -685,11 +693,11 @@ public class StateGraphReActAgent extends BaseAgent implements StructuredStreamC
     }
 
     static AgentService.StreamDelta streamedContentDelta(boolean isFinalAnswerTurn, boolean carriesToolCalls,
-                                                         int iteration, String streamed) {
+                                                         int observationCount, String streamed) {
         if (isFinalAnswerTurn) {
             return AgentService.StreamDelta.persistOnly(streamed, null, ContentKind.FINAL_ANSWER);
         }
-        ContentKind kind = carriesToolCalls && iteration == 0
+        ContentKind kind = carriesToolCalls && observationCount == 0
                 ? ContentKind.PRE_TOOL_NARRATION
                 : ContentKind.GROUNDED_NARRATION;
         return AgentService.StreamDelta.segmentOnly(streamed, null, kind);
