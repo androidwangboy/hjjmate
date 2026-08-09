@@ -2009,7 +2009,7 @@ export default {
       core: '核心',
       extension: '扩展',
       coreHint: '当前为核心：该 server 的工具直接进入模型可调用列表。点击改为扩展。',
-      extensionHint: '当前为扩展：该 server 的工具进入工具盒，模型调用 enable_tool 后激活。点击改为核心。',
+      extensionHint: '当前为扩展：该 server 的完整工具 schema 保持隐藏，模型通过 tool_call 当轮执行。点击改为核心。',
     },
     kv: {
       envKey: 'KEY',
@@ -2161,11 +2161,11 @@ export default {
       toCore: '→ 核心',
       toExtension: '→ 扩展',
       toCoreHint: '移至核心工具：直接进入模型可调用列表',
-      toExtensionHint: '移至扩展工具：进入工具盒目录，模型调用 enable_tool 后激活',
+      toExtensionHint: '移至扩展工具：隐藏完整 schema，通过 tool_call 当轮执行',
       locked: '由来源决定',
       lockedHint: 'MCP / ACP / Skill 工具的分级由所属 server / endpoint / skill 决定，请到对应页面修改',
       core: { desc: '直接进入模型可调用列表' },
-      extension: { desc: '进入工具盒目录，模型调用 enable_tool 后激活' },
+      extension: { desc: '完整 schema 保持隐藏，模型通过 tool_call 当轮执行' },
     },
     modal: {
       editTitle: '编辑工具',

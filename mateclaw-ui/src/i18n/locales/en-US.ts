@@ -2135,7 +2135,7 @@ export default {
       core: 'Core',
       extension: 'Extension',
       coreHint: "Core: this server's tools are advertised to the model directly. Click to make extension.",
-      extensionHint: "Extension: this server's tools live in the tool box, activated after enable_tool. Click to make core.",
+      extensionHint: "Extension: this server's full tool schemas stay hidden and are executed through tool_call. Click to make core.",
     },
     kv: {
       envKey: 'KEY',
@@ -2287,11 +2287,11 @@ export default {
       toCore: '→ Core',
       toExtension: '→ Extension',
       toCoreHint: 'Move to Core: advertised to the model directly',
-      toExtensionHint: 'Move to Extension: lives in the tool box, activated after enable_tool',
+      toExtensionHint: 'Move to Extension: hide full schemas and execute through tool_call',
       locked: 'Source-owned',
       lockedHint: "MCP / ACP / Skill tools are tiered by their owning server / endpoint / skill — change it there",
       core: { desc: 'Advertised to the model directly' },
-      extension: { desc: 'Lives in the tool box; activated after the model calls enable_tool' },
+      extension: { desc: 'Full schemas stay hidden; the model executes tools through tool_call' },
     },
     modal: {
       editTitle: 'Edit Tool',

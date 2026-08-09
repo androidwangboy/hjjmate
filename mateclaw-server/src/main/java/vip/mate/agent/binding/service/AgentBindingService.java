@@ -691,6 +691,12 @@ public class AgentBindingService implements AgentBindingResolver {
             // extension-tier tool for the rest of the conversation. Must be
             // agent-wide so the model can always surface hidden tools.
             "enable_tool",
+            // Stable Hermes-style bridges. They must survive every explicit
+            // allowlist because they are the only way to discover, inspect
+            // and invoke schemas that were deferred by the hard budget.
+            "tool_search",
+            "tool_describe",
+            "tool_call",
             // Skill discovery / dispatch — skills are docs, not callables;
             // these helpers let the LLM read SKILL.md / run scripts.
             "load_skill",

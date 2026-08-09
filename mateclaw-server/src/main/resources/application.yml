@@ -174,12 +174,16 @@ mateclaw:
     enabled: true
   tools:
     disclosure:
-      # progressive: extension-tier tools are hidden behind the extension-tools
-      #   catalog until the model calls enable_tool. By default that's the heavy
-      #   generative / browser tools; MCP servers default to core (visible) and
-      #   an admin can move a noisy one to extension per server.
+      # progressive: deferred schemas stay behind tool_search/tool_describe and
+      #   execute through tool_call in the same action round. enable_tool remains
+      #   available only for backwards compatibility with older conversations.
       # legacy: advertise every bound tool up front (pre-disclosure behavior).
       mode: ${MATECLAW_TOOLS_DISCLOSURE_MODE:progressive}
+  context:
+    prefix-budget:
+      # Ratio remains useful for small contexts; this hard ceiling is what keeps
+      # a provider-declared 1M window from advertising ~30k schema tokens forever.
+      tool-schema-max-tokens: ${MATECLAW_TOOL_SCHEMA_MAX_TOKENS:12000}
   workspace:
     sandbox:
       # Global fallback filesystem boundary for file/shell tools. When a
