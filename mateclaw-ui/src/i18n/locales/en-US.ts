@@ -3781,6 +3781,8 @@ export default {
         messageReason: 'Core: send and receive messages',
         receive: 'Receive message events',
         receiveReason: 'Core: receive user messages',
+        cardkit: 'Create and update cards',
+        cardkitReason: 'Streaming cards: show execution trace and answer in real time',
         resource: 'Access message resources',
         resourceReason: 'Get message content in WebSocket mode',
         reactions: 'Manage message reactions',

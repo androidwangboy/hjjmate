@@ -3881,6 +3881,8 @@ export default {
         messageReason: '基础：收发消息',
         receive: '接收消息事件',
         receiveReason: '基础：接收用户消息',
+        cardkit: '创建与更新卡片',
+        cardkitReason: '流式卡片：实时展示执行轨迹与回答',
         resource: '获取消息中的资源文件',
         resourceReason: 'WebSocket 模式下获取消息内容',
         reactions: '管理消息表情回复',
