@@ -1239,7 +1239,7 @@ export default {
       sttProvider: 'Select preferred STT provider. Auto mode picks the first available one.',
       sttFallbackEnabled: 'Automatically try other configured providers if the preferred one fails.',
       openaiSttInfo: 'Reuses OpenAI API Key from Model Management. Whisper model, supports multilingual auto-detection.',
-      dashscopeSttInfo: 'Reuses DashScope API Key from Model Management. Paraformer Realtime over WebSocket — strong Chinese recognition, sub-second latency.',
+      dashscopeSttInfo: 'Reuses the DashScope API Key from Model Management. Qwen3-ASR Flash transcribes each complete recording over HTTP with multilingual and Chinese dialect support.',
       // Issue #76
       sttOpenAiCompatProviderId: 'Pick any OpenAI-compatible provider from Model Management as the credential source (baseUrl + API key). Beyond OpenAI itself this covers self-hosted FunASR, SiliconFlow, Groq, Together, Volcano, Qiniu, and any custom provider you add with the OpenAI-compatible protocol.',
       sttOpenAiCompatModel: 'Model id sent in the multipart "model" field. Defaults to whisper-1; use paraformer-large for FunASR, or whatever id your vendor documents.',
@@ -1348,7 +1348,7 @@ export default {
       saveFail: 'Save failed',
     },
     sttTitle: 'Speech Recognition',
-    sttDesc: 'Configure STT speech-to-text with OpenAI Whisper and DashScope Paraformer',
+    sttDesc: 'Configure STT speech-to-text with OpenAI Whisper and DashScope Qwen3-ASR',
     sttProviderOptions: { auto: 'Auto Select' },
     sttProviderTags: { reuseLlmKey: 'Reuses LLM API Key' },
     musicTitle: 'Music Generation',

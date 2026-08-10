@@ -1104,11 +1104,11 @@ export default {
       searxngBaseUrl: '自部署 SearXNG 实例地址。Docker 部署时自动配置。',
       searchProviderAuto: '让系统按优先级自动挑选一个已配置好的 provider。',
       // STT 语音识别
-      sttEnabled: '开启后支持语音消息转文字。OpenAI Whisper 和 DashScope Paraformer 均复用已有 Key。',
+      sttEnabled: '开启后支持语音消息转文字。OpenAI Whisper 和 DashScope Qwen3-ASR 均复用已有 Key。',
       sttProvider: '选择首选 STT 提供商，auto 模式自动选择可用的提供商。',
       sttFallbackEnabled: '首选提供商失败时自动尝试其他已配置的提供商。',
       openaiSttInfo: '复用模型管理中的 OpenAI API Key。使用 Whisper 模型，支持多语言自动识别。',
-      dashscopeSttInfo: '复用模型管理中的 DashScope API Key。使用 Paraformer Realtime（WebSocket 流式），中文识别效果优秀，亚秒级延迟。',
+      dashscopeSttInfo: '复用模型管理中的 DashScope API Key。使用 Qwen3-ASR Flash 通过 HTTP 转写完整录音，支持多语种和中文方言。',
       // Issue #76
       sttOpenAiCompatProviderId: '从模型管理选一个 OpenAI 兼容 provider 行作为凭证（baseUrl + API Key）来源。除官方 OpenAI 外，FunASR 私有部署 / 硅基流动 / Groq / Together / 火山 / 七牛等都可以用——在模型管理新增自定义 provider 后即可在此选用。',
       sttOpenAiCompatModel: '发送给端点的模型名（multipart "model" 字段）。OpenAI 默认 whisper-1；FunASR 通常是 paraformer-large；其他厂商按其文档填写。',
@@ -1222,7 +1222,7 @@ export default {
       saveFail: '保存失败',
     },
     sttTitle: '语音识别',
-    sttDesc: '配置 STT 语音转文字，支持 OpenAI Whisper 和 DashScope Paraformer',
+    sttDesc: '配置 STT 语音转文字，支持 OpenAI Whisper 和 DashScope Qwen3-ASR',
     sttProviderOptions: { auto: '自动选择' },
     sttProviderTags: { reuseLlmKey: '复用 LLM API Key' },
     musicTitle: '音乐生成',
