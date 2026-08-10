@@ -377,6 +377,7 @@ export default {
     modelLivenessCooldown: '冷却中（{seconds} 秒后自动恢复）',
     // RFC-074 PR-2: empty-state inside the model dropdown
     noProvidersConfigured: '还没有可用的模型',
+    noModelsAvailableContactAdmin: '当前没有可用模型，请联系全局管理员配置',
     goConfigure: '去配置',
     // Issue #81: liveness-aware popup state machine.
     prompt: {
@@ -787,6 +788,8 @@ export default {
     model: {
       title: '模型管理',
       desc: '配置模型提供商、凭证和模型列表',
+      permissionTitle: '需要全局管理员权限',
+      permissionDesc: '模型提供商配置包含系统级凭证。你仍可在聊天中切换管理员已启用的模型；如需新增或修改模型，请联系全局管理员。',
       addProvider: '新增提供商',
       localProviders: '本地模型',
       cloudProviders: '云端模型',

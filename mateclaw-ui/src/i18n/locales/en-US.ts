@@ -377,6 +377,7 @@ export default {
     modelLivenessCooldown: 'In cooldown ({seconds}s remaining)',
     // RFC-074 PR-2: empty-state inside the model dropdown
     noProvidersConfigured: 'No models available yet',
+    noModelsAvailableContactAdmin: 'No models are available. Contact a global administrator to configure one.',
     goConfigure: 'Configure',
     // Issue #81: liveness-aware popup state machine.
     prompt: {
@@ -925,6 +926,8 @@ export default {
     model: {
       title: 'Model Management',
       desc: 'Configure model providers, credentials, and model lists',
+      permissionTitle: 'Global administrator access required',
+      permissionDesc: 'Provider configuration contains system-level credentials. You can still switch among enabled models in Chat; contact a global administrator to add or change models.',
       addProvider: 'Add Provider',
       localProviders: 'Local Models',
       cloudProviders: 'Cloud Models',
