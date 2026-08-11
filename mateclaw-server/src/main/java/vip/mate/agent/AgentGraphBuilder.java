@@ -777,6 +777,10 @@ public class AgentGraphBuilder {
                     // 丢这个键，evidence_insufficient 检查会"静默地不生效" ——
                     // StateKeyRegistrationCoverageTest 专门兜这条。
                     .addStrategy(MateClawStateKeys.SOURCE_EVIDENCE_LEDGER, KeyStrategy.REPLACE)
+                    .addStrategy(MateClawStateKeys.ACTION_EXECUTION_LEDGER, KeyStrategy.REPLACE)
+                    .addStrategy(MateClawStateKeys.ACTION_COMPLETION_REQUIRED, KeyStrategy.REPLACE)
+                    .addStrategy(MateClawStateKeys.ACTION_COMPLETION_RETRY_COUNT, KeyStrategy.REPLACE)
+                    .addStrategy(MateClawStateKeys.CONTINUE_REASONING, KeyStrategy.REPLACE)
                     // Multimodal sidecar routing decision for the current turn.
                     .addStrategy(MateClawStateKeys.ROUTING_DECISION, KeyStrategy.REPLACE)
                     // RFC 48 — persistent goal state keys must be registered in
@@ -1126,6 +1130,10 @@ public class AgentGraphBuilder {
                     // 丢这个键，evidence_insufficient 检查会"静默地不生效" ——
                     // StateKeyRegistrationCoverageTest 专门兜这条。
                     .addStrategy(MateClawStateKeys.SOURCE_EVIDENCE_LEDGER, KeyStrategy.REPLACE)
+                    .addStrategy(MateClawStateKeys.ACTION_EXECUTION_LEDGER, KeyStrategy.REPLACE)
+                    .addStrategy(MateClawStateKeys.ACTION_COMPLETION_REQUIRED, KeyStrategy.REPLACE)
+                    .addStrategy(MateClawStateKeys.ACTION_COMPLETION_RETRY_COUNT, KeyStrategy.REPLACE)
+                    .addStrategy(MateClawStateKeys.CONTINUE_REASONING, KeyStrategy.REPLACE)
                     // Multimodal sidecar routing decision for the current turn.
                     .addStrategy(MateClawStateKeys.ROUTING_DECISION, KeyStrategy.REPLACE)
                     // RFC 48 — persistent goal state keys must be registered in
@@ -1178,7 +1186,8 @@ public class AgentGraphBuilder {
                     .addEdge(StateGraph.START, MateClawStateKeys.REASONING_NODE)
                     .addConditionalEdges(MateClawStateKeys.REASONING_NODE,
                             AsyncEdgeAction.edge_async(new ReasoningDispatcher()),
-                            Map.of(MateClawStateKeys.ACTION_NODE, MateClawStateKeys.ACTION_NODE,
+                            Map.of(MateClawStateKeys.REASONING_NODE, MateClawStateKeys.REASONING_NODE,
+                                    MateClawStateKeys.ACTION_NODE, MateClawStateKeys.ACTION_NODE,
                                     MateClawStateKeys.SUMMARIZING_NODE, MateClawStateKeys.SUMMARIZING_NODE,
                                     MateClawStateKeys.FINAL_ANSWER_NODE, MateClawStateKeys.FINAL_ANSWER_NODE,
                                     MateClawStateKeys.LIMIT_EXCEEDED_NODE, MateClawStateKeys.LIMIT_EXCEEDED_NODE))
