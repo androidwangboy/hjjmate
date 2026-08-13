@@ -142,7 +142,7 @@ class WikiToolKbNameRoutingTest {
         when(kbService.resolvePrimaryKb(AGENT)).thenReturn(kb(PRIMARY_KB, "Primary", AGENT));
         when(kbService.findVisibleById(AGENT, OTHER_KB)).thenReturn(kb(OTHER_KB, "Other", null));
 
-        String json = tool.wiki_list_pages(AGENT_PARAM, null, null, OTHER_KB);
+        String json = tool.wiki_list_pages(AGENT_PARAM, null, null, String.valueOf(OTHER_KB));
         JSONObject obj = JSONUtil.parseObj(json);
 
         assertThat(obj.getJSONArray("pages").getJSONObject(0).getStr("slug"))
@@ -157,7 +157,7 @@ class WikiToolKbNameRoutingTest {
         // Deliberately do NOT stub findAllByName — if the tool consulted
         // kbName at all (or fell back to primary), the call would NPE.
 
-        String json = tool.wiki_list_pages(AGENT_PARAM, null, "anything", OTHER_KB);
+        String json = tool.wiki_list_pages(AGENT_PARAM, null, "anything", String.valueOf(OTHER_KB));
         JSONObject obj = JSONUtil.parseObj(json);
         assertThat(obj.getJSONArray("pages").getJSONObject(0).getStr("slug"))
                 .isEqualTo("other-only-slug");
@@ -218,7 +218,7 @@ class WikiToolKbNameRoutingTest {
         // would return null and surface a spurious "kbId=0 not visible" error,
         // which is exactly the production regression this test prevents.
 
-        String json = tool.wiki_list_pages(AGENT_PARAM, null, null, 0L);
+        String json = tool.wiki_list_pages(AGENT_PARAM, null, null, "0");
         JSONObject obj = JSONUtil.parseObj(json);
 
         assertThat(obj.getStr("error"))
@@ -235,7 +235,7 @@ class WikiToolKbNameRoutingTest {
         when(kbService.findVisibleById(AGENT, 99999L)).thenReturn(null);
         when(kbService.resolvePrimaryKb(AGENT)).thenReturn(kb(PRIMARY_KB, "Primary", AGENT));
 
-        String json = tool.wiki_list_pages(AGENT_PARAM, null, null, 99999L);
+        String json = tool.wiki_list_pages(AGENT_PARAM, null, null, "99999");
         JSONObject obj = JSONUtil.parseObj(json);
 
         assertThat(obj.getStr("error"))

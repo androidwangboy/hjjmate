@@ -33,15 +33,22 @@ class WikiToolIdSchemaTest {
         int checked = 0;
         for (ToolCallback callback : ToolCallbacks.from(tool)) {
             JsonNode root = MAPPER.readTree(callback.getToolDefinition().inputSchema());
-            JsonNode agentId = root.at("/properties/agentId/type");
-            if (!agentId.isMissingNode()) {
-                assertThat(agentId.asText())
-                        .as(callback.getToolDefinition().name())
-                        .isEqualTo("string");
-                checked++;
-            }
+            checked += assertIdParamIsString(root, callback, "agentId");
+            checked += assertIdParamIsString(root, callback, "kbId");
+            checked += assertIdParamIsString(root, callback, "rawId");
         }
 
         assertThat(checked).isGreaterThan(0);
+    }
+
+    private static int assertIdParamIsString(JsonNode root, ToolCallback callback, String property) {
+        JsonNode type = root.at("/properties/" + property + "/type");
+        if (!type.isMissingNode()) {
+            assertThat(type.asText())
+                        .as(callback.getToolDefinition().name())
+                        .isEqualTo("string");
+            return 1;
+        }
+        return 0;
     }
 }

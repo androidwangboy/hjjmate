@@ -201,15 +201,15 @@ public class WikiTool {
             @ToolParam(description = "Max characters to return (null = full page)", required = false) Integer maxChars,
             @ToolParam(description = "Section heading to extract (null = all sections)", required = false) String sectionHeading,
             @ToolParam(description = "Target knowledge base name (from wiki_list_kbs). Omit to use the agent's primary KB; switch to `kbId` when two KBs share the name.", required = false) String kbName,
-            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Use when `kbName` returns an ambiguous-name error.", required = false) Long kbId) {
+            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Must be passed as a string to preserve large integer precision. Use when `kbName` returns an ambiguous-name error.", required = false) String kbIdParam) {
 
         if (slug == null || slug.isBlank()) {
             return error("slug is required");
         }
 
-        KbResolution kbRes = resolveKb(agentId, kbName, kbId);
+        KbResolution kbRes = resolveKb(agentId, kbName, kbIdParam);
         if (kbRes.hasError()) return kbRes.errorJson();
-        kbId = kbRes.kbId();
+        Long kbId = kbRes.kbId();
 
         WikiPageEntity page = pageService.getBySlug(kbId, slug);
         if (page == null) {
@@ -251,11 +251,11 @@ public class WikiTool {
             @ToolParam(description = "Agent ID. Must be passed as a string to preserve large integer precision") String agentId,
             @ToolParam(description = "Title keyword filter (optional)", required = false) String query,
             @ToolParam(description = "Target knowledge base name (from wiki_list_kbs). Omit to use the agent's primary KB; switch to `kbId` when two KBs share the name.", required = false) String kbName,
-            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Use when `kbName` returns an ambiguous-name error.", required = false) Long kbId) {
+            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Must be passed as a string to preserve large integer precision. Use when `kbName` returns an ambiguous-name error.", required = false) String kbIdParam) {
 
-        KbResolution kbRes = resolveKb(agentId, kbName, kbId);
+        KbResolution kbRes = resolveKb(agentId, kbName, kbIdParam);
         if (kbRes.hasError()) return kbRes.errorJson();
-        kbId = kbRes.kbId();
+        Long kbId = kbRes.kbId();
 
         WikiPageTypePermissionService.Access access = pageTypeAccess(agentId, kbId);
         List<WikiPageLite> pages;
@@ -314,15 +314,15 @@ public class WikiTool {
             @ToolParam(description = "Max results (default 5, max 20)", required = false) Integer topK,
             @ToolParam(description = "Knowledge layer filter: fact | experience | all (default all). 'fact' = factual pages (and unlayered pages); 'experience' = synthesis/analysis pages.", required = false) String layer,
             @ToolParam(description = "Target knowledge base name (from wiki_list_kbs). Omit to use the agent's primary KB; switch to `kbId` when two KBs share the name.", required = false) String kbName,
-            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Use when `kbName` returns an ambiguous-name error.", required = false) Long kbId) {
+            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Must be passed as a string to preserve large integer precision. Use when `kbName` returns an ambiguous-name error.", required = false) String kbIdParam) {
 
         if (query == null || query.isBlank()) {
             return error("query is required");
         }
 
-        KbResolution kbRes = resolveKb(agentId, kbName, kbId);
+        KbResolution kbRes = resolveKb(agentId, kbName, kbIdParam);
         if (kbRes.hasError()) return kbRes.errorJson();
-        kbId = kbRes.kbId();
+        Long kbId = kbRes.kbId();
 
         int k = (topK != null && topK > 0) ? Math.min(topK, 20) : 5;
         List<PageSearchResult> results = hybridRetriever.search(kbId, query, mode, k);
@@ -379,15 +379,15 @@ public class WikiTool {
             @ToolParam(description = "Natural language query") String query,
             @ToolParam(description = "Max results (default 5)", required = false) Integer topK,
             @ToolParam(description = "Target knowledge base name (from wiki_list_kbs). Omit to use the agent's primary KB; switch to `kbId` when two KBs share the name.", required = false) String kbName,
-            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Use when `kbName` returns an ambiguous-name error.", required = false) Long kbId) {
+            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Must be passed as a string to preserve large integer precision. Use when `kbName` returns an ambiguous-name error.", required = false) String kbIdParam) {
 
         if (query == null || query.isBlank()) {
             return error("query is required");
         }
 
-        KbResolution kbRes = resolveKb(agentId, kbName, kbId);
+        KbResolution kbRes = resolveKb(agentId, kbName, kbIdParam);
         if (kbRes.hasError()) return kbRes.errorJson();
-        kbId = kbRes.kbId();
+        Long kbId = kbRes.kbId();
 
         int k = (topK != null && topK > 0) ? Math.min(topK, 20) : 5;
         List<HybridRetriever.ChunkHit> hits = hybridRetriever.searchChunks(kbId, query, k);
@@ -445,15 +445,15 @@ public class WikiTool {
             @ToolParam(description = "Agent ID. Must be passed as a string to preserve large integer precision") String agentId,
             @ToolParam(description = "Page slug") String slug,
             @ToolParam(description = "Target knowledge base name (from wiki_list_kbs). Omit to use the agent's primary KB; switch to `kbId` when two KBs share the name.", required = false) String kbName,
-            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Use when `kbName` returns an ambiguous-name error.", required = false) Long kbId) {
+            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Must be passed as a string to preserve large integer precision. Use when `kbName` returns an ambiguous-name error.", required = false) String kbIdParam) {
 
         if (slug == null || slug.isBlank()) {
             return error("slug is required");
         }
 
-        KbResolution kbRes = resolveKb(agentId, kbName, kbId);
+        KbResolution kbRes = resolveKb(agentId, kbName, kbIdParam);
         if (kbRes.hasError()) return kbRes.errorJson();
-        kbId = kbRes.kbId();
+        Long kbId = kbRes.kbId();
 
         WikiPageEntity page = pageService.getBySlug(kbId, slug);
         if (page == null) {
@@ -479,7 +479,7 @@ public class WikiTool {
             @ToolParam(description = "Page title") String title,
             @ToolParam(description = "Page content (Markdown)") String content,
             @ToolParam(description = "Target knowledge base name (from wiki_list_kbs). Omit to use the agent's primary KB; switch to `kbId` when two KBs share the name.", required = false) String kbName,
-            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Use when `kbName` returns an ambiguous-name error.", required = false) Long kbId) {
+            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Must be passed as a string to preserve large integer precision. Use when `kbName` returns an ambiguous-name error.", required = false) String kbIdParam) {
 
         if (title == null || title.isBlank()) {
             return error("title is required");
@@ -488,9 +488,9 @@ public class WikiTool {
             return error("content is required");
         }
 
-        KbResolution kbRes = resolveKb(agentId, kbName, kbId);
+        KbResolution kbRes = resolveKb(agentId, kbName, kbIdParam);
         if (kbRes.hasError()) return kbRes.errorJson();
-        kbId = kbRes.kbId();
+        Long kbId = kbRes.kbId();
 
         // wiki_create_page does not take an explicit pageType, so creation is
         // governed by the agent's wildcard ('*') write rule for this KB.
@@ -567,14 +567,14 @@ public class WikiTool {
             @ToolParam(description = "Optional explicit slug for the page", required = false) String slug,
             @ToolParam(description = "Max evidence chunks (default 8, max 20)", required = false) Integer maxEvidenceChunks,
             @ToolParam(description = "Target knowledge base name (from wiki_list_kbs). Omit to use the agent's primary KB; switch to `kbId` when two KBs share the name.", required = false) String kbName,
-            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Use when `kbName` returns an ambiguous-name error.", required = false) Long kbId) {
+            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Must be passed as a string to preserve large integer precision. Use when `kbName` returns an ambiguous-name error.", required = false) String kbIdParam) {
 
         if (topic == null || topic.isBlank()) {
             return error("topic is required");
         }
-        KbResolution kbRes = resolveKb(agentId, kbName, kbId);
+        KbResolution kbRes = resolveKb(agentId, kbName, kbIdParam);
         if (kbRes.hasError()) return kbRes.errorJson();
-        kbId = kbRes.kbId();
+        Long kbId = kbRes.kbId();
         if (compileService == null) return error("Compile service not available");
 
         String compileErr = checkWrite(agentId, kbId, null,
@@ -623,12 +623,12 @@ public class WikiTool {
             @ToolParam(description = "Comma-separated slugs (max 10)") String slugs,
             @ToolParam(description = "Max chars returned per page (default 2000, max 8000)", required = false) Integer maxCharsPerPage,
             @ToolParam(description = "Target knowledge base name (from wiki_list_kbs). Omit to use the agent's primary KB; switch to `kbId` when two KBs share the name.", required = false) String kbName,
-            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Use when `kbName` returns an ambiguous-name error.", required = false) Long kbId) {
+            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Must be passed as a string to preserve large integer precision. Use when `kbName` returns an ambiguous-name error.", required = false) String kbIdParam) {
 
         if (slugs == null || slugs.isBlank()) return error("slugs is required");
-        KbResolution kbRes = resolveKb(agentId, kbName, kbId);
+        KbResolution kbRes = resolveKb(agentId, kbName, kbIdParam);
         if (kbRes.hasError()) return kbRes.errorJson();
-        kbId = kbRes.kbId();
+        Long kbId = kbRes.kbId();
 
         int cap = (maxCharsPerPage == null || maxCharsPerPage <= 0) ? 2000 : Math.min(8000, maxCharsPerPage);
         List<String> slugList = Arrays.stream(slugs.split(","))
@@ -674,8 +674,8 @@ public class WikiTool {
             @ToolParam(description = "Agent ID. Must be passed as a string to preserve large integer precision") String agentId,
             @ToolParam(description = "Page slug to archive") String slug,
             @ToolParam(description = "Target knowledge base name (from wiki_list_kbs). Omit to use the agent's primary KB; switch to `kbId` when two KBs share the name.", required = false) String kbName,
-            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Use when `kbName` returns an ambiguous-name error.", required = false) Long kbId) {
-        return setArchivedTool(agentId, slug, true, "archived", kbName, kbId);
+            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Must be passed as a string to preserve large integer precision. Use when `kbName` returns an ambiguous-name error.", required = false) String kbIdParam) {
+        return setArchivedTool(agentId, slug, true, "archived", kbName, kbIdParam);
     }
 
     @Tool(description = """
@@ -686,15 +686,15 @@ public class WikiTool {
             @ToolParam(description = "Agent ID. Must be passed as a string to preserve large integer precision") String agentId,
             @ToolParam(description = "Page slug to unarchive") String slug,
             @ToolParam(description = "Target knowledge base name (from wiki_list_kbs). Omit to use the agent's primary KB; switch to `kbId` when two KBs share the name.", required = false) String kbName,
-            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Use when `kbName` returns an ambiguous-name error.", required = false) Long kbId) {
-        return setArchivedTool(agentId, slug, false, "unarchived", kbName, kbId);
+            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Must be passed as a string to preserve large integer precision. Use when `kbName` returns an ambiguous-name error.", required = false) String kbIdParam) {
+        return setArchivedTool(agentId, slug, false, "unarchived", kbName, kbIdParam);
     }
 
-    private String setArchivedTool(String agentId, String slug, boolean archive, String verb, String kbName, Long kbId) {
+    private String setArchivedTool(String agentId, String slug, boolean archive, String verb, String kbName, String kbIdParam) {
         if (slug == null || slug.isBlank()) return error("slug is required");
-        KbResolution kbRes = resolveKb(agentId, kbName, kbId);
+        KbResolution kbRes = resolveKb(agentId, kbName, kbIdParam);
         if (kbRes.hasError()) return kbRes.errorJson();
-        kbId = kbRes.kbId();
+        Long kbId = kbRes.kbId();
         // Archiving toggles visibility — gate it as an update, and hide pages
         // whose type the agent cannot read.
         WikiPageEntity target = pageService.getBySlug(kbId, slug);
@@ -729,15 +729,15 @@ public class WikiTool {
             @ToolParam(description = "Agent ID. Must be passed as a string to preserve large integer precision") String agentId,
             @ToolParam(description = "Page slug to delete") String slug,
             @ToolParam(description = "Target knowledge base name (from wiki_list_kbs). Omit to use the agent's primary KB; switch to `kbId` when two KBs share the name.", required = false) String kbName,
-            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Use when `kbName` returns an ambiguous-name error.", required = false) Long kbId) {
+            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Must be passed as a string to preserve large integer precision. Use when `kbName` returns an ambiguous-name error.", required = false) String kbIdParam) {
 
         if (slug == null || slug.isBlank()) {
             return error("slug is required");
         }
 
-        KbResolution kbRes = resolveKb(agentId, kbName, kbId);
+        KbResolution kbRes = resolveKb(agentId, kbName, kbIdParam);
         if (kbRes.hasError()) return kbRes.errorJson();
-        kbId = kbRes.kbId();
+        Long kbId = kbRes.kbId();
 
         WikiPageEntity page = pageService.getBySlug(kbId, slug);
         if (page == null) {
@@ -786,11 +786,11 @@ public class WikiTool {
             @ToolParam(description = "Page slug") String slug,
             @ToolParam(description = "Max results (default 5, max 10)", required = false) Integer topK,
             @ToolParam(description = "Target knowledge base name (from wiki_list_kbs). Omit to use the agent's primary KB; switch to `kbId` when two KBs share the name.", required = false) String kbName,
-            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Use when `kbName` returns an ambiguous-name error.", required = false) Long kbId) {
+            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Must be passed as a string to preserve large integer precision. Use when `kbName` returns an ambiguous-name error.", required = false) String kbIdParam) {
 
-        KbResolution kbRes = resolveKb(agentId, kbName, kbId);
+        KbResolution kbRes = resolveKb(agentId, kbName, kbIdParam);
         if (kbRes.hasError()) return kbRes.errorJson();
-        kbId = kbRes.kbId();
+        Long kbId = kbRes.kbId();
         if (relationService == null) return error("Relation service not available");
 
         int k = (topK != null && topK > 0) ? Math.min(topK, 10) : 5;
@@ -824,11 +824,11 @@ public class WikiTool {
             @ToolParam(description = "First page slug") String slugA,
             @ToolParam(description = "Second page slug") String slugB,
             @ToolParam(description = "Target knowledge base name (from wiki_list_kbs). Omit to use the agent's primary KB; switch to `kbId` when two KBs share the name.", required = false) String kbName,
-            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Use when `kbName` returns an ambiguous-name error.", required = false) Long kbId) {
+            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Must be passed as a string to preserve large integer precision. Use when `kbName` returns an ambiguous-name error.", required = false) String kbIdParam) {
 
-        KbResolution kbRes = resolveKb(agentId, kbName, kbId);
+        KbResolution kbRes = resolveKb(agentId, kbName, kbIdParam);
         if (kbRes.hasError()) return kbRes.errorJson();
-        kbId = kbRes.kbId();
+        Long kbId = kbRes.kbId();
         if (relationService == null) return error("Relation service not available");
 
         WikiPageTypePermissionService.Access relAccess = pageTypeAccess(agentId, kbId);
@@ -858,11 +858,11 @@ public class WikiTool {
             @ToolParam(description = "Agent ID. Must be passed as a string to preserve large integer precision") String agentId,
             @ToolParam(description = "Page slug") String slug,
             @ToolParam(description = "Target knowledge base name (from wiki_list_kbs). Omit to use the agent's primary KB; switch to `kbId` when two KBs share the name.", required = false) String kbName,
-            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Use when `kbName` returns an ambiguous-name error.", required = false) Long kbId) {
+            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Must be passed as a string to preserve large integer precision. Use when `kbName` returns an ambiguous-name error.", required = false) String kbIdParam) {
 
-        KbResolution kbRes = resolveKb(agentId, kbName, kbId);
+        KbResolution kbRes = resolveKb(agentId, kbName, kbIdParam);
         if (kbRes.hasError()) return kbRes.errorJson();
-        kbId = kbRes.kbId();
+        Long kbId = kbRes.kbId();
         if (jobService == null || eventPublisher == null) return error("Job service not available");
 
         WikiPageEntity page = pageService.getBySlug(kbId, slug);
@@ -904,7 +904,7 @@ public class WikiTool {
             @ToolParam(description = "New full Markdown content for the page body") String content,
             @ToolParam(description = "New one-line summary (optional; omit to auto-derive from content)", required = false) String summary,
             @ToolParam(description = "Target knowledge base name (from wiki_list_kbs). Omit to use the agent's primary KB; switch to `kbId` when two KBs share the name.", required = false) String kbName,
-            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Use when `kbName` returns an ambiguous-name error.", required = false) Long kbId) {
+            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Must be passed as a string to preserve large integer precision. Use when `kbName` returns an ambiguous-name error.", required = false) String kbIdParam) {
 
         if (slug == null || slug.isBlank()) {
             return error("slug is required");
@@ -912,9 +912,9 @@ public class WikiTool {
         if (content == null || content.isBlank()) {
             return error("content is required");
         }
-        KbResolution kbRes = resolveKb(agentId, kbName, kbId);
+        KbResolution kbRes = resolveKb(agentId, kbName, kbIdParam);
         if (kbRes.hasError()) return kbRes.errorJson();
-        kbId = kbRes.kbId();
+        Long kbId = kbRes.kbId();
 
         WikiPageEntity page = pageService.getBySlug(kbId, slug);
         if (page == null) {
@@ -947,11 +947,11 @@ public class WikiTool {
     public String wiki_stale_pages(
             @ToolParam(description = "Agent ID. Must be passed as a string to preserve large integer precision") String agentId,
             @ToolParam(description = "Target knowledge base name (from wiki_list_kbs). Omit to use the agent's primary KB; switch to `kbId` when two KBs share the name.", required = false) String kbName,
-            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Use when `kbName` returns an ambiguous-name error.", required = false) Long kbId) {
+            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Must be passed as a string to preserve large integer precision. Use when `kbName` returns an ambiguous-name error.", required = false) String kbIdParam) {
 
-        KbResolution kbRes = resolveKb(agentId, kbName, kbId);
+        KbResolution kbRes = resolveKb(agentId, kbName, kbIdParam);
         if (kbRes.hasError()) return kbRes.errorJson();
-        kbId = kbRes.kbId();
+        Long kbId = kbRes.kbId();
 
         WikiPageTypePermissionService.Access access = pageTypeAccess(agentId, kbId);
         JSONArray arr = new JSONArray();
@@ -983,10 +983,10 @@ public class WikiTool {
     public String wiki_list_transformations(
             @ToolParam(description = "Agent ID. Must be passed as a string to preserve large integer precision") String agentId,
             @ToolParam(description = "Target knowledge base name (from wiki_list_kbs). Omit to use the agent's primary KB; switch to `kbId` when two KBs share the name.", required = false) String kbName,
-            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Use when `kbName` returns an ambiguous-name error.", required = false) Long kbId) {
-        KbResolution kbRes = resolveKb(agentId, kbName, kbId);
+            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Must be passed as a string to preserve large integer precision. Use when `kbName` returns an ambiguous-name error.", required = false) String kbIdParam) {
+        KbResolution kbRes = resolveKb(agentId, kbName, kbIdParam);
         if (kbRes.hasError()) return kbRes.errorJson();
-        kbId = kbRes.kbId();
+        Long kbId = kbRes.kbId();
         if (transformationService == null) return error("Transformations not available");
 
         WikiKnowledgeBaseEntity kb = kbService.getById(kbId);
@@ -1013,14 +1013,14 @@ public class WikiTool {
     public String wiki_apply_transformation(
             @ToolParam(description = "Agent ID. Must be passed as a string to preserve large integer precision") String agentId,
             @ToolParam(description = "Transformation name (from wiki_list_transformations)") String name,
-            @ToolParam(description = "Raw material ID to run the transformation against") Long rawId,
+            @ToolParam(description = "Raw material ID to run the transformation against. Must be passed as a string to preserve large integer precision") String rawIdParam,
             @ToolParam(description = "Target knowledge base name (from wiki_list_kbs). Omit to use the agent's primary KB; switch to `kbId` when two KBs share the name.", required = false) String kbName,
-            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Use when `kbName` returns an ambiguous-name error.", required = false) Long kbId) {
+            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Must be passed as a string to preserve large integer precision. Use when `kbName` returns an ambiguous-name error.", required = false) String kbIdParam) {
         if (name == null || name.isBlank()) return error("name is required");
-        if (rawId == null) return error("rawId is required");
-        KbResolution kbRes = resolveKb(agentId, kbName, kbId);
+        Long rawId = parseRequiredId(rawIdParam, "rawId");
+        KbResolution kbRes = resolveKb(agentId, kbName, kbIdParam);
         if (kbRes.hasError()) return kbRes.errorJson();
-        kbId = kbRes.kbId();
+        Long kbId = kbRes.kbId();
         if (transformationService == null || transformationExecutor == null) {
             return error("Transformations not available");
         }
@@ -1070,12 +1070,12 @@ public class WikiTool {
             @ToolParam(description = "Transformation name (from wiki_list_transformations)") String name,
             @ToolParam(description = "Source wiki page slug to run the transformation against") String slug,
             @ToolParam(description = "Target knowledge base name (from wiki_list_kbs). Omit to use the agent's primary KB; switch to `kbId` when two KBs share the name.", required = false) String kbName,
-            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Use when `kbName` returns an ambiguous-name error.", required = false) Long kbId) {
+            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Must be passed as a string to preserve large integer precision. Use when `kbName` returns an ambiguous-name error.", required = false) String kbIdParam) {
         if (name == null || name.isBlank()) return error("name is required");
         if (slug == null || slug.isBlank()) return error("slug is required");
-        KbResolution kbRes = resolveKb(agentId, kbName, kbId);
+        KbResolution kbRes = resolveKb(agentId, kbName, kbIdParam);
         if (kbRes.hasError()) return kbRes.errorJson();
-        kbId = kbRes.kbId();
+        Long kbId = kbRes.kbId();
         if (transformationService == null || transformationExecutor == null) {
             return error("Transformations not available");
         }
@@ -1131,11 +1131,11 @@ public class WikiTool {
             @ToolParam(description = "Agent ID. Must be passed as a string to preserve large integer precision") String agentId,
             @ToolParam(description = "Transformation name (from wiki_list_transformations)") String name,
             @ToolParam(description = "Target knowledge base name (from wiki_list_kbs). Omit to use the agent's primary KB; switch to `kbId` when two KBs share the name.", required = false) String kbName,
-            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Use when `kbName` returns an ambiguous-name error.", required = false) Long kbId) {
+            @ToolParam(description = "Numeric KB id from wiki_list_kbs. Must be passed as a string to preserve large integer precision. Use when `kbName` returns an ambiguous-name error.", required = false) String kbIdParam) {
         if (name == null || name.isBlank()) return error("name is required");
-        KbResolution kbRes = resolveKb(agentId, kbName, kbId);
+        KbResolution kbRes = resolveKb(agentId, kbName, kbIdParam);
         if (kbRes.hasError()) return kbRes.errorJson();
-        kbId = kbRes.kbId();
+        Long kbId = kbRes.kbId();
         if (transformationService == null || transformationAggregator == null) {
             return error("Transformations not available");
         }
@@ -1194,6 +1194,26 @@ public class WikiTool {
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("agentId must be a numeric string");
         }
+    }
+
+    private Long parseOptionalId(String value, String name) {
+        String trimmed = value != null ? value.trim() : "";
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        try {
+            return Long.parseLong(trimmed);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(name + " must be a numeric string");
+        }
+    }
+
+    private Long parseRequiredId(String value, String name) {
+        Long parsed = parseOptionalId(value, name);
+        if (parsed == null) {
+            throw new IllegalArgumentException(name + " is required");
+        }
+        return parsed;
     }
 
     /**
@@ -1412,8 +1432,8 @@ public class WikiTool {
         return KbResolution.ok(primary.getId());
     }
 
-    private KbResolution resolveKb(String agentId, String kbName, Long kbId) {
-        return resolveKb(parseAgentId(agentId), kbName, kbId);
+    private KbResolution resolveKb(String agentId, String kbName, String kbIdParam) {
+        return resolveKb(parseAgentId(agentId), kbName, parseOptionalId(kbIdParam, "kbId"));
     }
 
     /**
