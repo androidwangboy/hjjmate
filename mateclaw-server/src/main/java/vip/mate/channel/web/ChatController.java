@@ -581,10 +581,15 @@ public class ChatController {
                         ? regenerateSeed.parts()
                         : normalizeRequestParts(request);
                 String promptText = buildPromptText(message, requestParts);
+                Long originMessageId;
                 if (regenerateSeed == null) {
                     // Regenerate reuses the already-persisted seed user row —
                     // inserting again would duplicate it (issue #547).
-                    conversationService.saveMessage(conversationId, "user", message, requestParts);
+                    MessageEntity savedUser = conversationService
+                            .saveMessage(conversationId, "user", message, requestParts);
+                    originMessageId = savedUser == null ? null : savedUser.getId();
+                } else {
+                    originMessageId = regenerateSeed.seedMessageId();
                 }
                 conversationService.updateStreamStatus(conversationId, "running");
 
@@ -602,7 +607,8 @@ public class ChatController {
                 // is enriched with workspaceBasePath in StateGraph buildInitialState).
                 vip.mate.agent.context.ChatOrigin webOrigin =
                         memoryOrigin(conversationId, username, requesterUserIdOf(auth), workspaceId, request.getEndUserId())
-                                .withBaseUrl(requestBaseUrl);
+                                .withBaseUrl(requestBaseUrl)
+                                .withOriginMessageId(originMessageId);
                 Disposable disposable = agentService.chatStructuredStream(agentId, promptText, conversationId, username, request.getThinkingLevel(), webOrigin)
                         .doOnNext(delta -> {
                             if (emitterDone.get()) return;
@@ -1105,13 +1111,16 @@ public class ChatController {
             return R.fail(401, "未登录，请先登录");
         }
         conversationService.getOrCreateConversation(request.getConversationId(), agentId, username, workspaceId);
-        conversationService.saveMessage(request.getConversationId(), "user", request.getMessage(), request.getContentParts());
+        MessageEntity savedUser = conversationService.saveMessage(
+                request.getConversationId(), "user", request.getMessage(), request.getContentParts());
 
         String promptText = buildPromptText(request.getMessage(), request.getContentParts());
         // Carry the web origin so per-owner memory recall (read) and the
         // post-conversation memory write below agree on the same owner key.
         vip.mate.agent.context.ChatOrigin webOrigin =
-                memoryOrigin(request.getConversationId(), username, requesterUserIdOf(auth), workspaceId, request.getEndUserId());
+                memoryOrigin(request.getConversationId(), username, requesterUserIdOf(auth), workspaceId,
+                        request.getEndUserId()).withOriginMessageId(
+                                savedUser == null ? null : savedUser.getId());
         AgentService.ChatResult result = agentService.chatWithUsage(agentId, promptText, request.getConversationId(), webOrigin);
         String response = result.content();
         conversationService.saveMessage(request.getConversationId(), "assistant", response, null, "completed",
@@ -1417,9 +1426,11 @@ public class ChatController {
         // 持久化排队的用户消息（含 contentParts；幂等：如果 /interrupt 已提前持久化则跳过）。
         // 这里持久化是为了确保 user 消息在 assistant 消息（doOnError/doOnCancel 已写入）之后落库，
         // 让 listMessages ORDER BY create_time ASC 后顺序正确：Q1 → Asst1 → Q2 → Asst2。
+        Long queuedOriginMessageId = null;
         if (queuedMessage != null && !queuedMessage.isBlank() && !preConsumedInput.persisted()) {
-            conversationService.saveMessage(conversationId, "user", queuedMessage,
+            MessageEntity savedUser = conversationService.saveMessage(conversationId, "user", queuedMessage,
                     preConsumedInput.contentParts(), "queued");
+            queuedOriginMessageId = savedUser == null ? null : savedUser.getId();
         }
 
         // 广播 queued_input_started 事件
@@ -1444,7 +1455,8 @@ public class ChatController {
         // turn keeps a consistent (null-channel) binding.
         vip.mate.agent.context.ChatOrigin queuedOrigin =
                 vip.mate.agent.context.ChatOrigin.web(conversationId, requesterId, null, null)
-                        .withBaseUrl(baseUrl);
+                        .withBaseUrl(baseUrl)
+                        .withOriginMessageId(queuedOriginMessageId);
         Disposable disposable = agentService.chatStructuredStream(agentId, queuedMessage, conversationId, requesterId, null, queuedOrigin)
                 .doOnNext(delta -> {
                     if (emitterDone.get()) return;

@@ -104,6 +104,15 @@
         </div>
       </div>
 
+      <TeamWorkerBanner
+        v-if="workerRunContext"
+        :run-id="workerRunContext.runId"
+        :task-id="workerRunContext.taskId"
+        :team-id="workerRunContext.teamId"
+        :lead-conversation-id="workerRunContext.leadConversationId"
+        @navigate="router.push($event)"
+      />
+
       <!-- 使用组件化的 MessageList -->
       <MessageList
         ref="messageListRef"
@@ -114,6 +123,9 @@
         :title="blockingPrompt ? modelPromptText.title : $t('app.title')"
         :subtitle="blockingPrompt ? modelPromptText.desc : $t('chat.subtitle')"
         :suggestions="blockingPrompt ? [] : suggestions"
+        :team-runs="teamRuns"
+        :expanded-team-run-id="teamRunRouteQuery.teamRunId || null"
+        :selected-team-task-id="teamRunRouteQuery.taskId || null"
         @regenerate="handleRegenerate"
         @rewind="handleRewind"
         @suggestion-click="sendSuggestion"
@@ -121,6 +133,7 @@
         @approve="handleApprove"
         @approve-always="handleApproveAlways"
         @deny="handleDeny"
+        @team-run-navigate="router.push($event)"
       >
         <!-- Issue #81 v2 R2: blocking-only popup. Recoverable cases use the
              non-blocking <RecoverableModelBanner> below instead. -->
@@ -224,7 +237,7 @@
         ref="chatInputRef"
         v-model="inputText"
         :loading="isGenerating && !hasPendingApproval"
-        :disabled="blockingPrompt || !currentAgent"
+        :disabled="blockingPrompt || !currentAgent || workerConversationReadOnly"
         :skills-enabled="!!currentAgent && !currentAgent.skillsDisabled"
         :placeholder="$t('chat.messagePlaceholder')"
         :hint="currentRuntimeModel"
@@ -288,14 +301,22 @@ import { copyToClipboard } from '@/utils/clipboard'
 import { useFileDrop } from '@/composables/useFileDrop'
 import { useIsMobile, useMediaQuery, BREAKPOINTS } from '@/composables/useBreakpoint'
 import { useChat } from '@/composables/chat/useChat'
+import { useTeamRuns } from '@/composables/chat/useTeamRuns'
+import { isConversationReadOnly, parseTeamMessageMetadata, resolveWorkerRunContext } from '@/composables/chat/messageMetadata'
 import RunOverviewPanel from '@/components/chat/RunOverviewPanel.vue'
 import { reconstructErrorInfo } from '@/types/chatError'
 import { reconcileMessages, extractMessages } from '@/utils/messageReconcile'
-import { resolveConversationAgentSelection, resolveRouteHydrationQuery } from '@/utils/chatRouteHydration'
+import {
+  buildChatRouteQuery,
+  readTeamRunRouteQuery,
+  resolveConversationAgentSelection,
+  resolveRouteHydrationQuery,
+} from '@/utils/chatRouteHydration'
 import type { Conversation, Agent, ModelConfig, ProviderInfo, ActiveModelsInfo, ChatAttachment, MessageContentPart, Message, ToolCallMeta } from '@/types'
 
 // 导入组件化组件
 import MessageList from '@/components/chat/MessageList.vue'
+import TeamWorkerBanner from '@/components/chat/TeamWorkerBanner.vue'
 import RecoverableModelBanner from '@/components/chat/RecoverableModelBanner.vue'
 import SkillIcon from '@/components/common/SkillIcon.vue'
 import ConversationSidebar from '@/components/chat/ConversationSidebar.vue'
@@ -782,6 +803,25 @@ const {
     }
   },
 })
+
+const teamRunRouteQuery = computed(() => readTeamRunRouteQuery(route.query))
+const metadataWorkerRunId = computed(() => {
+  for (let index = messages.value.length - 1; index >= 0; index -= 1) {
+    const metadata = parseTeamMessageMetadata(messages.value[index])
+    if (metadata.runId && metadata.taskId) return metadata.runId
+  }
+  return undefined
+})
+const linkedTeamRunId = computed(() => teamRunRouteQuery.value.teamRunId ?? metadataWorkerRunId.value)
+const { runs: teamRuns } = useTeamRuns(currentConversationId, { linkedRunId: linkedTeamRunId })
+const workerRunContext = computed(() => resolveWorkerRunContext({
+  messages: messages.value,
+  runs: teamRuns.value,
+  conversationId: currentConversationId.value,
+  routeRunId: teamRunRouteQuery.value.teamRunId,
+  routeTaskId: teamRunRouteQuery.value.taskId,
+}))
+const workerConversationReadOnly = computed(() => isConversationReadOnly(workerRunContext.value))
 
 // ============ 连接状态 ============
 const connectionStatusClass = computed(() => {
@@ -1663,9 +1703,11 @@ async function hydrateStateFromRoute() {
 }
 
 function syncRouteState() {
-  const query: Record<string, string> = {}
-  if (selectedAgentId.value) query.agentId = String(selectedAgentId.value)
-  if (currentConversationId.value) query.conversationId = currentConversationId.value
+  const query = buildChatRouteQuery({
+    currentQuery: route.query,
+    agentId: selectedAgentId.value ? String(selectedAgentId.value) : undefined,
+    conversationId: currentConversationId.value || undefined,
+  })
   router.replace({ path: '/chat', query })
 }
 
@@ -1919,7 +1961,10 @@ async function handleSendMessage(content: string) {
   // 允许在等待审批时发送审批命令
   const isApprovalCommand = /^\/(approve|deny)$/i.test(content.trim())
 
-  if ((!content && pendingAttachments.value.length === 0) || !selectedAgentId.value || blockingPrompt.value) return
+  if ((!content && pendingAttachments.value.length === 0)
+      || !selectedAgentId.value
+      || blockingPrompt.value
+      || workerConversationReadOnly.value) return
   // 不再阻止运行中发送 — useChat 会自动走 interrupt/queue 路径
 
   // 拦截 /approve 和 /deny 命令 —— 通过 SSE 流发送（和普通消息相同通道）

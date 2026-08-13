@@ -1,6 +1,11 @@
 // @vitest-environment happy-dom
 import { describe, expect, it } from 'vitest'
-import { resolveConversationAgentSelection, resolveRouteHydrationQuery } from '@/utils/chatRouteHydration'
+import {
+  buildChatRouteQuery,
+  readTeamRunRouteQuery,
+  resolveConversationAgentSelection,
+  resolveRouteHydrationQuery,
+} from '@/utils/chatRouteHydration'
 
 const agents = [{ id: 'agent-visible' }]
 const conversations = [{ conversationId: 'conv-listed' }]
@@ -54,5 +59,45 @@ describe('resolveConversationAgentSelection', () => {
     })
 
     expect(selected).toBe('2079862124313986')
+  })
+})
+
+describe('team run chat route state', () => {
+  it('reads only explicit string run and task ids', () => {
+    expect(readTeamRunRouteQuery({
+      teamRunId: '9007199254740991', taskId: '501', teamId: '20', leadConversationId: 'lead',
+    })).toEqual({
+      teamRunId: '9007199254740991',
+      taskId: '501',
+      teamId: '20',
+      leadConversationId: 'lead',
+    })
+    expect(readTeamRunRouteQuery({ teamRunId: ['10'], taskId: null })).toEqual({})
+  })
+
+  it('preserves a team run deep link while syncing agent and conversation state', () => {
+    expect(buildChatRouteQuery({
+      currentQuery: {
+        conversationId: 'worker-conversation', teamRunId: '9007199254740991', taskId: '501',
+        teamId: '20', leadConversationId: 'lead', action: 'discard',
+      },
+      agentId: 'agent-visible',
+      conversationId: 'worker-conversation',
+    })).toEqual({
+      agentId: 'agent-visible',
+      conversationId: 'worker-conversation',
+      teamRunId: '9007199254740991',
+      taskId: '501',
+      teamId: '20',
+      leadConversationId: 'lead',
+    })
+  })
+
+  it('drops an old run deep link when the selected conversation changes', () => {
+    expect(buildChatRouteQuery({
+      currentQuery: { conversationId: 'worker-conversation', teamRunId: '10', taskId: '501' },
+      agentId: 'agent-visible',
+      conversationId: 'another-conversation',
+    })).toEqual({ agentId: 'agent-visible', conversationId: 'another-conversation' })
   })
 })
