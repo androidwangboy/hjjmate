@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, expect, it } from 'vitest'
-import { resolveRouteHydrationQuery } from '@/utils/chatRouteHydration'
+import { resolveConversationAgentSelection, resolveRouteHydrationQuery } from '@/utils/chatRouteHydration'
 
 const agents = [{ id: 'agent-visible' }]
 const conversations = [{ conversationId: 'conv-listed' }]
@@ -32,5 +32,27 @@ describe('resolveRouteHydrationQuery', () => {
       agentId: 'agent-visible',
       conversationId: 'conv-listed',
     })
+  })
+})
+
+describe('resolveConversationAgentSelection', () => {
+  it('keeps a valid route agent when opening an existing conversation with stale metadata', () => {
+    const selected = resolveConversationAgentSelection({
+      routeAgentId: '20798621241343139868',
+      conversationAgentId: '2079862124313986',
+      currentAgentId: '',
+    })
+
+    expect(selected).toBe('20798621241343139868')
+  })
+
+  it('uses the conversation agent when no route agent is provided', () => {
+    const selected = resolveConversationAgentSelection({
+      routeAgentId: '',
+      conversationAgentId: '2079862124313986',
+      currentAgentId: 'fallback',
+    })
+
+    expect(selected).toBe('2079862124313986')
   })
 })

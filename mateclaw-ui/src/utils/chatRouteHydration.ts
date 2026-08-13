@@ -23,3 +23,14 @@ export function resolveRouteHydrationQuery(options: {
 
   return { agentId, conversationId }
 }
+
+export function resolveConversationAgentSelection(options: {
+  routeAgentId?: string
+  conversationAgentId?: IdLike | null
+  currentAgentId?: IdLike | null
+}): string {
+  if (options.routeAgentId) return options.routeAgentId
+  if (options.conversationAgentId != null) return String(options.conversationAgentId)
+  if (options.currentAgentId != null) return String(options.currentAgentId)
+  return ''
+}

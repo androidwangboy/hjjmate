@@ -291,7 +291,7 @@ import { useChat } from '@/composables/chat/useChat'
 import RunOverviewPanel from '@/components/chat/RunOverviewPanel.vue'
 import { reconstructErrorInfo } from '@/types/chatError'
 import { reconcileMessages, extractMessages } from '@/utils/messageReconcile'
-import { resolveRouteHydrationQuery } from '@/utils/chatRouteHydration'
+import { resolveConversationAgentSelection, resolveRouteHydrationQuery } from '@/utils/chatRouteHydration'
 import type { Conversation, Agent, ModelConfig, ProviderInfo, ActiveModelsInfo, ChatAttachment, MessageContentPart, Message, ToolCallMeta } from '@/types'
 
 // 导入组件化组件
@@ -1632,7 +1632,7 @@ async function hydrateStateFromRoute() {
   if (conversationId && conversationId !== currentConversationId.value) {
     const matchedConversation = conversations.value.find(conv => conv.conversationId === conversationId)
     if (matchedConversation) {
-      await selectConversation(matchedConversation)
+      await selectConversation(matchedConversation, agentId)
     } else {
       // 会话不在已加载列表中（可能来自 Sessions 页面跳转），尝试加载消息
       currentConversationId.value = conversationId
@@ -1669,7 +1669,7 @@ function syncRouteState() {
   router.replace({ path: '/chat', query })
 }
 
-async function selectConversation(conv: Conversation) {
+async function selectConversation(conv: Conversation, routeAgentId = '') {
   if (isMobile.value) convPanelOpen.value = false
   // 切换到不同会话：只清理本地 UI/SSE（resetForNewConversation 会 stream.disconnect + 清变量），
   // 但不 POST /chat/{A}/stop —— 让 A 的后台 agent run 跑到完成。
@@ -1682,7 +1682,11 @@ async function selectConversation(conv: Conversation) {
     messageListRef.value?.resetScrollLock()
   }
   currentConversationId.value = conv.conversationId
-  selectedAgentId.value = conv.agentId || selectedAgentId.value
+  selectedAgentId.value = resolveConversationAgentSelection({
+    routeAgentId,
+    conversationAgentId: conv.agentId,
+    currentAgentId: selectedAgentId.value,
+  })
   // Opening another conversation: its pin (or the agent/global fallback) is
   // authoritative, so clear the previous conversation's manual-pick guard.
   userPickedModel.value = false
