@@ -87,7 +87,7 @@ public class WorkspaceMemoryTool {
         }
 
         JSONObject result = new JSONObject();
-        result.set("agentId", agentId);
+        result.set("agentId", String.valueOf(agentId));
         result.set("count", files.size());
         result.set("files", items);
         return JSONUtil.toJsonPrettyStr(result);
@@ -118,7 +118,7 @@ public class WorkspaceMemoryTool {
         memoryRecallTracker.trackActiveRetrieval(agentId, filename, content);
 
         JSONObject result = new JSONObject();
-        result.set("agentId", agentId);
+        result.set("agentId", String.valueOf(agentId));
         result.set("filename", file.getFilename());
         result.set("enabled", Boolean.TRUE.equals(file.getEnabled()));
         result.set("fileSize", file.getFileSize());
@@ -154,7 +154,7 @@ public class WorkspaceMemoryTool {
         WorkspaceFileEntity saved = workspaceFileService.saveVisibleFile(agentId, filename, content != null ? content : "", ownerKey);
 
         JSONObject result = new JSONObject();
-        result.set("agentId", agentId);
+        result.set("agentId", String.valueOf(agentId));
         result.set("filename", saved.getFilename());
         result.set("created", before == null);
         result.set("overwritten", before != null);
@@ -222,7 +222,7 @@ public class WorkspaceMemoryTool {
         WorkspaceFileEntity saved = workspaceFileService.saveVisibleFile(agentId, filename, updated, ownerKey);
 
         JSONObject result = new JSONObject();
-        result.set("agentId", agentId);
+        result.set("agentId", String.valueOf(agentId));
         result.set("filename", filename);
         result.set("replacements", replacements);
         result.set("replaceAll", replaceAllFlag);
@@ -296,7 +296,7 @@ public class WorkspaceMemoryTool {
             hitsJson.add(h);
         }
         JSONObject result = new JSONObject();
-        result.set("agentId", agentId);
+        result.set("agentId", String.valueOf(agentId));
         result.set("query", trimmed);
         result.set("scope", scope == null || scope.isBlank() ? "all" : scope);
         result.set("totalHits", hits.size());

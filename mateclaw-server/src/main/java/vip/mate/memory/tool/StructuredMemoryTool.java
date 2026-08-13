@@ -111,7 +111,7 @@ public class StructuredMemoryTool {
                     readOwner(toolContext));
 
             JSONObject result = new JSONObject();
-            result.set("agentId", agentId);
+            result.set("agentId", String.valueOf(agentId));
             result.set("count", results.size());
             result.set("entries", results);
             return JSONUtil.toJsonPrettyStr(result);
