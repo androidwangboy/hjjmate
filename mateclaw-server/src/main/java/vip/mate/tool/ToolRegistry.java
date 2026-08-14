@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -153,6 +154,66 @@ public class ToolRegistry {
             Collections.addAll(callbacks, ToolCallbacks.from(bean));
         }
         return AgentToolSet.fromCallbacks(toolBeans, callbacks, nameByBean::get);
+    }
+
+    /**
+     * Resolve aliases for currently enabled built-in {@code @Tool} beans without
+     * touching {@link ToolCallbackProvider}s. This is intentionally narrower than
+     * {@link #getEnabledToolSet()}: disclosure-tier snapshots only need to bridge
+     * {@code mate_tool.name}/{@code bean_name} onto built-in function names, and
+     * calling providers here would synchronously enumerate MCP tools on the chat
+     * hot path.
+     */
+    public Set<String> enabledToolBeanFunctionNamesFor(Set<String> aliases) {
+        if (aliases == null || aliases.isEmpty()) {
+            return Set.of();
+        }
+        Map<String, Set<String>> index = enabledToolBeanFunctionNameIndex();
+        LinkedHashSet<String> out = new LinkedHashSet<>();
+        for (String alias : aliases) {
+            Set<String> hits = index.get(alias);
+            if (hits != null) {
+                out.addAll(hits);
+            }
+        }
+        return out;
+    }
+
+    /**
+     * Build {@code alias -> @Tool function names} for enabled built-in tool beans.
+     * The aliases mirror {@link AgentToolSet}: function name, Spring bean name,
+     * and Java simple class name. Provider/MCP callbacks are deliberately absent.
+     */
+    public Map<String, Set<String>> enabledToolBeanFunctionNameIndex() {
+        LinkedHashMap<String, Object> beansByName = getEnabledToolBeansByName();
+        Map<String, Set<String>> index = new LinkedHashMap<>();
+        for (Map.Entry<String, Object> entry : beansByName.entrySet()) {
+            String beanName = entry.getKey();
+            Object bean = entry.getValue();
+            ToolCallback[] callbacks = ToolCallbacks.from(bean);
+            LinkedHashSet<String> functionNames = new LinkedHashSet<>();
+            for (ToolCallback cb : callbacks) {
+                if (cb != null && cb.getToolDefinition() != null) {
+                    functionNames.add(cb.getToolDefinition().name());
+                }
+            }
+            if (functionNames.isEmpty()) {
+                continue;
+            }
+            putAlias(index, beanName, functionNames);
+            putAlias(index, bean.getClass().getSimpleName(), functionNames);
+            for (String functionName : functionNames) {
+                putAlias(index, functionName, Set.of(functionName));
+            }
+        }
+        return index;
+    }
+
+    private static void putAlias(Map<String, Set<String>> index, String alias, Set<String> functionNames) {
+        if (alias == null || alias.isBlank() || functionNames == null || functionNames.isEmpty()) {
+            return;
+        }
+        index.computeIfAbsent(alias, ignored -> new LinkedHashSet<>()).addAll(functionNames);
     }
 
     /**
