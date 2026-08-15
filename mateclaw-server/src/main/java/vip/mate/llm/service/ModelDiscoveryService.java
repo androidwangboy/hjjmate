@@ -929,7 +929,7 @@ public class ModelDiscoveryService {
      */
     private String resolveCompletionsPath(String baseUrl, Map<String, Object> kwargs) {
         if (kwargs != null) {
-            Object raw = kwargs.get("completionsPath");
+            Object raw = ProviderGenerateKwargs.findOptionValue(kwargs, "completionsPath");
             if (raw instanceof String value && StringUtils.hasText(value)) {
                 String path = value.trim();
                 if (!path.startsWith("/")) {
@@ -980,7 +980,7 @@ public class ModelDiscoveryService {
         if (kwargs == null) {
             return;
         }
-        Object customHeaders = kwargs.get("customHeaders");
+        Object customHeaders = ProviderGenerateKwargs.findOptionValue(kwargs, "customHeaders");
         if (customHeaders instanceof Map) {
             ((Map<String, Object>) customHeaders).forEach((key, value) -> {
                 if (value != null) {

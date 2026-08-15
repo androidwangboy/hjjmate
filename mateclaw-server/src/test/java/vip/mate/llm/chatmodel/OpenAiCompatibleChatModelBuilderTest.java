@@ -128,6 +128,20 @@ class OpenAiCompatibleChatModelBuilderTest {
     }
 
     @Test
+    @DisplayName("Snake_case built-in search kwargs enable web search options")
+    void snakeCaseBuiltinSearchKwargs_enableWebSearchOptions() {
+        Map<String, Object> kwargs = new LinkedHashMap<>();
+        kwargs.put("enable_search", true);
+        kwargs.put("search_strategy", "high");
+        when(modelProviderService.readProviderGenerateKwargs(provider)).thenReturn(kwargs);
+
+        OpenAiChatOptions options = builder.buildOpenAiOptions(model("gpt-4o-search-preview"), provider);
+
+        assertNotNull(options.getWebSearchOptions(),
+                "enable_search should be treated the same as enableSearch");
+    }
+
+    @Test
     @DisplayName("Empty generateKwargs: no exception, extraBody stays empty/null (pre-existing behavior preserved)")
     void emptyGenerateKwargs_noExceptionNoExtraBody() {
         when(modelProviderService.readProviderGenerateKwargs(provider)).thenReturn(Map.of());

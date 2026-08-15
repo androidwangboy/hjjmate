@@ -11,8 +11,8 @@ import java.util.Set;
  * Reads typed values out of a provider's {@code generateKwargs} map.
  *
  * <p>A lookup tries the camelCase key first, then a snake_case fallback, and also
- * descends into a nested {@code chatOptions} map — so an admin may specify an
- * option under any of those shapes. Shared by the OpenAI-compatible chat model
+ * descends into a nested {@code chatOptions} / {@code chat_options} map — so an
+ * admin may specify an option under any of those shapes. Shared by the OpenAI-compatible chat model
  * builder, the reasoning-effort resolver, and the provider test-prompt path
  * ({@code ModelDiscoveryService}) so every outbound request built from
  * {@code generateKwargs} treats unrecognized keys the same way.
@@ -25,7 +25,7 @@ public final class ProviderGenerateKwargs {
     /**
      * Top-level {@code generateKwargs} keys with dedicated typed handling elsewhere
      * (both camelCase and snake_case spellings), plus the {@code chatOptions} nesting
-     * wrapper itself (its contents are already consumed via {@link #findOptionValue}).
+     * wrappers themselves (their contents are already consumed via {@link #findOptionValue}).
      * Centralized here so passthrough logic and known-key extraction across callers
      * can't drift out of sync. Anything else at the top level of generateKwargs is
      * forwarded verbatim — see {@link #collectPassthroughExtraBody}.
@@ -95,6 +95,9 @@ public final class ProviderGenerateKwargs {
             return kwargs.get(key);
         }
         Object chatOptions = kwargs.get("chatOptions");
+        if (!(chatOptions instanceof Map<?, ?>)) {
+            chatOptions = kwargs.get("chat_options");
+        }
         if (chatOptions instanceof Map<?, ?> optionsMap) {
             return ((Map<String, Object>) optionsMap).get(key);
         }
