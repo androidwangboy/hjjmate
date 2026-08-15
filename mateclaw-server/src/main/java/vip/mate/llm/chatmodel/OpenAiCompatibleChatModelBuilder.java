@@ -32,6 +32,7 @@ import vip.mate.llm.service.ModelProviderService;
 
 import java.net.http.HttpClient;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -183,6 +184,19 @@ public class OpenAiCompatibleChatModelBuilder implements ChatModelBuilder {
         // Leaving it null keeps Spring AI from serializing the field; each node controls it
         // when tools are present.
         options.setStreamUsage(true);
+
+        // Forward unrecognized top-level generateKwargs keys as-is via extraBody (e.g. vLLM's
+        // chat_template_kwargs). Get-then-merge rather than overwrite, in case a future addition
+        // to buildOpenAiOptions ever sets extraBody above this point.
+        Map<String, Object> passthroughExtraBody = ProviderGenerateKwargs.collectPassthroughExtraBody(kwargs);
+        if (!passthroughExtraBody.isEmpty()) {
+            Map<String, Object> existingExtraBody = options.getExtraBody();
+            Map<String, Object> mergedExtraBody = (existingExtraBody == null)
+                    ? new LinkedHashMap<>()
+                    : new LinkedHashMap<>(existingExtraBody);
+            mergedExtraBody.putAll(passthroughExtraBody);
+            options.setExtraBody(mergedExtraBody);
+        }
         return options;
     }
 
