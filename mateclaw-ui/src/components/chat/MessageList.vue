@@ -93,6 +93,11 @@
             @deny="(pendingId) => $emit('deny', pendingId)"
           />
         </template>
+        <div v-if="teamRunsHasMore" class="team-runs-more">
+          <button data-chat-team-runs-load-more type="button" :disabled="teamRunsLoadingMore" @click="$emit('team-runs-load-more')">
+            {{ teamRunsLoadingMore ? t('teamRuns.loadingMore') : t('teamRuns.loadMore') }}
+          </button>
+        </div>
       </template>
 
       <!-- 加载指示器：只在无消息时显示（有消息时由输入框显示停止按钮） -->
@@ -169,6 +174,8 @@ interface Props {
   teamRuns?: TeamRun[]
   expandedTeamRunId?: string | null
   selectedTeamTaskId?: string | null
+  teamRunsHasMore?: boolean
+  teamRunsLoadingMore?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -181,6 +188,8 @@ const props = withDefaults(defineProps<Props>(), {
   autoScroll: true,
   hasMore: false,
   loadingOlder: false,
+  teamRunsHasMore: false,
+  teamRunsLoadingMore: false,
 })
 
 const emit = defineEmits<{
@@ -196,6 +205,7 @@ const emit = defineEmits<{
   'team-run-select-task': [task: TeamRunTask]
   'team-run-cancel': [runId: string]
   'team-run-navigate': [route: TeamRunRoute]
+  'team-runs-load-more': []
 }>()
 
 const timelineItems = computed<TeamRunTimelineItem[]>(() => {
@@ -374,6 +384,7 @@ onUnmounted(() => {
   width: min(760px, calc(100% - 32px));
   margin: 8px auto;
 }
+.team-runs-more{display:flex;justify-content:center;padding:8px 0 14px}.team-runs-more button{min-height:32px;padding:5px 12px;border:1px solid var(--mc-border);border-radius:6px;background:var(--mc-bg-elevated);color:#16795a;cursor:pointer}.team-runs-more button:disabled{cursor:wait;opacity:.65}
 
 /* ==================== 空状态 / 欢迎屏 ==================== */
 .empty-state {
