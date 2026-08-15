@@ -58,10 +58,10 @@ export function useTeamRunHistory(options: TeamRunHistoryOptions = {}) {
   const refreshTimers = new Map<string, unknown>()
   const runRevisions = new Map<string, number>()
   const runRequestSequences = new Map<string, number>()
-  const detailRequestSequences = new Map<string, number>()
   let generation = 0
   let revision = 0
   let selectionRevision = 0
+  let detailRequestSequence = 0
   let unsubscribe: (() => void) | null = null
 
   function merge(run: TeamRun) {
@@ -95,13 +95,14 @@ export function useTeamRunHistory(options: TeamRunHistoryOptions = {}) {
     const requestSequence = (runRequestSequences.get(requestKey) ?? 0) + 1
     const requestRevision = runRevisions.get(runId) ?? 0
     runRequestSequences.set(requestKey, requestSequence)
-    const detailRequestSequence = silent ? null : (detailRequestSequences.get(runId) ?? 0) + 1
-    if (detailRequestSequence !== null) detailRequestSequences.set(runId, detailRequestSequence)
+    const requestSelectionRevision = selectionRevision
+    const currentDetailRequest = silent ? null : ++detailRequestSequence
     const isLatestRequest = () => expectedGeneration === generation
       && runRequestSequences.get(requestKey) === requestSequence
     const isLatestDetailRequest = () => !silent
       && expectedGeneration === generation
-      && detailRequestSequences.get(runId) === detailRequestSequence
+      && detailRequestSequence === currentDetailRequest
+      && selectionRevision === requestSelectionRevision
     try {
       if (!silent) {
         detailLoading.value = true
@@ -153,7 +154,7 @@ export function useTeamRunHistory(options: TeamRunHistoryOptions = {}) {
     runs.value = []
     runRevisions.clear()
     runRequestSequences.clear()
-    detailRequestSequences.clear()
+    detailRequestSequence++
     revision = 0
     loading.value = true
     error.value = null
@@ -202,6 +203,8 @@ export function useTeamRunHistory(options: TeamRunHistoryOptions = {}) {
 
   function select(runId: string | null, taskId: string | null = null) {
     selectionRevision++
+    detailLoading.value = false
+    detailError.value = null
     selectedRunId.value = runId
     selectedTaskId.value = taskId
   }
@@ -229,7 +232,7 @@ export function useTeamRunHistory(options: TeamRunHistoryOptions = {}) {
     runs.value = []
     runRevisions.clear()
     runRequestSequences.clear()
-    detailRequestSequences.clear()
+    detailRequestSequence++
     loading.value = false
     error.value = null
     detailLoading.value = false

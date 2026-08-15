@@ -86,6 +86,7 @@
             :assistant-icon="assistantIcon"
             :user-icon="userIcon"
             :show-cursor="showCursorForMessage(item.message)"
+            :readonly="readonly"
             @regenerate="$emit('regenerate', item.message)"
             @rewind="$emit('rewind', item.message)"
             @toggle-thinking="(expanded) => $emit('toggle-thinking', item.message, expanded)"
@@ -176,6 +177,7 @@ interface Props {
   selectedTeamTaskId?: string | null
   teamRunsHasMore?: boolean
   teamRunsLoadingMore?: boolean
+  readonly?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -190,6 +192,7 @@ const props = withDefaults(defineProps<Props>(), {
   loadingOlder: false,
   teamRunsHasMore: false,
   teamRunsLoadingMore: false,
+  readonly: false,
 })
 
 const emit = defineEmits<{

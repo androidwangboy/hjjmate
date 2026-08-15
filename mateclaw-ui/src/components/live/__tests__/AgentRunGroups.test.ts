@@ -62,4 +62,15 @@ describe('AgentRunGroups', () => {
     await nextTick()
     expect(opened).toEqual(['20'])
   })
+
+  it('uses a stable class for the mobile-only run arrow', () => {
+    const host = document.createElement('div')
+    document.body.appendChild(host)
+    const app = createApp(AgentRunGroups, { groups: [group] })
+    app.use(createI18n({ legacy: false, locale: 'en', messages: { en: messages } }))
+    app.mount(host)
+    apps.push(app)
+
+    expect(host.querySelector('.agent-run-group__arrow')).not.toBeNull()
+  })
 })

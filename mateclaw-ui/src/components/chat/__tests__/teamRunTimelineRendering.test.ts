@@ -6,8 +6,11 @@ import type { Message } from '@/types'
 
 vi.mock('../MessageBubble.vue', () => ({
   default: defineComponent({
-    props: ['message'],
-    setup: props => () => h('div', { 'data-message-id': String(props.message.id) }, props.message.content),
+    props: ['message', 'readonly'],
+    setup: props => () => h('div', {
+      'data-message-id': String(props.message.id),
+      'data-readonly': String(Boolean(props.readonly)),
+    }, props.message.content),
   }),
 }))
 vi.mock('../CompressionSummary.vue', () => ({ default: defineComponent({ setup: () => () => h('div') }) }))
@@ -63,6 +66,12 @@ afterEach(() => {
 })
 
 describe('MessageList team run timeline', () => {
+  it('passes readonly state to every message action surface', () => {
+    const host = mount({ messages: [message('1', 'assistant', 'result')], readonly: true })
+
+    expect(host.querySelector('[data-message-id="1"]')?.getAttribute('data-readonly')).toBe('true')
+  })
+
   it('preserves legacy rendering when teamRuns is not provided', () => {
     const host = mount({ messages: [
       message('1', 'user', 'hello'),

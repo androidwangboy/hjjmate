@@ -34,7 +34,7 @@ const { t } = useI18n()
             <TeamRunStatus :status="group.run.status" :started-at="group.run.startedAt" :completed-at="group.run.completedAt" show-duration />
           </span>
           <TeamRunProgress :progress="group.run.progress" compact />
-          <el-icon :size="15"><ArrowRight /></el-icon>
+          <el-icon class="agent-run-group__arrow" :size="15"><ArrowRight /></el-icon>
         </button>
       </header>
       <div class="agent-run-group__lead" style="min-width: 0">
@@ -68,5 +68,5 @@ const { t } = useI18n()
 .agent-run-group__lead { display: grid; grid-template-columns: auto minmax(0,1fr) minmax(0,.6fr); align-items:center; gap: 8px; padding: 7px 10px; border-top: 1px solid var(--mc-border-light); background: rgba(71, 85, 105, 0.035); color: var(--mc-text-tertiary); font-size: 11px; }
 .agent-run-group__lead-name,.agent-run-group__phase{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.agent-run-group__lead-name{color:var(--mc-text-secondary)}.agent-run-group__phase{text-align:right}
 .agent-run-group__empty { margin: 0; padding: 12px; border-top: 1px solid var(--mc-border-light); color: var(--mc-text-tertiary); font-size: 11px; }
-@media(max-width:520px){.agent-run-group__open{grid-template-columns:minmax(0,1fr) auto;gap:8px}.agent-run-group__open>el-icon{display:none}.agent-run-group__lead{grid-template-columns:auto minmax(0,1fr)}.agent-run-group__phase{grid-column:2;text-align:left}.agent-run-group__copy>span{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}}
+@media(max-width:520px){.agent-run-group__open{grid-template-columns:minmax(0,1fr) auto;gap:8px}.agent-run-group__arrow{display:none}.agent-run-group__lead{grid-template-columns:auto minmax(0,1fr)}.agent-run-group__phase{grid-column:2;text-align:left}.agent-run-group__copy>span{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}}
 </style>

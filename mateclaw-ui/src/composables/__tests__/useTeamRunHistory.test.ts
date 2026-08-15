@@ -226,6 +226,35 @@ describe('useTeamRunHistory', () => {
     await pending
     expect(history.selectedRunId.value).toBe('2')
     expect(history.selectedTaskId.value).toBe('task-b')
+    expect(history.detailLoading.value).toBe(false)
+    expect(history.detailError.value).toBeNull()
+  })
+
+  it('keeps detail loading and errors scoped to the currently selected run', async () => {
+    const detailA = deferred<unknown>()
+    const detailB = deferred<unknown>()
+    const get = vi.fn((id: string) => id === '1' ? detailA.promise : detailB.promise)
+    const history = useTeamRunHistory({
+      api: { listByTeam: vi.fn().mockResolvedValue({ data: [
+        { ...run('1', '2026-01-01'), projectionCompleteness: 'summary' },
+        { ...run('2', '2026-01-02'), projectionCompleteness: 'summary' },
+      ] }), get }, subscribe: () => vi.fn(),
+    })
+    await history.open('10')
+
+    history.select('1')
+    const pendingA = history.ensureSelectedRunDetail('1', null, '10')
+    history.select('2')
+    const pendingB = history.ensureSelectedRunDetail('2', null, '10')
+    detailA.reject(new Error('run A failed'))
+    await pendingA
+
+    expect(history.detailLoading.value).toBe(true)
+    expect(history.detailError.value).toBeNull()
+
+    detailB.resolve({ data: { ...run('2', '2026-01-02'), projectionCompleteness: 'full' } })
+    await pendingB
+    expect(history.detailLoading.value).toBe(false)
   })
   it('loads the new paged team history response', async () => {
     const history = useTeamRunHistory({
