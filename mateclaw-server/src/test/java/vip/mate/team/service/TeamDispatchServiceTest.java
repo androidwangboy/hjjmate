@@ -236,7 +236,7 @@ class TeamDispatchServiceTest {
         TeamTaskEntity completed = task(1L, MEMBER_A);
         completed.setStatus(TeamTaskStatus.COMPLETED);
         TeamTaskCommentEntity evidence = new TeamTaskCommentEntity();
-        evidence.setContent("[checkpoint:R300] acknowledged");
+        evidence.setContent("运行台账终点: [checkpoint:R300] acknowledged");
         when(taskService.getTask(1L)).thenReturn(running, completed);
         when(taskService.checkpointTerminalTag(running)).thenReturn("R300");
         when(taskService.listComments(1L)).thenReturn(List.of(evidence));
@@ -390,7 +390,13 @@ class TeamDispatchServiceTest {
         assertTrue(section.contains("[Prerequisite results]"));
         assertTrue(section.contains("pricing collected: 3 competitors"));
         assertTrue(section.contains("prices.xlsx → /api/v1/files/generated/x"));
+        assertTrue(section.contains("Inspect locally: ../generated-files/x"));
+        assertTrue(section.contains("do not guess an HTTP port"));
         assertFalse(section.contains("#2"), "vanished blockers leave no trace");
+
+        assertNull(TeamDispatchService.generatedFileInspectionPath("https://example.com/file"));
+        assertNull(TeamDispatchService.generatedFileInspectionPath(
+                "/api/v1/files/generated/../../secret"));
 
         // No blockers → no section at all.
         StringBuilder plain = new StringBuilder();

@@ -391,15 +391,25 @@ public class TeamTaskService {
      * @return true when the comment was a blocker that failed the task
      */
     @Transactional
-    public boolean addComment(Long taskId, String authorType, String authorId,
-                              String commentType, String content) {
+    public synchronized boolean addComment(Long taskId, String authorType, String authorId,
+                                            String commentType, String content) {
         TeamTaskEntity task = requireTask(taskId);
+        String normalizedType = commentType == null ? COMMENT_NOTE : commentType;
+        String checkpointKey = checkpointEvidenceKey(content);
+        if (COMMENT_NOTE.equals(normalizedType)
+                && checkpointKey != null
+                && checkpointTerminalTag(task) != null
+                && hasCheckpointEvidence(taskId, checkpointKey)) {
+            log.debug("Skipped duplicate checkpoint evidence {} on team task {}",
+                    checkpointKey, taskId);
+            return false;
+        }
         TeamTaskCommentEntity comment = new TeamTaskCommentEntity();
         comment.setTaskId(taskId);
         comment.setTeamId(task.getTeamId());
         comment.setAuthorType(authorType);
         comment.setAuthorId(authorId);
-        comment.setCommentType(commentType == null ? COMMENT_NOTE : commentType);
+        comment.setCommentType(normalizedType);
         comment.setContent(content);
         commentMapper.insert(comment);
         recordEvent(task.getTeamId(), taskId,
@@ -424,18 +434,44 @@ public class TeamTaskService {
                 .orderByAsc(TeamTaskCommentEntity::getCreateTime));
     }
 
-    /** Persist a note once, keyed by an exact stable content value. */
+    /** Persist a note once, using a semantic checkpoint key when present. */
     @Transactional
     public synchronized boolean addCommentOnce(Long taskId, String authorType, String authorId,
                                                String commentType, String content) {
-        Long existing = commentMapper.selectCount(Wrappers.<TeamTaskCommentEntity>lambdaQuery()
-                .eq(TeamTaskCommentEntity::getTaskId, taskId)
-                .eq(TeamTaskCommentEntity::getContent, content));
-        if (existing != null && existing > 0) {
+        String checkpointKey = checkpointEvidenceKey(content);
+        boolean exists = checkpointKey == null
+                ? hasExactComment(taskId, content)
+                : hasCheckpointEvidence(taskId, checkpointKey);
+        if (exists) {
             return false;
         }
         addComment(taskId, authorType, authorId, commentType, content);
         return true;
+    }
+
+    private boolean hasExactComment(Long taskId, String content) {
+        Long existing = commentMapper.selectCount(Wrappers.<TeamTaskCommentEntity>lambdaQuery()
+                .eq(TeamTaskCommentEntity::getTaskId, taskId)
+                .eq(TeamTaskCommentEntity::getContent, content));
+        return existing != null && existing > 0;
+    }
+
+    private boolean hasCheckpointEvidence(Long taskId, String checkpointKey) {
+        Long existing = commentMapper.selectCount(Wrappers.<TeamTaskCommentEntity>lambdaQuery()
+                .eq(TeamTaskCommentEntity::getTaskId, taskId)
+                .like(TeamTaskCommentEntity::getContent, checkpointKey));
+        return existing != null && existing > 0;
+    }
+
+    static String checkpointEvidenceKey(String content) {
+        if (content == null || content.isBlank()) {
+            return null;
+        }
+        Matcher matcher = Pattern.compile("(?i)\\[checkpoint:(R\\d{3,})]\\s*acknowledged")
+                .matcher(content);
+        return matcher.find()
+                ? "[checkpoint:" + matcher.group(1).toUpperCase() + "] acknowledged"
+                : null;
     }
 
     // ==================== timeline events ====================

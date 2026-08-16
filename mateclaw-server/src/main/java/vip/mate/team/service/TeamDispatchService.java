@@ -271,7 +271,8 @@ public class TeamDispatchService {
             if (terminalCheckpoint != null) {
                 String terminalEvidence = "[checkpoint:" + terminalCheckpoint + "] acknowledged";
                 boolean terminalAlreadyAcknowledged = taskService.listComments(current.getId()).stream()
-                        .anyMatch(comment -> terminalEvidence.equals(comment.getContent()));
+                        .anyMatch(comment -> comment.getContent() != null
+                                && comment.getContent().contains(terminalEvidence));
                 if (terminalAlreadyAcknowledged) {
                     List<Long> released = taskService.completeTask(task.getId(), null,
                             truncate(reply, MAX_RESULT_CHARS));
@@ -392,6 +393,11 @@ public class TeamDispatchService {
             for (TeamTaskService.Deliverable file : taskService.listDeliverables(blocker)) {
                 section.append("  File: ").append(file.name()).append(" → ")
                         .append(file.url()).append('\n');
+                String inspectionPath = generatedFileInspectionPath(file.url());
+                if (inspectionPath != null) {
+                    section.append("  Inspect locally: ").append(inspectionPath)
+                            .append(" (do not guess an HTTP port)\n");
+                }
             }
         }
         if (section.isEmpty()) {
@@ -400,6 +406,18 @@ public class TeamDispatchService {
         sb.append("\n[Prerequisite results]\n")
                 .append(truncate(section.toString(), MAX_PREREQ_SECTION_CHARS))
                 .append("Use team_tasks(action=\"get\", taskId=...) for any full record.\n");
+    }
+
+    static String generatedFileInspectionPath(String url) {
+        String prefix = "/api/v1/files/generated/";
+        if (url == null || !url.startsWith(prefix)) {
+            return null;
+        }
+        String fileId = url.substring(prefix.length());
+        if (!fileId.matches("[A-Za-z0-9-]+")) {
+            return null;
+        }
+        return "../generated-files/" + fileId;
     }
 
     /** Push a task event onto the team channel and the lead conversation's stream. */

@@ -435,6 +435,24 @@ class TeamTaskServiceTest {
         verify(commentMapper, times(1)).insert(any(TeamTaskCommentEntity.class));
     }
 
+    @Test
+    @DisplayName("checkpoint notes are deduplicated by their embedded stable key")
+    void checkpointCommentIsSemanticallyIdempotent() {
+        TeamTaskEntity tracker = task(5L, TeamTaskStatus.IN_PROGRESS);
+        tracker.setSubject("R001-R010 共享跟踪检查点");
+        when(taskMapper.selectById(5L)).thenReturn(tracker);
+        when(commentMapper.selectCount(any(LambdaQueryWrapper.class))).thenReturn(1L);
+
+        assertFalse(service.addComment(5L, TeamTaskService.AUTHOR_AGENT, "2",
+                TeamTaskService.COMMENT_NOTE,
+                "[运行台账] R001: [checkpoint:R001] acknowledged"));
+
+        verify(commentMapper, never()).insert(any(TeamTaskCommentEntity.class));
+        assertEquals("[checkpoint:R001] acknowledged",
+                TeamTaskService.checkpointEvidenceKey(
+                        "[运行台账] [CHECKPOINT:r001] acknowledged"));
+    }
+
     // ==================== circuit breaker ====================
 
     @Test
