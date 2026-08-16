@@ -777,6 +777,7 @@ function onBoardEvent(e: { event: string; data: Record<string, unknown> }) {
 
 function startEventSubscription(teamId: string) {
   stopEventSubscription()
+  if (document.hidden) return
   unsubscribeEvents = subscribeTeamEvents(teamId, onBoardEvent)
 }
 
@@ -795,12 +796,30 @@ let pollTimer: ReturnType<typeof setInterval> | null = null
 
 function startPolling() {
   stopPolling()
+  if (document.hidden) return
   pollTimer = setInterval(() => {
     const team = store.currentTeam
     if (team && store.hasActiveTasks) {
       store.fetchTasks(team.team.id)
     }
   }, 3000)
+}
+
+/**
+ * A team SSE stream occupies one HTTP/1.1 connection for the life of the
+ * page. Pause background tabs so several open team pages cannot consume all
+ * same-origin connection slots and starve ordinary board API requests.
+ */
+function handleVisibilityChange() {
+  const team = store.currentTeam
+  if (document.hidden || !team) {
+    stopPolling()
+    stopEventSubscription()
+    return
+  }
+  startPolling()
+  startEventSubscription(String(team.team.id))
+  void store.fetchTasks(String(team.team.id))
 }
 
 function stopPolling() {
@@ -895,6 +914,7 @@ watch(
 )
 
 onMounted(() => {
+  document.addEventListener('visibilitychange', handleVisibilityChange)
   store.fetchTeams()
   if (agentStore.agents.length === 0) {
     agentStore.fetchAgents()
@@ -902,6 +922,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
   stopPolling()
   stopEventSubscription()
 })

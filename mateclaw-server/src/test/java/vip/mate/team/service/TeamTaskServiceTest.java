@@ -421,6 +421,20 @@ class TeamTaskServiceTest {
         verify(taskMapper, never()).update(isNull(), any());
     }
 
+    @Test
+    @DisplayName("checkpoint evidence note is inserted only when its stable key is absent")
+    void addCommentOnceIsIdempotent() {
+        when(commentMapper.selectCount(any(LambdaQueryWrapper.class))).thenReturn(1L, 0L);
+        when(taskMapper.selectById(5L)).thenReturn(task(5L, TeamTaskStatus.COMPLETED));
+
+        assertFalse(service.addCommentOnce(5L, TeamTaskService.AUTHOR_SYSTEM, "bridge",
+                TeamTaskService.COMMENT_NOTE, "[checkpoint:R001] acknowledged"));
+        assertTrue(service.addCommentOnce(5L, TeamTaskService.AUTHOR_SYSTEM, "bridge",
+                TeamTaskService.COMMENT_NOTE, "[checkpoint:R002] acknowledged"));
+
+        verify(commentMapper, times(1)).insert(any(TeamTaskCommentEntity.class));
+    }
+
     // ==================== circuit breaker ====================
 
     @Test

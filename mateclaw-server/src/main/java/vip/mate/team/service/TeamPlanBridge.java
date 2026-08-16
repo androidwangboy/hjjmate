@@ -249,8 +249,19 @@ public class TeamPlanBridge {
      * Normal status questions retain the detailed board snapshot.
      */
     public ParkedPlanState checkParkedPlan(String conversationId, String currentMessage) {
+        String checkpointTag = checkpointTagOf(currentMessage);
         PlanEntity plan = planningService.findDelegatedPlan(conversationId);
         if (plan == null) {
+            if (checkpointTag != null) {
+                Optional<TeamRunEntity> latest = runService.findLatestConversationRun(conversationId);
+                if (latest.isPresent()) {
+                    List<TeamTaskEntity> tasks = taskService.listTasksByRun(latest.get().getId());
+                    if (!tasks.isEmpty()) {
+                        recordCheckpointEvidence(latest.get().getTeamId(), tasks, checkpointTag);
+                        return new InFlight(buildCheckpointText(tasks, checkpointTag));
+                    }
+                }
+            }
             return new None();
         }
         Optional<AgentTeamEntity> teamOpt = leadTeam(parseAgentId(plan.getAgentId()));
@@ -270,6 +281,10 @@ public class TeamPlanBridge {
         List<String> steps = planningService.getSubPlans(plan.getId()).stream()
                 .map(sub -> sub.getDescription())
                 .toList();
+        if (checkpointTag != null) {
+            recordCheckpointEvidence(teamOpt.get().getId(), tasks, checkpointTag);
+            return new InFlight(buildCheckpointText(tasks, checkpointTag));
+        }
         if (!allTerminal) {
             return new InFlight(buildProgressText(tasks, currentMessage));
         }
@@ -352,24 +367,7 @@ public class TeamPlanBridge {
     private String buildProgressText(List<TeamTaskEntity> tasks, String currentMessage) {
         String checkpointTag = checkpointTagOf(currentMessage);
         if (checkpointTag != null) {
-            long completed = tasks.stream()
-                    .filter(task -> TeamTaskStatus.COMPLETED.equals(task.getStatus()))
-                    .count();
-            TeamTaskEntity active = tasks.stream()
-                    .filter(task -> !TeamTaskStatus.isTerminal(task.getStatus()))
-                    .findFirst()
-                    .orElse(tasks.get(tasks.size() - 1));
-            StringBuilder compact = new StringBuilder(checkpointTag)
-                    .append("｜执行中 ").append(completed).append('/').append(tasks.size())
-                    .append("｜#").append(active.getTaskNumber()).append(' ')
-                    .append(active.getStatus());
-            if (active.getProgressPercent() != null) {
-                compact.append(' ').append(active.getProgressPercent()).append('%');
-            }
-            if ("R100".equalsIgnoreCase(checkpointTag)) {
-                compact.append("（已完成第100轮检查点）");
-            }
-            return compact.toString();
+            return buildCheckpointText(tasks, checkpointTag);
         }
         StringBuilder sb = new StringBuilder("计划仍在团队任务板上执行中：\n");
         for (TeamTaskEntity task : tasks) {
@@ -388,6 +386,48 @@ public class TeamPlanBridge {
         }
         sb.append("全部完成后我会汇总；如需调整可在团队任务板上操作。");
         return sb.toString();
+    }
+
+    private String buildCheckpointText(List<TeamTaskEntity> tasks, String checkpointTag) {
+        long completed = tasks.stream()
+                .filter(task -> TeamTaskStatus.COMPLETED.equals(task.getStatus()))
+                .count();
+        boolean allTerminal = tasks.stream().allMatch(task -> TeamTaskStatus.isTerminal(task.getStatus()));
+        TeamTaskEntity focus = tasks.stream()
+                .filter(task -> !TeamTaskStatus.isTerminal(task.getStatus()))
+                .findFirst()
+                .orElse(tasks.get(tasks.size() - 1));
+        StringBuilder compact = new StringBuilder(checkpointTag)
+                .append(allTerminal ? "｜已完成 " : "｜执行中 ")
+                .append(completed).append('/').append(tasks.size())
+                .append("｜#").append(focus.getTaskNumber()).append(' ')
+                .append(focus.getStatus());
+        if (focus.getProgressPercent() != null) {
+            compact.append(' ').append(focus.getProgressPercent()).append('%');
+        }
+        if ("R100".equalsIgnoreCase(checkpointTag)) {
+            compact.append("（已完成第100轮检查点）");
+        }
+        return compact.toString();
+    }
+
+    private void recordCheckpointEvidence(Long teamId, List<TeamTaskEntity> tasks,
+                                          String checkpointTag) {
+        TeamTaskEntity tracker = taskService.findCheckpointTracker(teamId).orElseGet(() -> tasks.stream()
+                .filter(this::isCheckpointTracker)
+                .findFirst()
+                .orElse(tasks.get(tasks.size() - 1)));
+        String content = "[checkpoint:" + checkpointTag + "] acknowledged";
+        taskService.addCommentOnce(tracker.getId(), TeamTaskService.AUTHOR_SYSTEM,
+                "team-plan-bridge", TeamTaskService.COMMENT_NOTE, content);
+    }
+
+    private boolean isCheckpointTracker(TeamTaskEntity task) {
+        String text = (task.getSubject() == null ? "" : task.getSubject()) + " "
+                + (task.getDescription() == null ? "" : task.getDescription());
+        String lower = text.toLowerCase();
+        return text.contains("检查点") || text.contains("共享跟踪")
+                || lower.contains("checkpoint") || lower.contains("r001-r100");
     }
 
     static String checkpointTagOf(String message) {

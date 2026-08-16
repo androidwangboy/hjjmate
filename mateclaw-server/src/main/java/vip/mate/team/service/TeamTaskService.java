@@ -396,6 +396,20 @@ public class TeamTaskService {
                 .orderByAsc(TeamTaskCommentEntity::getCreateTime));
     }
 
+    /** Persist a note once, keyed by an exact stable content value. */
+    @Transactional
+    public synchronized boolean addCommentOnce(Long taskId, String authorType, String authorId,
+                                               String commentType, String content) {
+        Long existing = commentMapper.selectCount(Wrappers.<TeamTaskCommentEntity>lambdaQuery()
+                .eq(TeamTaskCommentEntity::getTaskId, taskId)
+                .eq(TeamTaskCommentEntity::getContent, content));
+        if (existing != null && existing > 0) {
+            return false;
+        }
+        addComment(taskId, authorType, authorId, commentType, content);
+        return true;
+    }
+
     // ==================== timeline events ====================
 
     /** Timeline detail cap, matching the column width. */
@@ -640,6 +654,25 @@ public class TeamTaskService {
                 .eq(TeamTaskEntity::getTeamId, teamId)
                 .like(TeamTaskEntity::getMetadata, "\"planId\":\"" + planId + "\"")
                 .orderByAsc(TeamTaskEntity::getCreateTime));
+    }
+
+    /**
+     * Locate the team's dedicated long-running checkpoint tracker, even when
+     * the current checkpoint belongs to a later run. Highest priority and
+     * newest creation win when historical tests left more than one candidate.
+     */
+    public java.util.Optional<TeamTaskEntity> findCheckpointTracker(Long teamId) {
+        return java.util.Optional.ofNullable(taskMapper.selectOne(
+                Wrappers.<TeamTaskEntity>lambdaQuery()
+                        .eq(TeamTaskEntity::getTeamId, teamId)
+                        .and(candidate -> candidate
+                                .like(TeamTaskEntity::getSubject, "共享跟踪")
+                                .or().like(TeamTaskEntity::getDescription, "R001-R100")
+                                .or().like(TeamTaskEntity::getSubject, "checkpoint")
+                                .or().like(TeamTaskEntity::getDescription, "checkpoint"))
+                        .orderByDesc(TeamTaskEntity::getPriority)
+                        .orderByDesc(TeamTaskEntity::getCreateTime)
+                        .last("LIMIT 1")));
     }
 
     public List<TeamTaskEntity> listTasks(Long teamId, List<String> statuses) {

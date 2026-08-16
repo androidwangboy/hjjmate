@@ -100,7 +100,8 @@ export const useTeamStore = defineStore('team', () => {
    * loaded size, so a poll/event refresh never collapses a column the user
    * has extended with load-more.
    */
-  async function fetchTasks(teamId: string, expectedGeneration = teamGeneration) {
+  async function fetchTasks(teamId: string, expectedGeneration = teamGeneration,
+                            retryOnTimeout = true) {
     const requestSequence = ++boardRequestSequence
     boardLoading.value = true
     try {
@@ -120,6 +121,17 @@ export const useTeamStore = defineStore('team', () => {
       closedTasks.value = closed.data || []
       taskStats.value = stats.data || {}
     } catch (e) {
+      const message = e instanceof Error ? e.message : String(e)
+      const timedOut = (e as { code?: string } | null)?.code === 'ECONNABORTED'
+        || /timeout/i.test(message)
+      if (retryOnTimeout
+        && timedOut
+        && expectedGeneration === teamGeneration
+        && requestSequence === boardRequestSequence
+        && String(currentTeam.value?.team.id ?? '') === teamId) {
+        await fetchTasks(teamId, expectedGeneration, false)
+        return
+      }
       if (expectedGeneration === teamGeneration && requestSequence === boardRequestSequence) {
         console.error('Failed to fetch team tasks', e)
       }
@@ -163,7 +175,10 @@ export const useTeamStore = defineStore('team', () => {
   }
 
   async function setTaskRunId(teamId: string, runId: string | null) {
-    if (taskRunId.value === runId) return
+    if (taskRunId.value === runId) {
+      await fetchTasks(teamId)
+      return
+    }
     taskRunId.value = runId
     activeTasks.value = []
     completedTasks.value = []

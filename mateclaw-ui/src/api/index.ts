@@ -951,6 +951,8 @@ export interface TeamTaskEvent {
   createTime?: string
 }
 
+const TEAM_TASK_READ_TIMEOUT_MS = 15_000
+
 export const teamApi = {
   list: () => http.get('/teams'),
   get: (id: string) => http.get(`/teams/${id}`),
@@ -968,6 +970,7 @@ export const teamApi = {
   removeMember: (id: string, agentId: string) => http.delete(`/teams/${id}/members/${agentId}`),
   listTasks: (id: string, status?: string[], opts?: { limit?: number; offset?: number; runId?: string }) =>
     http.get(`/teams/${id}/tasks`, {
+      timeout: TEAM_TASK_READ_TIMEOUT_MS,
       params: {
         ...(status?.length ? { status: status.join(',') } : {}),
         ...(opts?.limit != null ? { limit: opts.limit } : {}),
@@ -976,9 +979,12 @@ export const teamApi = {
       },
     }),
   taskStats: (id: string, runId?: string) => http.get(`/teams/${id}/tasks/stats`, {
+    timeout: TEAM_TASK_READ_TIMEOUT_MS,
     params: runId ? { runId } : {},
   }),
-  getTask: (id: string, taskId: string) => http.get(`/teams/${id}/tasks/${taskId}`),
+  getTask: (id: string, taskId: string) => http.get(`/teams/${id}/tasks/${taskId}`, {
+    timeout: TEAM_TASK_READ_TIMEOUT_MS,
+  }),
   createTask: (
     id: string,
     data: {
@@ -1081,8 +1087,10 @@ export interface TeamRun {
   tasks: TeamRunTask[]
 }
 
+const TEAM_RUN_READ_TIMEOUT_MS = 15_000
+
 export const teamRunApi = {
-  get: (runId: string) => http.get(`/team-runs/${runId}`),
+  get: (runId: string) => http.get(`/team-runs/${runId}`, { timeout: TEAM_RUN_READ_TIMEOUT_MS }),
   listByTeamPage: (
     teamId: string,
     options: { activeOnly?: boolean; cursor?: string; limit?: number } = {},
@@ -1092,7 +1100,7 @@ export const teamRunApi = {
     }
     if (options.activeOnly) params.activeOnly = true
     if (options.cursor) params.cursor = options.cursor
-    return http.get(`/teams/${teamId}/runs/page`, { params })
+    return http.get(`/teams/${teamId}/runs/page`, { params, timeout: TEAM_RUN_READ_TIMEOUT_MS })
   },
   listByConversationPage: (
     conversationId: string,
@@ -1100,7 +1108,10 @@ export const teamRunApi = {
   ) => {
     const params: { cursor?: string; limit: number } = { limit: options.limit ?? 20 }
     if (options.cursor) params.cursor = options.cursor
-    return http.get(`/conversations/${encId(conversationId)}/team-runs/page`, { params })
+    return http.get(`/conversations/${encId(conversationId)}/team-runs/page`, {
+      params,
+      timeout: TEAM_RUN_READ_TIMEOUT_MS,
+    })
   },
   listByTeam: (teamId: string, activeOnly = false, cursor?: string, limit = 30) => {
     const query = new URLSearchParams()

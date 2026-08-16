@@ -520,7 +520,7 @@ public class PlanGenerationNode implements NodeAction {
                         .build();
             }
             if (parked instanceof TeamPlanBridge.InFlight inFlight) {
-                log.info("[PlanGeneration] Delegated plan still in flight — answering with progress");
+                log.info("[PlanGeneration] Answering from delegated team state without triage LLM");
                 if (streamingHelper != null) {
                     streamingHelper.broadcastContent(conversationId, inFlight.progressText());
                 }
@@ -686,7 +686,8 @@ public class PlanGenerationNode implements NodeAction {
 
             String llmResponse = result.text();
             log.info("[PlanGeneration] Triage completed in {}ms", triageMs);
-            log.debug("[PlanGeneration] LLM response: {}", llmResponse);
+            log.debug("[PlanGeneration] LLM response received ({} chars)",
+                    llmResponse == null ? 0 : llmResponse.length());
 
             // D-6: emit triage perf summary
             events.add(GraphEventPublisher.perfSummary("triage", Map.of(
@@ -695,7 +696,17 @@ public class PlanGenerationNode implements NodeAction {
                     "completion_tokens", result.completionTokens()
             )));
 
-            TriageResult triage = converter.convert(llmResponse);
+            TriageResult triage;
+            if (!StringUtils.hasText(llmResponse)) {
+                // An upstream model can occasionally finish without content.
+                // Treat it as a recoverable single-step route, not a parser
+                // exception (and therefore not a false backend ERROR).
+                log.warn("[PlanGeneration] Triage returned empty content; using single-step fallback");
+                triage = new TriageResult(true, null, "single_step",
+                        List.of(persistGoal), null, null);
+            } else {
+                triage = converter.convert(llmResponse);
+            }
             boolean needsPlanning = triage != null && triage.needsPlanning();
 
             if (!needsPlanning) {
