@@ -654,8 +654,15 @@ public class TeamTaskService {
      */
     public List<TeamTaskEntity> listTasks(Long teamId, List<String> statuses,
                                           Integer limit, Integer offset) {
+        return listTasks(teamId, statuses, limit, offset, null);
+    }
+
+    /** Board query optionally scoped to one run to avoid mixing history. */
+    public List<TeamTaskEntity> listTasks(Long teamId, List<String> statuses,
+                                          Integer limit, Integer offset, Long runId) {
         return taskMapper.selectList(Wrappers.<TeamTaskEntity>lambdaQuery()
                 .eq(TeamTaskEntity::getTeamId, teamId)
+                .eq(runId != null, TeamTaskEntity::getRunId, runId)
                 .in(statuses != null && !statuses.isEmpty(), TeamTaskEntity::getStatus, statuses)
                 .orderByDesc(TeamTaskEntity::getPriority)
                 .orderByDesc(TeamTaskEntity::getCreateTime)
@@ -666,10 +673,15 @@ public class TeamTaskService {
 
     /** Per-status task counts for the board header, computed in the database. */
     public Map<String, Long> countByStatus(Long teamId) {
+        return countByStatus(teamId, null);
+    }
+
+    public Map<String, Long> countByStatus(Long teamId, Long runId) {
         Map<String, Long> counts = new HashMap<>();
         taskMapper.selectMaps(Wrappers.<TeamTaskEntity>query()
                         .select("status", "count(*) as cnt")
                         .eq("team_id", teamId)
+                        .eq(runId != null, "run_id", runId)
                         .eq("deleted", 0)
                         .groupBy("status"))
                 .forEach(row -> counts.put(String.valueOf(row.get("status")),

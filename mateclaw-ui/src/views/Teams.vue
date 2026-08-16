@@ -97,6 +97,18 @@
                   @click="setActiveTab('members')"
                 >{{ t('teams.members') }}</button>
               </div>
+              <select
+                v-if="activeTab === 'board'"
+                class="form-input board-run-filter"
+                :aria-label="t('teams.boardScope')"
+                :value="store.taskRunId || ''"
+                @change="changeBoardRunFilter"
+              >
+                <option value="">{{ t('teams.boardAllRuns') }}</option>
+                <option v-for="run in runHistory.runs.value" :key="run.id" :value="run.id">
+                  {{ run.title }}
+                </option>
+              </select>
               <button
                 v-if="activeTab === 'board'"
                 class="btn-primary"
@@ -175,6 +187,10 @@
                   >
                     <div class="task-card__progress-bar" :style="{ width: vo.task.progressPercent + '%' }"></div>
                   </div>
+                  <div
+                    v-if="vo.task.status === 'in_progress' && vo.task.progressPercent === 100"
+                    class="task-card__settling"
+                  >{{ t('teams.status.settling') }}</div>
                 </div>
                 <button
                   v-if="col.hasMore"
@@ -828,6 +844,8 @@ watch(
         if (!routeIsCurrent()) return
         await runHistory.open(state.teamId)
         if (!routeIsCurrent()) return
+        await store.setTaskRunId(state.teamId, runHistory.runs.value[0]?.id ?? null)
+        if (!routeIsCurrent()) return
       }
       activeTab.value = state.view ?? 'runs'
       runHistory.select(reconciliation.selectedRunId, reconciliation.selectedTaskId)
@@ -894,11 +912,12 @@ async function openTeam(teamId: string) {
   try {
     await store.openTeam(teamId)
     await runHistory.open(teamId)
+    await store.setTaskRunId(teamId, runHistory.runs.value[0]?.id ?? null)
     activeTab.value = 'runs'
     runHistory.select(null)
     await router.push({ path: '/teams', query: buildTeamsRouteQuery(teamId) })
   } catch (e: any) {
-    ElMessage.error(e?.message || 'failed')
+    ElMessage.error(e?.response?.data?.msg || e?.msg || e?.message || t('common.failed'))
   }
 }
 
@@ -947,6 +966,12 @@ function refreshBoard() {
     return store.fetchTasks(store.currentTeam.team.id)
   }
   return Promise.resolve()
+}
+
+async function changeBoardRunFilter(event: Event) {
+  if (!store.currentTeam) return
+  const value = (event.target as HTMLSelectElement).value || null
+  await store.setTaskRunId(String(store.currentTeam.team.id), value)
 }
 
 function refreshCurrentView() {
@@ -1610,6 +1635,11 @@ async function cancelTask() {
   color: var(--mc-text-primary);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
+.board-run-filter {
+  width: auto;
+  max-width: 220px;
+  flex: none;
+}
 
 /* ==================== kanban board ==================== */
 
@@ -1775,6 +1805,11 @@ async function cancelTask() {
   border-radius: inherit;
   background: var(--mc-primary);
   transition: width 0.4s ease;
+}
+.task-card__settling {
+  margin-top: 5px;
+  color: var(--mc-text-tertiary);
+  font-size: 11px;
 }
 
 /* ==================== members panel ==================== */

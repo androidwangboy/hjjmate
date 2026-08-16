@@ -122,6 +122,18 @@ class TeamPlanBridgeTest {
         assertNull(bridge.resolveMembers(team, List.of("s1", "s2"), null));
     }
 
+    @Test
+    @DisplayName("explicitly requested workspace agents missing from the team are reported")
+    void reportsNamedAgentsOutsideRoster() {
+        AgentEntity general = agent(4L, "通用助手");
+
+        assertEquals(List.of("通用助手"), bridge.namedAgentsOutsideRoster(
+                team, "请让写手、分析师和通用助手共同完成", List.of(
+                        agent(WRITER_ID, "写手"), agent(ANALYST_ID, "分析师"), general)));
+        assertTrue(bridge.namedAgentsOutsideRoster(
+                team, "请让写手和分析师共同完成", List.of(general)).isEmpty());
+    }
+
     // ==================== hand-off ====================
 
     @Test
@@ -272,6 +284,26 @@ class TeamPlanBridgeTest {
         TeamPlanBridge.InFlight inFlight = assertInstanceOf(TeamPlanBridge.InFlight.class, state);
         assertTrue(inFlight.progressText().contains("in_progress"));
         verify(planningService, never()).updateSubPlanResult(any(), anyInt(), anyString());
+    }
+
+    @Test
+    @DisplayName("checkpoint status requests get a single-line deterministic response")
+    void compactCheckpointProgress() {
+        parkedPlan();
+        TeamTaskEntity completed = task(101L, 46, 0, TeamTaskStatus.COMPLETED);
+        TeamTaskEntity active = task(102L, 47, 1, TeamTaskStatus.IN_PROGRESS);
+        active.setProgressPercent(80);
+        when(taskService.listTasksByPlan(TEAM_ID, PLAN_ID)).thenReturn(List.of(completed, active));
+
+        TeamPlanBridge.InFlight state = assertInstanceOf(TeamPlanBridge.InFlight.class,
+                bridge.checkParkedPlan(CONV,
+                        "R100/100 最终检查点：仅用一行回复，并确认已连续完成100轮"));
+
+        assertEquals("R100｜执行中 1/2｜#47 in_progress 80%（已完成第100轮检查点）",
+                state.progressText());
+        assertFalse(state.progressText().contains("\n"));
+        assertEquals("R002", TeamPlanBridge.checkpointTagOf("R002/100 checkpoint"));
+        assertNull(TeamPlanBridge.checkpointTagOf("R002 ordinary status"));
     }
 
     @Test

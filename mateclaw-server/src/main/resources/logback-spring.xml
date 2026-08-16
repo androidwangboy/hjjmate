@@ -2,7 +2,10 @@
 <configuration scan="true" scanPeriod="30 seconds">
 
     <!-- ======================== 属性定义 ======================== -->
-    <property name="LOG_HOME" value="./logs"/>
+    <!-- Override with MATECLAW_LOG_HOME so IDE, CLI and packaged launches
+         converge on one explicit directory instead of silently writing to
+         different cwd-relative locations. -->
+    <property name="LOG_HOME" value="${MATECLAW_LOG_HOME:-./logs}"/>
     <property name="APP_NAME" value="mateclaw"/>
     <!-- 保留天数 -->
     <property name="MAX_HISTORY" value="30"/>

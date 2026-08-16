@@ -26,7 +26,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Bridges the Plan-Execute graph onto the team task board. When a plan's
@@ -51,6 +54,7 @@ public class TeamPlanBridge {
 
     /** Task subject cap; the full step text rides in the description. */
     static final int SUBJECT_MAX_CHARS = 120;
+    private static final Pattern CHECKPOINT_TAG = Pattern.compile("(?i)(?:^|\\b)(R\\d{3})(?:\\b|/)");
 
     private final TeamService teamService;
     private final TeamTaskService taskService;
@@ -113,6 +117,29 @@ public class TeamPlanBridge {
             ids.add(id);
         }
         return ids;
+    }
+
+    /**
+     * Detect enabled workspace agents explicitly named by the user but absent
+     * from this team. Silently substituting another member violates the
+     * requested roster and makes team runs look successful when a participant
+     * never took part.
+     */
+    public List<String> namedAgentsOutsideRoster(AgentTeamEntity team, String goal,
+                                                  List<AgentEntity> workspaceAgents) {
+        if (goal == null || goal.isBlank() || workspaceAgents == null || workspaceAgents.isEmpty()) {
+            return List.of();
+        }
+        Set<Long> memberIds = teamService.listMembers(team.getId()).stream()
+                .map(AgentTeamMemberEntity::getAgentId)
+                .collect(java.util.stream.Collectors.toSet());
+        return workspaceAgents.stream()
+                .filter(agent -> agent.getId() != null && !memberIds.contains(agent.getId()))
+                .filter(agent -> agent.getName() != null && !agent.getName().isBlank())
+                .filter(agent -> goal.contains(agent.getName()))
+                .map(AgentEntity::getName)
+                .distinct()
+                .toList();
     }
 
     // ==================== hand-off ====================
@@ -214,6 +241,14 @@ public class TeamPlanBridge {
      * progress snapshot.
      */
     public ParkedPlanState checkParkedPlan(String conversationId) {
+        return checkParkedPlan(conversationId, null);
+    }
+
+    /**
+     * Variant that can honor a user's compact checkpoint response contract.
+     * Normal status questions retain the detailed board snapshot.
+     */
+    public ParkedPlanState checkParkedPlan(String conversationId, String currentMessage) {
         PlanEntity plan = planningService.findDelegatedPlan(conversationId);
         if (plan == null) {
             return new None();
@@ -236,7 +271,7 @@ public class TeamPlanBridge {
                 .map(sub -> sub.getDescription())
                 .toList();
         if (!allTerminal) {
-            return new InFlight(buildProgressText(tasks));
+            return new InFlight(buildProgressText(tasks, currentMessage));
         }
         List<String> results = settle(plan.getId(), tasks);
         finalizeRunWithFallback(teamOpt.get().getWorkspaceId(), tasks, results);
@@ -314,7 +349,28 @@ public class TeamPlanBridge {
         return sb.toString();
     }
 
-    private String buildProgressText(List<TeamTaskEntity> tasks) {
+    private String buildProgressText(List<TeamTaskEntity> tasks, String currentMessage) {
+        String checkpointTag = checkpointTagOf(currentMessage);
+        if (checkpointTag != null) {
+            long completed = tasks.stream()
+                    .filter(task -> TeamTaskStatus.COMPLETED.equals(task.getStatus()))
+                    .count();
+            TeamTaskEntity active = tasks.stream()
+                    .filter(task -> !TeamTaskStatus.isTerminal(task.getStatus()))
+                    .findFirst()
+                    .orElse(tasks.get(tasks.size() - 1));
+            StringBuilder compact = new StringBuilder(checkpointTag)
+                    .append("｜执行中 ").append(completed).append('/').append(tasks.size())
+                    .append("｜#").append(active.getTaskNumber()).append(' ')
+                    .append(active.getStatus());
+            if (active.getProgressPercent() != null) {
+                compact.append(' ').append(active.getProgressPercent()).append('%');
+            }
+            if ("R100".equalsIgnoreCase(checkpointTag)) {
+                compact.append("（已完成第100轮检查点）");
+            }
+            return compact.toString();
+        }
         StringBuilder sb = new StringBuilder("计划仍在团队任务板上执行中：\n");
         for (TeamTaskEntity task : tasks) {
             sb.append("- #").append(task.getTaskNumber()).append(' ')
@@ -332,6 +388,18 @@ public class TeamPlanBridge {
         }
         sb.append("全部完成后我会汇总；如需调整可在团队任务板上操作。");
         return sb.toString();
+    }
+
+    static String checkpointTagOf(String message) {
+        if (message == null || message.isBlank()) {
+            return null;
+        }
+        String lower = message.toLowerCase();
+        if (!message.contains("检查点") && !lower.contains("checkpoint")) {
+            return null;
+        }
+        Matcher matcher = CHECKPOINT_TAG.matcher(message);
+        return matcher.find() ? matcher.group(1).toUpperCase() : null;
     }
 
     // ==================== helpers ====================

@@ -89,4 +89,21 @@ describe('useTeamStore request generation', () => {
     expect(store.tasks).toEqual([])
     expect(store.taskStats).toEqual({})
   })
+
+  it('scopes every board request to the selected run', async () => {
+    api.get.mockResolvedValue(detail('A'))
+    api.listTasks.mockResolvedValue({ data: [] })
+    api.taskStats.mockResolvedValue({ data: {} })
+    const store = useTeamStore()
+    await store.openTeam('A')
+    vi.clearAllMocks()
+
+    await store.setTaskRunId('A', '9007199254740993')
+
+    expect(api.listTasks).toHaveBeenCalledTimes(3)
+    for (const call of api.listTasks.mock.calls) {
+      expect(call[2]).toMatchObject({ runId: '9007199254740993' })
+    }
+    expect(api.taskStats).toHaveBeenCalledWith('A', '9007199254740993')
+  })
 })
