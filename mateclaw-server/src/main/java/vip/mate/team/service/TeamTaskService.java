@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Shared task board service. All status transitions are guarded conditional
@@ -42,6 +44,9 @@ import java.util.Set;
 @Service
 @RequiredArgsConstructor
 public class TeamTaskService {
+
+    private static final Pattern CHECKPOINT_RANGE = Pattern.compile(
+            "(?i)R(\\d{3})\\s*[-–—]\\s*R(\\d{3})");
 
     /** Execution lease length; renewed by the runner while the member works. */
     static final int LOCK_MINUTES = 60;
@@ -177,6 +182,7 @@ public class TeamTaskService {
                 .eq(TeamTaskEntity::getStatus, TeamTaskStatus.PENDING)
                 .set(TeamTaskEntity::getStatus, TeamTaskStatus.IN_PROGRESS)
                 .set(TeamTaskEntity::getOwnerAgentId, agentId)
+                .set(TeamTaskEntity::getReason, null)
                 .set(TeamTaskEntity::getLockExpiresAt, newLease())) == 1;
         if (assigned) {
             projectTask(taskId);
@@ -323,6 +329,28 @@ public class TeamTaskService {
             projectTask(taskId);
         }
         return retried;
+    }
+
+    /**
+     * Requeue an automatically dispatched task whose member result is unusable.
+     * Unlike a manual retry this deliberately preserves {@code dispatchCount},
+     * so the existing dispatch circuit breaker remains the hard upper bound.
+     */
+    public boolean requeueUnusableResult(Long taskId, String reason) {
+        TeamTaskEntity task = taskMapper.selectById(taskId);
+        boolean requeued = taskMapper.update(null, Wrappers.<TeamTaskEntity>lambdaUpdate()
+                .eq(TeamTaskEntity::getId, taskId)
+                .eq(TeamTaskEntity::getStatus, TeamTaskStatus.IN_PROGRESS)
+                .set(TeamTaskEntity::getStatus, TeamTaskStatus.PENDING)
+                .set(TeamTaskEntity::getOwnerAgentId, null)
+                .set(TeamTaskEntity::getLockExpiresAt, null)
+                .set(TeamTaskEntity::getReason, reason)) == 1;
+        if (requeued) {
+            recordEvent(task == null ? null : task.getTeamId(), taskId,
+                    TeamTaskEventEntity.RETRIED, AUTHOR_SYSTEM, null, reason);
+            projectTask(taskId);
+        }
+        return requeued;
     }
 
     // ==================== progress / comments ====================
@@ -667,12 +695,31 @@ public class TeamTaskService {
                         .eq(TeamTaskEntity::getTeamId, teamId)
                         .and(candidate -> candidate
                                 .like(TeamTaskEntity::getSubject, "共享跟踪")
-                                .or().like(TeamTaskEntity::getDescription, "R001-R100")
-                                .or().like(TeamTaskEntity::getSubject, "checkpoint")
-                                .or().like(TeamTaskEntity::getDescription, "checkpoint"))
+                                .or().like(TeamTaskEntity::getSubject, "检查点")
+                                .or().like(TeamTaskEntity::getSubject, "checkpoint"))
                         .orderByDesc(TeamTaskEntity::getPriority)
                         .orderByDesc(TeamTaskEntity::getCreateTime)
                         .last("LIMIT 1")));
+    }
+
+    /** Terminal checkpoint tag declared by a long-running tracker, e.g. R300. */
+    public String checkpointTerminalTag(TeamTaskEntity task) {
+        if (task == null) {
+            return null;
+        }
+        String description = task.getDescription() == null ? "" : task.getDescription();
+        int contextStart = description.indexOf("[Plan context]");
+        if (contextStart >= 0) {
+            description = description.substring(0, contextStart);
+        }
+        String text = (task.getSubject() == null ? "" : task.getSubject()) + " " + description;
+        String lower = text.toLowerCase();
+        if (!text.contains("共享跟踪") && !text.contains("检查点")
+                && !lower.contains("checkpoint")) {
+            return null;
+        }
+        Matcher matcher = CHECKPOINT_RANGE.matcher(text);
+        return matcher.find() ? "R" + matcher.group(2) : null;
     }
 
     public List<TeamTaskEntity> listTasks(Long teamId, List<String> statuses) {

@@ -7,6 +7,7 @@ import vip.mate.agent.AgentService;
 import vip.mate.channel.web.ChatStreamTracker;
 import vip.mate.team.model.AgentTeamEntity;
 import vip.mate.team.model.TeamTaskEntity;
+import vip.mate.team.model.TeamTaskCommentEntity;
 import vip.mate.team.model.TeamTaskStatus;
 import vip.mate.workspace.conversation.ConversationService;
 
@@ -151,6 +152,100 @@ class TeamDispatchServiceTest {
         verify(taskService).completeTask(1L, null, "analysis finished");
         verify(eventChannel).publishTaskEvent(any(), eq("team_task_completed"), any());
         verify(announceService).announceTaskSettled(done);
+    }
+
+    @Test
+    @DisplayName("a fallback final answer is requeued instead of being reported as completed")
+    void settleFallbackRequeues() {
+        TeamTaskEntity running = task(1L, MEMBER_A);
+        running.setStatus(TeamTaskStatus.IN_PROGRESS);
+        running.setDispatchCount(1);
+        when(taskService.getTask(1L)).thenReturn(running);
+        when(taskService.requeueUnusableResult(1L, "member response generation failed"))
+                .thenReturn(true);
+
+        service.settleOutcome(running,
+                "I inspected the task. Failed to generate a response, please retry.");
+
+        verify(taskService).requeueUnusableResult(1L, "member response generation failed");
+        verify(taskService, never()).completeTask(any(), any(), anyString());
+        verify(announceService, never()).announceTaskSettled(any());
+        verify(eventChannel).publishTaskEvent(any(), eq("team_task_retrying"), any());
+    }
+
+    @Test
+    @DisplayName("an unusable third result fails instead of bypassing the circuit breaker")
+    void settleFallbackFailsAfterDispatchBudget() {
+        TeamTaskEntity running = task(1L, MEMBER_A);
+        running.setStatus(TeamTaskStatus.IN_PROGRESS);
+        running.setDispatchCount(TeamTaskService.MAX_DISPATCHES);
+        TeamTaskEntity failed = task(1L, MEMBER_A);
+        failed.setStatus(TeamTaskStatus.FAILED);
+        failed.setReason("member response generation failed");
+        when(taskService.getTask(1L)).thenReturn(running, failed);
+        when(taskService.failTask(1L, "member response generation failed")).thenReturn(true);
+
+        service.settleOutcome(running, "Failed to generate a response, please retry.");
+
+        verify(taskService, never()).requeueUnusableResult(any(), anyString());
+        verify(taskService).failTask(1L, "member response generation failed");
+        verify(eventChannel).publishTaskEvent(any(), eq("team_task_failed"), any());
+        verify(announceService).announceTaskSettled(failed);
+    }
+
+    @Test
+    @DisplayName("a declared deliverable task without an attachment is requeued")
+    void settleMissingDeliverableRequeues() {
+        TeamTaskEntity running = task(1L, MEMBER_A);
+        running.setStatus(TeamTaskStatus.IN_PROGRESS);
+        running.setDispatchCount(1);
+        running.setMetadata("{\"deliverableRequired\":true}");
+        when(taskService.getTask(1L)).thenReturn(running);
+        when(taskService.listDeliverables(running)).thenReturn(List.of());
+        when(taskService.requeueUnusableResult(1L, "required deliverable was not attached"))
+                .thenReturn(true);
+
+        service.settleOutcome(running, "handbook completed");
+
+        verify(taskService).requeueUnusableResult(1L, "required deliverable was not attached");
+        verify(taskService, never()).completeTask(any(), any(), anyString());
+    }
+
+    @Test
+    @DisplayName("a long-running checkpoint tracker stays active until its terminal round")
+    void settleParksCheckpointTracker() {
+        TeamTaskEntity running = task(1L, MEMBER_A);
+        running.setStatus(TeamTaskStatus.IN_PROGRESS);
+        running.setProgressPercent(1);
+        when(taskService.getTask(1L)).thenReturn(running);
+        when(taskService.checkpointTerminalTag(running)).thenReturn("R300");
+
+        service.settleOutcome(running, "R001 tracker initialized");
+
+        verify(taskService).updateProgress(1L, null, 1,
+                "waiting for R300 checkpoint");
+        verify(taskService, never()).completeTask(any(), any(), anyString());
+        verify(announceService, never()).announceTaskSettled(any());
+    }
+
+    @Test
+    @DisplayName("a tracker initialized after its terminal checkpoint completes immediately")
+    void settleCompletesTrackerWhenTerminalEvidenceAlreadyExists() {
+        TeamTaskEntity running = task(1L, MEMBER_A);
+        running.setStatus(TeamTaskStatus.IN_PROGRESS);
+        TeamTaskEntity completed = task(1L, MEMBER_A);
+        completed.setStatus(TeamTaskStatus.COMPLETED);
+        TeamTaskCommentEntity evidence = new TeamTaskCommentEntity();
+        evidence.setContent("[checkpoint:R300] acknowledged");
+        when(taskService.getTask(1L)).thenReturn(running, completed);
+        when(taskService.checkpointTerminalTag(running)).thenReturn("R300");
+        when(taskService.listComments(1L)).thenReturn(List.of(evidence));
+        when(taskService.completeTask(1L, null, "tracker initialized")).thenReturn(List.of());
+
+        service.settleOutcome(running, "tracker initialized");
+
+        verify(taskService).completeTask(1L, null, "tracker initialized");
+        verify(announceService).announceTaskSettled(completed);
     }
 
     @Test

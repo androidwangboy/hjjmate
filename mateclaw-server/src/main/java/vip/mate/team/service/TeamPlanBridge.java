@@ -55,6 +55,9 @@ public class TeamPlanBridge {
     /** Task subject cap; the full step text rides in the description. */
     static final int SUBJECT_MAX_CHARS = 120;
     private static final Pattern CHECKPOINT_TAG = Pattern.compile("(?i)(?:^|\\b)(R\\d{3})(?:\\b|/)");
+    private static final Pattern DELIVERABLE_REQUEST = Pattern.compile(
+            "(?i)(交付物|生成.{0,8}(文件|文档)|文档成稿|报告成稿|"
+                    + "docx|xlsx|pptx|pdf|deliverable|document|spreadsheet|presentation)");
 
     private final TeamService teamService;
     private final TeamTaskService taskService;
@@ -197,6 +200,7 @@ public class TeamPlanBridge {
                     .metadata(new JSONObject()
                             .set("planId", String.valueOf(planId))
                             .set("stepIndex", i)
+                            .set("deliverableRequired", DELIVERABLE_REQUEST.matcher(step).find())
                             .toString())
                     .build());
             created.add(task);
@@ -258,6 +262,7 @@ public class TeamPlanBridge {
                     List<TeamTaskEntity> tasks = taskService.listTasksByRun(latest.get().getId());
                     if (!tasks.isEmpty()) {
                         recordCheckpointEvidence(latest.get().getTeamId(), tasks, checkpointTag);
+                        tasks = taskService.listTasksByRun(latest.get().getId());
                         return new InFlight(buildCheckpointText(tasks, checkpointTag));
                     }
                 }
@@ -283,6 +288,7 @@ public class TeamPlanBridge {
                 .toList();
         if (checkpointTag != null) {
             recordCheckpointEvidence(teamOpt.get().getId(), tasks, checkpointTag);
+            tasks = taskService.listTasksByPlan(teamOpt.get().getId(), plan.getId());
             return new InFlight(buildCheckpointText(tasks, checkpointTag));
         }
         if (!allTerminal) {
@@ -408,23 +414,45 @@ public class TeamPlanBridge {
         if ("R100".equalsIgnoreCase(checkpointTag)) {
             compact.append("（已完成第100轮检查点）");
         }
+        compact.append("｜证据 [checkpoint:").append(checkpointTag).append("] acknowledged");
         return compact.toString();
     }
 
     private void recordCheckpointEvidence(Long teamId, List<TeamTaskEntity> tasks,
                                           String checkpointTag) {
-        TeamTaskEntity tracker = taskService.findCheckpointTracker(teamId).orElseGet(() -> tasks.stream()
-                .filter(this::isCheckpointTracker)
+        TeamTaskEntity tracker = tasks.stream()
+                .filter(task -> taskService.checkpointTerminalTag(task) != null)
                 .findFirst()
-                .orElse(tasks.get(tasks.size() - 1)));
+                .orElseGet(() -> tasks.stream()
+                        .filter(this::isCheckpointTracker)
+                        .findFirst()
+                        .orElseGet(() -> taskService.findCheckpointTracker(teamId)
+                                .orElse(tasks.get(tasks.size() - 1))));
         String content = "[checkpoint:" + checkpointTag + "] acknowledged";
         taskService.addCommentOnce(tracker.getId(), TeamTaskService.AUTHOR_SYSTEM,
                 "team-plan-bridge", TeamTaskService.COMMENT_NOTE, content);
+        String terminalTag = taskService.checkpointTerminalTag(tracker);
+        if (terminalTag != null && TeamTaskStatus.IN_PROGRESS.equals(tracker.getStatus())) {
+            int current = Integer.parseInt(checkpointTag.substring(1));
+            int terminal = Integer.parseInt(terminalTag.substring(1));
+            int percent = terminal <= 0 ? 1
+                    : Math.min(99, Math.max(1, current * 100 / terminal));
+            if (checkpointTag.equalsIgnoreCase(terminalTag)) {
+                taskService.completeTask(tracker.getId(), null,
+                        "Checkpoint tracking completed at " + checkpointTag);
+                eventPublisher.publishEvent(new TeamTasksDelegatedEvent(teamId));
+            } else {
+                taskService.updateProgress(tracker.getId(), null, percent,
+                        checkpointTag + "/" + terminalTag + " acknowledged");
+            }
+        }
     }
 
     private boolean isCheckpointTracker(TeamTaskEntity task) {
-        String text = (task.getSubject() == null ? "" : task.getSubject()) + " "
-                + (task.getDescription() == null ? "" : task.getDescription());
+        if (taskService.checkpointTerminalTag(task) != null) {
+            return true;
+        }
+        String text = task.getSubject() == null ? "" : task.getSubject();
         String lower = text.toLowerCase();
         return text.contains("检查点") || text.contains("共享跟踪")
                 || lower.contains("checkpoint") || lower.contains("r001-r100");

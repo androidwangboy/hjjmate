@@ -600,4 +600,18 @@ class TeamTaskServiceTest {
         query.getValue().getSqlSegment();
         assertTrue(query.getValue().getParamNameValuePairs().containsValue(RUN_ID));
     }
+
+    @Test
+    @DisplayName("checkpoint range detection ignores the injected overall plan context")
+    void checkpointTerminalTagUsesOnlyLocalTaskText() {
+        TeamTaskEntity tracker = task(1L, TeamTaskStatus.IN_PROGRESS);
+        tracker.setSubject("R001-R300 唯一共享跟踪条目");
+        tracker.setDescription("每轮登记证据，R300 前保持进行中\n\n[Plan context]\nOverall request");
+        assertEquals("R300", service.checkpointTerminalTag(tracker));
+
+        TeamTaskEntity ordinary = task(2L, TeamTaskStatus.IN_PROGRESS);
+        ordinary.setSubject("设计稳定性指标");
+        ordinary.setDescription("产出指标清单\n\n[Plan context]\nOverall request: R001-R300 共享跟踪");
+        assertNull(service.checkpointTerminalTag(ordinary));
+    }
 }

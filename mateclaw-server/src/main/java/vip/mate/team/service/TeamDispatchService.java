@@ -1,6 +1,7 @@
 package vip.mate.team.service;
 
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.json.JSONUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -247,6 +248,49 @@ public class TeamDispatchService {
             return;
         }
         if (TeamTaskStatus.IN_PROGRESS.equals(current.getStatus())) {
+            String invalidReason = invalidResultReason(current, reply);
+            if (invalidReason != null) {
+                int attempts = current.getDispatchCount() == null ? 0 : current.getDispatchCount();
+                if (attempts < TeamTaskService.MAX_DISPATCHES
+                        && taskService.requeueUnusableResult(task.getId(), invalidReason)) {
+                    log.warn("Team task #{} produced an unusable result on attempt {}/{}; requeued: {}",
+                            task.getTaskNumber(), attempts, TeamTaskService.MAX_DISPATCHES,
+                            invalidReason);
+                    broadcast(task, "team_task_retrying", Map.of("reason", invalidReason));
+                    return;
+                }
+                boolean failed = taskService.failTask(task.getId(), invalidReason);
+                TeamTaskEntity failedTask = taskService.getTask(task.getId());
+                if (failed) {
+                    broadcast(task, "team_task_failed", Map.of("reason", invalidReason));
+                    announceService.announceTaskSettled(failedTask);
+                }
+                return;
+            }
+            String terminalCheckpoint = taskService.checkpointTerminalTag(current);
+            if (terminalCheckpoint != null) {
+                String terminalEvidence = "[checkpoint:" + terminalCheckpoint + "] acknowledged";
+                boolean terminalAlreadyAcknowledged = taskService.listComments(current.getId()).stream()
+                        .anyMatch(comment -> terminalEvidence.equals(comment.getContent()));
+                if (terminalAlreadyAcknowledged) {
+                    List<Long> released = taskService.completeTask(task.getId(), null,
+                            truncate(reply, MAX_RESULT_CHARS));
+                    TeamTaskEntity completed = taskService.getTask(task.getId());
+                    log.info("Team task #{} completed after deferred {} acknowledgement "
+                                    + "({} dependents released)",
+                            task.getTaskNumber(), terminalCheckpoint, released.size());
+                    broadcast(task, "team_task_completed", Map.of("status", TeamTaskStatus.COMPLETED));
+                    announceService.announceTaskSettled(completed);
+                    return;
+                }
+                int percent = current.getProgressPercent() == null
+                        ? 1 : Math.max(1, current.getProgressPercent());
+                taskService.updateProgress(task.getId(), null, percent,
+                        "waiting for " + terminalCheckpoint + " checkpoint");
+                log.info("Team task #{} parked as long-running checkpoint tracker until {}",
+                        task.getTaskNumber(), terminalCheckpoint);
+                return;
+            }
             List<Long> released = taskService.completeTask(task.getId(), null,
                     truncate(reply == null || reply.isBlank() ? "(no output)" : reply,
                             MAX_RESULT_CHARS));
@@ -269,6 +313,30 @@ public class TeamDispatchService {
         }
         broadcast(task, event, payload);
         announceService.announceTaskSettled(current);
+    }
+
+    private String invalidResultReason(TeamTaskEntity task, String reply) {
+        if (reply == null || reply.isBlank()) {
+            return "member produced no result";
+        }
+        String normalized = reply.strip().toLowerCase();
+        if (normalized.contains("failed to generate a response, please retry")
+                || normalized.equals("(no output)")) {
+            return "member response generation failed";
+        }
+        if (requiresDeliverable(task) && taskService.listDeliverables(task).isEmpty()) {
+            return "required deliverable was not attached";
+        }
+        return null;
+    }
+
+    private boolean requiresDeliverable(TeamTaskEntity task) {
+        try {
+            return task.getMetadata() != null
+                    && JSONUtil.parseObj(task.getMetadata()).getBool("deliverableRequired", false);
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 
     /** Per-prerequisite and whole-section caps keeping the envelope bounded. */
