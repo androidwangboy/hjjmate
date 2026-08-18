@@ -33,6 +33,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Adapter for the official DeepSeek Harness SDK JSON-RPC runtime.
@@ -208,6 +209,10 @@ public class DshRuntimeService implements AgentRuntimeProvider {
                         modelName,
                         Path.of(System.getenv().getOrDefault("DSH_CWD", System.getProperty("user.dir"))),
                         Map.of());
+                // Each prompt runs in a fresh child process. DSH persists its
+                // own session log, so reusing the MateClaw conversation id
+                // would make the next turn look like a conflicting live session.
+                String dshSessionId = conversationId + "-" + UUID.randomUUID();
                 Files.createDirectories(session.workingDirectory());
                 ModelProviderEntity provider = resolveProvider(modelName);
                 String effectiveModelName = resolveModelName(modelName);
@@ -264,7 +269,7 @@ public class DshRuntimeService implements AgentRuntimeProvider {
 
                     String promptId = "prompt-" + conversationId;
                     send(writer, request("session/prompt", promptId, Map.of(
-                            "sessionId", conversationId,
+                            "sessionId", dshSessionId,
                             "contentBlocks", List.of(Map.of("type", "text", "text", message)))));
 
                     // DSH may emit session events before the JSON-RPC response
