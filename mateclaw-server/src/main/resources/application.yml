@@ -135,9 +135,16 @@ mateclaw:
   # outside the Spring classpath and can be supplied by environment variables.
   agent:
     runtime:
-      dsh:
-        command: ${DSH_JSONRPC_AGENT:}
-        cordis-config: ${DSH_CORDIS_CONFIG:}
+        dsh:
+          command: ${DSH_JSONRPC_AGENT:}
+          cordis-config: ${DSH_CORDIS_CONFIG:}
+          working-directory: ${DSH_CWD:}
+          base-url: ${DEEPSEEK_BASE_URL:}
+          model-name: ${DEEPSEEK_MODEL:}
+          api-key: ${DEEPSEEK_API_KEY:}
+          manifest-url: ${DSH_MANIFEST_URL:}
+          github-release-url: ${DSH_GITHUB_RELEASE_URL:https://api.github.com/repos/deepseek-ai/deepseek-harness/releases/latest}
+          install-root: ${DSH_INSTALL_ROOT:${user.home}/.mateclaw/runtimes/deepseek-harness}
   server:
     # Public base URL used to build absolute download links for tool-generated
     # files (e.g. https://mateclaw.example.com). Leave empty to fall back to the
