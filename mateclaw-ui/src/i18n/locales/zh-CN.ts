@@ -2034,6 +2034,8 @@ export default {
       args: '参数 (JSON 数组)',
       env: '环境变量',
       toolParseMode: 'Tool 解析模式',
+      promptTimeoutSeconds: '调用超时（秒）',
+      promptTimeoutHint: '用于 session/prompt。默认 300 秒，复杂 OpenCode 任务可调高，最大 3600 秒。',
       enabled: '启用',
     },
     env: {

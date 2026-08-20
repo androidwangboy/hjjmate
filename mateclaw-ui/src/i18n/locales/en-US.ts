@@ -2177,6 +2177,8 @@ export default {
       args: 'Args (JSON array)',
       env: 'Environment variables',
       toolParseMode: 'Tool parse mode',
+      promptTimeoutSeconds: 'Call timeout (seconds)',
+      promptTimeoutHint: 'Applies to session/prompt. Default 300 seconds, maximum 3600 seconds for long OpenCode tasks.',
       enabled: 'Enabled',
     },
     env: {
