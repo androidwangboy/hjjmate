@@ -204,7 +204,7 @@ export const conversationApi = {
    */
   page: (params: { page?: number; size?: number; keyword?: string }) =>
     http.get('/conversations/page', { params }),
-  listMessages: (conversationId: string, params?: { beforeId?: number; limit?: number }) =>
+  listMessages: (conversationId: string, params?: { beforeId?: number; limit?: number; runId?: string; taskId?: string }) =>
     http.get(`/conversations/${encId(conversationId)}/messages`, { params }),
   getStatus: (conversationId: string) =>
     http.get(`/conversations/${encId(conversationId)}/status`),
