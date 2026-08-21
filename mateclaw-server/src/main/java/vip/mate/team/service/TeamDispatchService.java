@@ -17,6 +17,7 @@ import vip.mate.team.model.TeamTaskEventEntity;
 import vip.mate.team.model.TeamTaskStatus;
 import vip.mate.tool.document.GeneratedFileCache;
 import vip.mate.workspace.conversation.ConversationService;
+import vip.mate.workspace.conversation.model.MessageEntity;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -424,8 +425,11 @@ public class TeamDispatchService {
     /** Per-prerequisite and whole-section caps keeping the envelope bounded. */
     static final int MAX_PREREQ_RESULT_CHARS = 1500;
     static final int MAX_PREREQ_SECTION_CHARS = 6000;
+    static final int LEAD_ATTACHMENT_CONTEXT_MESSAGES = 12;
+    static final int MAX_LEAD_ATTACHMENT_ITEM_CHARS = 1200;
+    static final int MAX_LEAD_ATTACHMENT_SECTION_CHARS = 6000;
 
-    /** The full instruction envelope the member receives; it cannot see the lead's conversation. */
+    /** The full instruction envelope the member receives. */
     private String buildDispatchContent(TeamTaskEntity task) {
         StringBuilder sb = new StringBuilder(1024);
         sb.append("[Assigned team task #").append(task.getTaskNumber())
@@ -434,6 +438,7 @@ public class TeamDispatchService {
         if (task.getDescription() != null && !task.getDescription().isBlank()) {
             sb.append("\n").append(task.getDescription()).append('\n');
         }
+        appendLeadAttachmentContext(sb, task);
         appendPrerequisiteResults(sb, task);
         sb.append("""
 
@@ -445,6 +450,57 @@ public class TeamDispatchService {
                 - If you are missing an input you cannot obtain yourself, call team_tasks(action="comment", taskId=%s, type="blocker", text="what you need") and stop. Do not ask the lead or user for clarification in your final reply.
                 """.formatted(task.getId(), task.getId(), task.getId()));
         return sb.toString();
+    }
+
+    /**
+     * Child worker conversations are isolated from the lead transcript, so
+     * upload paths from the lead turn must be copied into the dispatch
+     * envelope explicitly. Only rendered attachment/media rows with local
+     * paths are included; ordinary lead chat text stays out of the member
+     * prompt.
+     */
+    void appendLeadAttachmentContext(StringBuilder sb, TeamTaskEntity task) {
+        String leadConversationId = task.getLeadConversationId();
+        if (leadConversationId == null || leadConversationId.isBlank()) {
+            return;
+        }
+        List<MessageEntity> messages = conversationService.listRecentMessages(
+                leadConversationId, LEAD_ATTACHMENT_CONTEXT_MESSAGES);
+        if (messages == null || messages.isEmpty()) {
+            return;
+        }
+        StringBuilder section = new StringBuilder();
+        for (MessageEntity message : messages) {
+            if (message == null || message.getContentParts() == null
+                    || message.getContentParts().isBlank()) {
+                continue;
+            }
+            String rendered = conversationService.renderMessageContent(message, true);
+            if (rendered == null || rendered.isBlank() || !hasRenderedAttachmentPath(rendered)) {
+                continue;
+            }
+            section.append("- ")
+                    .append(truncate(rendered.strip(), MAX_LEAD_ATTACHMENT_ITEM_CHARS)
+                            .replace("\n", "\n  "))
+                    .append('\n');
+        }
+        if (section.isEmpty()) {
+            return;
+        }
+        sb.append("\n[Lead conversation attachments]\n")
+                .append(truncate(section.toString(), MAX_LEAD_ATTACHMENT_SECTION_CHARS))
+                .append("Use these paths when this task refers to files uploaded in the lead conversation.\n");
+    }
+
+    private static boolean hasRenderedAttachmentPath(String rendered) {
+        if (!rendered.contains("路径:")) {
+            return false;
+        }
+        return rendered.contains("[附件]")
+                || rendered.contains("[图片]")
+                || rendered.contains("[视频]")
+                || rendered.contains("[音频]")
+                || rendered.contains("[3D 模型]");
     }
 
     /**
