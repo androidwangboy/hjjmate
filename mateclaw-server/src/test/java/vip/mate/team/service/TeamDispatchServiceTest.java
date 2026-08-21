@@ -174,6 +174,26 @@ class TeamDispatchServiceTest {
     }
 
     @Test
+    @DisplayName("a clarifying question is requeued instead of being reported as completed")
+    void settleClarifyingQuestionRequeues() {
+        TeamTaskEntity running = task(1L, MEMBER_A);
+        running.setStatus(TeamTaskStatus.IN_PROGRESS);
+        running.setDispatchCount(1);
+        when(taskService.getTask(1L)).thenReturn(running);
+        when(taskService.requeueUnusableResult(1L,
+                "member asked for clarification instead of producing a result"))
+                .thenReturn(true);
+
+        service.settleOutcome(running, "您希望我如何处理？");
+
+        verify(taskService).requeueUnusableResult(1L,
+                "member asked for clarification instead of producing a result");
+        verify(taskService, never()).completeTask(any(), any(), anyString());
+        verify(announceService, never()).announceTaskSettled(any());
+        verify(eventChannel).publishTaskEvent(any(), eq("team_task_retrying"), any());
+    }
+
+    @Test
     @DisplayName("an unusable third result fails instead of bypassing the circuit breaker")
     void settleFallbackFailsAfterDispatchBudget() {
         TeamTaskEntity running = task(1L, MEMBER_A);
