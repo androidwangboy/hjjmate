@@ -243,27 +243,94 @@ function cancelBind() {
 
 <style scoped>
 .login-page {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: 100dvh;
   min-height: 100vh;
+  min-height: 100svh;
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: linear-gradient(160deg, #FAF5F0 0%, #F5EDE5 100%);
-  padding: 24px;
+  justify-content: flex-end;
+  padding: clamp(16px, 4vh, 48px) clamp(20px, 6vw, 112px);
+  overflow: hidden;
+  background-color: #071f24;
+  background-image:
+    linear-gradient(
+      90deg,
+      rgba(4, 31, 34, 0.06) 0%,
+      rgba(4, 31, 34, 0.08) 46%,
+      rgba(3, 22, 27, 0.25) 64%,
+      rgba(2, 15, 21, 0.70) 100%
+    ),
+    url('/images/login/hjjmate-login-bg-pc.png');
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
 }
 
-:root.dark .login-page,
-html.dark .login-page {
-  background: linear-gradient(160deg, var(--mc-bg) 0%, #1A1210 100%);
+/* A quiet vignette keeps the image atmospheric while preserving form contrast. */
+.login-page::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(1, 16, 20, 0.16) 0%,
+    transparent 28%,
+    transparent 72%,
+    rgba(1, 14, 18, 0.24) 100%
+  );
 }
 
 .login-center {
-  width: 100%;
-  max-width: 380px;
+  position: relative;
+  z-index: 1;
+  width: min(100%, 420px);
+  max-width: 420px;
+  max-height: calc(100dvh - 32px);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 40px;
+  align-items: stretch;
+  gap: 24px;
+  padding: clamp(24px, 4vh, 42px) clamp(24px, 3vw, 40px);
+  border: 1px solid rgba(224, 244, 236, 0.18);
+  border-radius: 24px;
+  background: linear-gradient(145deg, rgba(15, 61, 64, 0.80), rgba(3, 25, 30, 0.91));
+  box-shadow:
+    0 28px 80px rgba(0, 10, 14, 0.42),
+    0 8px 24px rgba(0, 16, 20, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(18px) saturate(120%);
+  -webkit-backdrop-filter: blur(18px) saturate(120%);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(190, 225, 215, 0.30) transparent;
   animation: fadeUp 0.6s ease-out both;
+}
+
+.login-center::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 28px;
+  right: 28px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(244, 184, 145, 0.75), transparent);
+  pointer-events: none;
+}
+
+.login-center::-webkit-scrollbar {
+  width: 4px;
+}
+
+.login-center::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(190, 225, 215, 0.30);
 }
 
 /* Logo */
@@ -273,24 +340,24 @@ html.dark .login-page {
 
 .logo-image {
   display: block;
-  margin: 0 auto 16px;
-  width: 100px;
-  height: 100px;
+  margin: 0 auto 14px;
+  width: 88px;
+  height: 88px;
   object-fit: contain;
-  filter: drop-shadow(0 6px 20px rgba(217, 119, 87, 0.3));
+  filter: drop-shadow(0 8px 24px rgba(238, 153, 111, 0.34));
   animation: breathe 3.5s ease-in-out infinite;
 }
 
 .logo-title {
   font-size: 36px;
   font-weight: 800;
-  color: var(--mc-text-primary);
+  color: #f3f8f5;
   margin: 0;
   letter-spacing: -0.04em;
 }
 
 .logo-title-highlight {
-  color: var(--mc-primary);
+  color: #f0a17d;
 }
 
 /* Form */
@@ -310,13 +377,17 @@ html.dark .login-page {
 .form-input {
   width: 100%;
   padding: 14px 16px;
-  border: 1.5px solid var(--mc-border);
+  border: 1.5px solid rgba(214, 239, 231, 0.20);
   border-radius: 12px;
   font-size: 15px;
-  color: var(--mc-text-primary);
-  background: var(--mc-bg-sunken);
+  color: #f2f8f5;
+  background: rgba(1, 20, 24, 0.34);
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+.form-input::placeholder {
+  color: rgba(214, 233, 226, 0.54);
 }
 
 .form-input--has-eye {
@@ -324,9 +395,9 @@ html.dark .login-page {
 }
 
 .form-input:focus {
-  border-color: var(--mc-primary);
-  background: var(--mc-bg-elevated);
-  box-shadow: 0 0 0 3px rgba(217, 119, 87, 0.08);
+  border-color: #eea17c;
+  background: rgba(2, 25, 29, 0.56);
+  box-shadow: 0 0 0 3px rgba(217, 109, 70, 0.20), 0 10px 24px rgba(0, 12, 15, 0.16);
 }
 
 .eye-btn {
@@ -337,7 +408,7 @@ html.dark .login-page {
   border: none;
   background: none;
   cursor: pointer;
-  color: var(--mc-text-tertiary);
+  color: rgba(207, 229, 222, 0.64);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -345,17 +416,17 @@ html.dark .login-page {
 }
 
 .eye-btn:hover {
-  color: var(--mc-primary);
+  color: #f0a17d;
 }
 
 /* Error */
 .error-msg {
   padding: 10px 14px;
-  background: var(--mc-danger-bg);
-  border: 1px solid var(--mc-danger);
+  background: rgba(128, 40, 34, 0.34);
+  border: 1px solid rgba(255, 166, 150, 0.48);
   border-radius: 10px;
   font-size: 13px;
-  color: var(--mc-danger);
+  color: #ffd9d0;
 }
 
 /* Button */
@@ -391,7 +462,7 @@ html.dark .login-page {
 .sso-divider {
   text-align: center;
   font-size: 12px;
-  color: var(--mc-text-tertiary);
+  color: rgba(207, 229, 222, 0.62);
   margin: 4px 0;
   position: relative;
 }
@@ -401,7 +472,7 @@ html.dark .login-page {
   display: inline-block;
   width: 30%;
   height: 1px;
-  background: var(--mc-border);
+  background: rgba(207, 229, 222, 0.20);
   vertical-align: middle;
   margin: 0 8px;
 }
@@ -414,9 +485,9 @@ html.dark .login-page {
 .sso-btn {
   width: 100%;
   padding: 11px;
-  background: var(--mc-bg-elevated);
-  color: var(--mc-text-primary);
-  border: 1.5px solid var(--mc-border);
+  background: rgba(255, 255, 255, 0.06);
+  color: #edf6f1;
+  border: 1.5px solid rgba(214, 239, 231, 0.20);
   border-radius: 12px;
   font-size: 14px;
   font-weight: 500;
@@ -425,8 +496,9 @@ html.dark .login-page {
   height: 44px;
 }
 .sso-btn:hover:not(:disabled) {
-  border-color: var(--mc-primary);
-  color: var(--mc-primary);
+  border-color: rgba(240, 161, 125, 0.82);
+  color: #f0a17d;
+  background: rgba(217, 109, 70, 0.12);
 }
 .sso-btn:disabled {
   opacity: 0.7;
@@ -445,19 +517,19 @@ html.dark .login-page {
 .bind-title {
   font-size: 16px;
   font-weight: 600;
-  color: var(--mc-text-primary);
+  color: #f3f8f5;
   margin: 0;
 }
 .bind-desc {
   font-size: 13px;
-  color: var(--mc-text-tertiary);
+  color: rgba(207, 229, 222, 0.68);
   margin: 0;
 }
 .bind-cancel {
   width: 100%;
   padding: 8px;
   background: none;
-  color: var(--mc-text-tertiary);
+  color: rgba(207, 229, 222, 0.68);
   border: none;
   font-size: 13px;
   cursor: pointer;
@@ -490,16 +562,16 @@ html.dark .login-page {
 .login-hint {
   text-align: center;
   font-size: 12px;
-  color: var(--mc-text-tertiary);
+  color: rgba(207, 229, 222, 0.62);
   margin: 0;
-  opacity: 0.7;
+  opacity: 0.9;
 }
 
 .login-hint :deep(code) {
-  background: var(--mc-inline-code-bg);
+  background: rgba(217, 109, 70, 0.16);
   padding: 1px 6px;
   border-radius: 4px;
-  color: var(--mc-inline-code-color);
+  color: #f3b08e;
   font-size: 12px;
 }
 
@@ -527,10 +599,86 @@ html.dark .login-page {
   }
 }
 
-/* Mobile */
+/* Tablet: keep the right-side composition while reducing the edge inset. */
+@media (max-width: 900px) {
+  .login-page {
+    padding-right: clamp(20px, 4vw, 48px);
+  }
+}
+
+/* Mobile: center the card so the desktop artwork is not over-cropped. */
+@media (max-width: 767px) {
+  .login-page {
+    justify-content: center;
+    padding: 16px;
+    background-position: 32% center;
+  }
+
+  .login-page::after {
+    background: linear-gradient(
+      180deg,
+      rgba(1, 16, 20, 0.26) 0%,
+      rgba(1, 16, 20, 0.10) 40%,
+      rgba(1, 14, 18, 0.54) 100%
+    );
+  }
+
+  .login-center {
+    width: min(100%, 420px);
+    padding: 28px 22px;
+    border-radius: 20px;
+  }
+}
+
+/* Short screens: keep the normal desktop view scroll-free and make the
+   card compact before falling back to its internal overflow as a last resort. */
+@media (max-height: 720px) {
+  .login-page {
+    padding-block: 12px;
+  }
+
+  .login-center {
+    gap: 18px;
+    padding-block: 20px;
+  }
+
+  .logo-image {
+    width: 70px;
+    height: 70px;
+    margin-bottom: 8px;
+  }
+
+  .logo-title {
+    font-size: 30px;
+  }
+
+  .login-form {
+    gap: 10px;
+  }
+
+  .form-input {
+    padding-block: 11px;
+  }
+
+  .login-btn {
+    height: 44px;
+  }
+}
+
 @media (max-width: 480px) {
   .login-page {
-    padding: 16px;
+    padding: 12px;
+  }
+
+  .login-center {
+    padding-inline: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-center,
+  .logo-image {
+    animation: none;
   }
 }
 </style>
