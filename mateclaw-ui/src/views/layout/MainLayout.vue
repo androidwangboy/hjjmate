@@ -10,11 +10,11 @@
       <!-- Logo -->
       <div class="sidebar-logo">
         <div class="logo-icon">
-          <img src="/logo/mateclaw_logo_s.png" alt="MateClaw" class="logo-img" />
+          <img src="/logo/hjjmate_logo.png" alt="HjjMate" class="logo-img" />
         </div>
         <transition name="fade">
           <div v-if="!effectiveCollapsed" class="logo-text">
-            <span class="logo-name">Mate<span class="logo-name-highlight">Claw</span></span>
+            <span class="logo-name">Hjj<span class="logo-name-highlight">Mate</span></span>
             <span class="logo-version">v{{ appVersion }}</span>
           </div>
         </transition>

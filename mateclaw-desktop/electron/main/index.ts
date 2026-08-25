@@ -207,8 +207,8 @@ async function startJavaBackend(): Promise<void> {
   if (!existsSync(javaExec)) {
     console.error(`[MateClaw] Java executable not found: ${javaExec}`)
     dialog.showErrorBox(
-      'MateClaw 启动失败',
-      `找不到 Java 运行时环境。\n路径: ${javaExec}\n\n请重新安装 MateClaw。`
+      'HjjMate 启动失败',
+      `找不到 Java 运行时环境。\n路径: ${javaExec}\n\n请重新安装 HjjMate。`
     )
     app.quit()
     return
@@ -217,8 +217,8 @@ async function startJavaBackend(): Promise<void> {
   if (!existsSync(jarPath)) {
     console.error(`[MateClaw] JAR not found: ${jarPath}`)
     dialog.showErrorBox(
-      'MateClaw 启动失败',
-      `找不到应用程序包。\n路径: ${jarPath}\n\n请重新安装 MateClaw。`
+      'HjjMate 启动失败',
+      `找不到应用程序包。\n路径: ${jarPath}\n\n请重新安装 HjjMate。`
     )
     app.quit()
     return
@@ -290,7 +290,7 @@ function pollBackendReady(): void {
       sendToWindow('backend:status', 'timeout')
       if (connectionMode !== 'remote') {
         dialog.showErrorBox(
-          'MateClaw 启动超时',
+          'HjjMate 启动超时',
           '后端服务启动超时，请检查日志或重启应用。'
         )
       }
@@ -472,7 +472,7 @@ function createWindow(): void {
     height: WINDOW_HEIGHT,
     minWidth: 900,
     minHeight: 600,
-    title: 'MateClaw',
+    title: 'HjjMate',
     icon: join(__dirname, '../../build/icon.png'),
     webPreferences: {
       preload: preloadPath,
@@ -807,14 +807,14 @@ function showAboutDialog(): void {
 
   dialog.showMessageBox({
     type: 'info',
-    title: 'About MateClaw',
-    message: 'MateClaw',
+    title: 'About HjjMate',
+    message: 'HjjMate',
     detail: [
       `Version: ${app.getVersion()}`,
       '',
       'Your intelligent AI assistant powered by Spring AI Alibaba.',
       '',
-      `Copyright © 2026 MateClaw Team`,
+      `Copyright © 2026 HjjMate Team`,
     ].join('\n'),
     buttons: ['OK'],
     icon,
@@ -922,7 +922,7 @@ async function menuCheckForUpdates(): Promise<void> {
         type: 'info',
         title: 'Check for Updates',
         message: 'You are up to date!',
-        detail: `MateClaw ${app.getVersion()} is the latest version.`,
+        detail: `HjjMate ${app.getVersion()} is the latest version.`,
       })
     }
     // If update is available, the existing updater:state IPC events will notify the renderer

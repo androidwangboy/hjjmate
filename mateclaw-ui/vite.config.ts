@@ -3,6 +3,7 @@ import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 import { visualizer } from 'rollup-plugin-visualizer'
 import Components from 'unplugin-vue-components/vite'
+import { existsSync, readdirSync } from 'node:fs'
 import { resolve } from 'path'
 
 // Sub-components that Element Plus re-exports from a parent package rather than
@@ -49,6 +50,27 @@ function elementPlusSubpathResolver() {
         ?? name.slice(2).replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase()
       return { name, from: `element-plus/es/components/${dir}/index` }
     },
+  }
+}
+
+// Pre-bundle every element-plus component subpath. The on-demand resolver above
+// resolves <el-*> to element-plus/es/components/<dir>/index only when a template
+// actually uses that component, so Vite's startup dep scan never sees them.
+// Without pre-listing, the first visit to a page that uses a not-yet-optimized
+// component triggers "optimized dependencies changed. reloading" — a forced
+// full-page reload that interrupts the user mid-flow. Pre-listing all ~124
+// subpaths costs a few extra seconds at server startup but makes dev reloads
+// deterministic. Same story as the echarts subpaths in optimizeDeps below.
+function elementPlusSubpathIncludes(): string[] {
+  const componentsDir = resolve(__dirname, 'node_modules/element-plus/es/components')
+  try {
+    return readdirSync(componentsDir)
+      .filter((dir) => existsSync(resolve(componentsDir, dir, 'index.mjs')))
+      .map((dir) => `element-plus/es/components/${dir}/index`)
+  } catch {
+    // node_modules missing (fresh clone / CI) — Vite discovers deps normally
+    // and surfaces the missing package itself.
+    return []
   }
 }
 
@@ -106,6 +128,7 @@ export default defineConfig({
   // single consistent pre-bundle at server startup.
   optimizeDeps: {
     include: [
+      ...elementPlusSubpathIncludes(),
       'echarts/core',
       'echarts/charts',
       'echarts/components',
