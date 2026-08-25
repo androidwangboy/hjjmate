@@ -302,7 +302,7 @@ let cachedAgents: import('@/types').Agent[] = []
 <script setup lang="ts">
 import { ElMessage } from 'element-plus/es/components/message/index'
 import { ElMessageBox } from 'element-plus/es/components/message-box/index'
-import { ref, computed, onMounted, onBeforeUnmount, onActivated, onDeactivated, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, onActivated, onDeactivated, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { mcToast } from '@/composables/useMcToast'
@@ -1100,37 +1100,6 @@ const eligibleModels = computed(() => {
 })
 
 // ============ 生命周期 ============
-// Global shortcuts (Ctrl+K agents, Ctrl+N new chat) live in MainLayout so they
-// work from any page; this view reacts to the dispatched event when mounted.
-function handleChatShortcut(e: Event) {
-  const action = (e as CustomEvent).detail as 'newChat' | undefined
-  if (action === 'newChat') {
-    newConversation()
-    nextTick(() => chatInputRef.value?.focus?.())
-  }
-}
-
-// Cross-page hand-off from MainLayout's global shortcuts: read once on mount
-// (before loadAgents triggers syncRouteState, which would wipe the action key)
-// and apply after agents are loaded so the dropdown actually has something to show.
-let pendingRouteAction: 'newChat' | '' = ''
-
-function captureRouteAction() {
-  const action = route.query.action
-  if (action === 'newChat') {
-    pendingRouteAction = action
-  }
-}
-
-function applyPendingRouteAction() {
-  const action = pendingRouteAction
-  pendingRouteAction = ''
-  if (action === 'newChat') {
-    newConversation()
-    nextTick(() => chatInputRef.value?.focus?.())
-  }
-}
-
 // 轮询定时器：让 ChatConsole 能实时感知外部渠道（WeChat/DingTalk/…）推进来的新消息，
 // 无需 F5 即可看到侧栏列表更新和选中会话的消息/流状态。
 let activityPollTimer: number | null = null
@@ -1285,15 +1254,12 @@ async function pollActivity() {
 }
 
 onMounted(async () => {
-  captureRouteAction()
-  window.addEventListener('mc:chat-shortcut', handleChatShortcut)
   document.addEventListener('click', handleCodeCopy)
   startECharts()
   startKatex()
   startMermaid()
   await Promise.all([loadAgents(), loadModelState(), loadConversations()])
   await hydrateStateFromRoute()
-  applyPendingRouteAction()
   activityPollTimer = window.setInterval(pollActivity, ACTIVITY_POLL_MS)
   elapsedTickTimer = window.setInterval(() => {
     if (activeCronRuns.value.length > 0) elapsedNow.value = Date.now()
@@ -1301,7 +1267,6 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
-  window.removeEventListener('mc:chat-shortcut', handleChatShortcut)
   document.removeEventListener('click', handleCodeCopy)
   disposeECharts()
   disposeKatex()
@@ -1369,10 +1334,6 @@ onActivated(async () => {
 })
 
 watch(() => route.query, () => {
-  // If a fresh action arrives (e.g. user re-fires Ctrl+K via the URL while
-  // the view is already alive), pick it up immediately.
-  captureRouteAction()
-  if (pendingRouteAction) applyPendingRouteAction()
   void hydrateStateFromRoute()
 })
 

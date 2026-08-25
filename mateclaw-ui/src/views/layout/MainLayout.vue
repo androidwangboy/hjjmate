@@ -163,13 +163,6 @@
             </button>
           </div>
 
-          <div class="shortcuts-hint" :title="shortcutsHintText">
-            <kbd>Ctrl+K</kbd>
-            <span>{{ t('nav.shortcutAgents') }}</span>
-            <span class="shortcuts-hint__sep">|</span>
-            <kbd>Ctrl+N</kbd>
-            <span>{{ t('nav.shortcutNew') }}</span>
-          </div>
         </template>
 
         <template v-else>
@@ -220,7 +213,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { warmRouteChunks } from '@/router'
 import { useIsMobile, useMediaQuery } from '@/composables/useBreakpoint'
@@ -312,51 +305,7 @@ watch(compactViewport, (compact) => {
   if (!userExplicitCollapse.value) sidebarCollapsed.value = compact
 }, { immediate: true })
 
-const shortcutsHintText = computed(() =>
-  `Ctrl+K ${t('nav.shortcutAgents')} | Ctrl+N ${t('nav.shortcutNew')}`,
-)
-
-function openAgentsMenu() {
-  if (!workspaceStore.can('manage:agents' as never)) return
-  if (route.path !== '/agents') router.push('/agents')
-}
-
-function fireNewChatShortcut() {
-  if (route.path === '/chat') {
-    window.dispatchEvent(new CustomEvent('mc:chat-shortcut', { detail: 'newChat' }))
-  } else {
-    router.push({ path: '/chat', query: { action: 'newChat' } })
-  }
-}
-
-function isEditableTarget(el: EventTarget | null): boolean {
-  if (!(el instanceof HTMLElement)) return false
-  if (el.isContentEditable) return true
-  const tag = el.tagName
-  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true
-  return false
-}
-
-function onGlobalKeydown(e: KeyboardEvent) {
-  const mod = e.metaKey || e.ctrlKey
-  if (!mod || e.altKey) return
-  const key = e.key.toLowerCase()
-  if (key !== 'k' && key !== 'n') return
-  // Ctrl+N within an editable field should keep its native behavior; Ctrl+K
-  // is rarely used by browsers (Firefox uses it for search-bar focus), but we
-  // still want to let the chat input handle native paste / undo unblocked.
-  if (key === 'n' && isEditableTarget(e.target)) return
-  e.preventDefault()
-  if (key === 'k') {
-    openAgentsMenu()
-  } else {
-    fireNewChatShortcut()
-  }
-}
-
 onMounted(async () => {
-  window.addEventListener('keydown', onGlobalKeydown)
-
   // Check onboarding status
   if (!localStorage.getItem('mc-onboarding-done')) {
     try {
@@ -382,10 +331,6 @@ onMounted(async () => {
   // idle, so sidebar navigation never depends on a live chunk fetch while an
   // agent run keeps the backend busy (issue #515).
   warmRouteChunks()
-})
-
-onBeforeUnmount(() => {
-  window.removeEventListener('keydown', onGlobalKeydown)
 })
 
 function onNavClick() {
@@ -972,36 +917,6 @@ watch(() => workspaceStore.currentWorkspaceId, () => {
 }
 
 .utility-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--mc-text-tertiary); margin: 0 0 8px; padding-left: 2px; }
-
-.shortcuts-hint {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 4px 6px;
-  margin-top: 8px;
-  padding: 4px 6px;
-  font-size: 10px;
-  color: var(--mc-text-tertiary);
-  letter-spacing: 0.02em;
-  user-select: none;
-}
-.shortcuts-hint kbd {
-  display: inline-flex;
-  align-items: center;
-  padding: 1px 5px;
-  border-radius: 4px;
-  border: 1px solid var(--mc-border-light);
-  background: var(--mc-bg-muted);
-  color: var(--mc-text-secondary);
-  font-family: inherit;
-  font-size: 9.5px;
-  font-weight: 600;
-  line-height: 1.4;
-}
-.shortcuts-hint__sep {
-  opacity: 0.45;
-}
 
 /* 主题切换 */
 .theme-toggle-row {
