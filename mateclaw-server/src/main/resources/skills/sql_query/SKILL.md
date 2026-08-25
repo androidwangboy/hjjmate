@@ -1,6 +1,6 @@
 ---
 name: sql_query
-version: "1.1.0"
+version: "1.2.0"
 description: "当用户提出数据查询需求（如'查数'、'查一下订单量'、'有多少用户'、'帮我跑个SQL'等），使用数据源工具发现表结构，生成并执行只读 SQL 查询。"
 dependencies:
   tools:
@@ -44,6 +44,7 @@ dependencies:
 - MySQL：日期用 `DATE_FORMAT()`、`NOW()`，字符串连接用 `CONCAT()`
 - PostgreSQL：日期用 `TO_CHAR()`、`NOW()`，字符串连接用 `||`
 - ClickHouse：日期用 `toDate()`、`today()`，注意不支持部分标准 SQL 语法
+- Oracle：日期用 `SYSDATE` / `TO_CHAR(date, 'YYYY-MM-DD')` / `TRUNC(date)`，字符串连接用 `||`，空值用 `NVL(col, 0)`；表名/列名默认大写（用小写需要双引号）；查询 `SELECT ... FROM DUAL` 不需要 FROM 真实表；系统通过 ROWNUM 自动限制结果行数，不要手动写 `LIMIT`
 
 ### 第五步：执行查询
 调用 `execute_sql(datasourceId=<id>, sql='<SQL>')` 执行查询。

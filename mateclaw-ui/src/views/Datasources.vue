@@ -152,6 +152,7 @@
               <select v-model="form.dbType" class="form-input" @change="onDbTypeChange">
                 <option value="mysql">MySQL</option>
                 <option value="postgresql">PostgreSQL</option>
+                <option value="oracle">Oracle</option>
                 <option value="clickhouse">ClickHouse</option>
                 <option value="mariadb">MariaDB</option>
               </select>
@@ -174,10 +175,10 @@
             </div>
             <div class="form-group">
               <label class="form-label">{{ t('datasources.fields.databaseName') }} *</label>
-              <input v-model="form.databaseName" class="form-input" :placeholder="t('datasources.placeholders.databaseName')" />
+              <input v-model="form.databaseName" class="form-input" :placeholder="databaseNamePlaceholder" />
             </div>
-            <div class="form-group" v-if="form.dbType === 'postgresql'">
-              <label class="form-label">{{ t('datasources.fields.schemaName') }}</label>
+            <div class="form-group" v-if="showSchemaField">
+              <label class="form-label">{{ schemaFieldLabel }}</label>
               <input v-model="form.schemaName" class="form-input" :placeholder="t('datasources.placeholders.schemaName')" />
             </div>
           </div>
@@ -282,10 +283,19 @@ const modalTesting = ref(false)
 const modalTestResult = ref<boolean | null>(null)
 
 const PORT_MAP: Record<string, number> = {
-  mysql: 3306, mariadb: 3306, postgresql: 5432, clickhouse: 8123,
+  mysql: 3306, mariadb: 3306, postgresql: 5432, clickhouse: 8123, oracle: 1521,
 }
 
 const defaultPort = computed(() => PORT_MAP[form.value.dbType] || 3306)
+
+// Oracle 的 databaseName 字段语义是 Service Name；schema 字段对 PG/Oracle 都有意义（Oracle 下为 owner 过滤）
+const showSchemaField = computed(() => ['postgresql', 'oracle'].includes(form.value.dbType))
+const databaseNamePlaceholder = computed(() => form.value.dbType === 'oracle'
+  ? t('datasources.placeholders.serviceName')
+  : t('datasources.placeholders.databaseName'))
+const schemaFieldLabel = computed(() => form.value.dbType === 'oracle'
+  ? t('datasources.fields.ownerSchema')
+  : t('datasources.fields.schemaName'))
 
 const defaultForm = () => ({
   name: '', description: '', dbType: 'mysql', host: '', port: 3306,
@@ -305,7 +315,7 @@ async function loadDatasources() {
 }
 
 function dbTypeLabel(dbType: string) {
-  const labels: Record<string, string> = { mysql: 'MySQL', postgresql: 'PostgreSQL', clickhouse: 'ClickHouse', mariadb: 'MariaDB' }
+  const labels: Record<string, string> = { mysql: 'MySQL', postgresql: 'PostgreSQL', clickhouse: 'ClickHouse', mariadb: 'MariaDB', oracle: 'Oracle' }
   return labels[dbType] || dbType
 }
 
@@ -318,7 +328,8 @@ function statusClass(ds: Datasource) {
 
 function onDbTypeChange() {
   form.value.port = PORT_MAP[form.value.dbType] || 3306
-  if (form.value.dbType !== 'postgresql') form.value.schemaName = ''
+  // Oracle 与 PostgreSQL 共用 schema 字段（Oracle 下作为 owner 过滤），切换时不清空
+  if (!['postgresql', 'oracle'].includes(form.value.dbType)) form.value.schemaName = ''
 }
 
 function openCreateModal() {
@@ -513,6 +524,7 @@ async function testConnection(ds: Datasource) {
 .type-postgresql { color: #336791; background: color-mix(in srgb, #336791 10%, transparent); }
 .type-clickhouse { color: #e6a817; background: color-mix(in srgb, #e6a817 10%, transparent); }
 .type-mariadb { color: #c0392b; background: color-mix(in srgb, #c0392b 10%, transparent); }
+.type-oracle { color: #f80000; background: color-mix(in srgb, #f80000 10%, transparent); }
 
 /* ===== Status cell ===== */
 .status-cell { display: flex; align-items: center; gap: 8px; }

@@ -52,12 +52,12 @@ public class SqlQueryTool {
 
         try {
             Long parsedDatasourceId = parseDatasourceId(datasourceId);
-            // 1. 验证并规范化 SQL
-            String safeSql = sqlValidationService.validateAndNormalize(sql);
-            log.info("执行 SQL 查询 [数据源 {}]: {}", parsedDatasourceId, safeSql);
-
-            // 2. 获取数据源连接
+            // 1. 获取数据源连接信息（解密后的实体，含 dbType 供方言化处理）
             DatasourceEntity entity = datasourceService.getDecrypted(parsedDatasourceId);
+
+            // 2. 按数据库方言验证并规范化 SQL（Oracle 走 ROWNUM 包装，其余注入 LIMIT 500）
+            String safeSql = sqlValidationService.validateAndNormalize(sql, entity.getDbType());
+            log.info("执行 SQL 查询 [数据源 {}]: {}", parsedDatasourceId, safeSql);
 
             // 3. 执行查询
             long startTime = System.currentTimeMillis();

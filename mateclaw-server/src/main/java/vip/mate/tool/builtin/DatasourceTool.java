@@ -103,9 +103,24 @@ public class DatasourceTool {
             return error("list_tables 需要 datasourceId 参数");
         }
         DatasourceEntity entity = datasourceService.getDecrypted(datasourceId);
+
+        String sql = buildListTablesSql(entity);
+
+        try (Connection conn = connectionManager.getConnection(entity);
+             Statement stmt = conn.createStatement()) {
+            stmt.setQueryTimeout(15);
+            ResultSet rs = stmt.executeQuery(sql);
+            return formatResultSet(rs, 200);
+        }
+    }
+
+    /**
+     * 生成 list_tables 动作的元数据查询 SQL（package-private 便于单测）。
+     */
+    static String buildListTablesSql(DatasourceEntity entity) {
         String dbType = entity.getDbType().toLowerCase();
 
-        String sql = switch (dbType) {
+        return switch (dbType) {
             case "mysql", "mariadb" -> String.format(
                     "SELECT TABLE_NAME, TABLE_COMMENT, TABLE_ROWS FROM information_schema.TABLES WHERE TABLE_SCHEMA = '%s' ORDER BY TABLE_NAME",
                     sanitizeIdentifier(entity.getDatabaseName()));
@@ -117,15 +132,25 @@ public class DatasourceTool {
                     "WHERE t.table_schema = '%s' ORDER BY t.table_name",
                     sanitizeIdentifier(entity.getSchemaName() != null ? entity.getSchemaName() : "public"));
             case "clickhouse" -> "SHOW TABLES";
+            case "oracle" -> buildOracleListTablesSql(entity);
             default -> throw new IllegalArgumentException("不支持的数据库类型: " + dbType);
         };
+    }
 
-        try (Connection conn = connectionManager.getConnection(entity);
-             Statement stmt = conn.createStatement()) {
-            stmt.setQueryTimeout(15);
-            ResultSet rs = stmt.executeQuery(sql);
-            return formatResultSet(rs, 200);
+    /**
+     * Oracle 11g/12c/19c 兼容的表列表查询（数据字典 ALL_TABLES + ALL_TAB_COMMENTS，
+     * 9i 起就有，无需 information_schema）。排除系统 schema，避免向模型暴露 SYS 等字典表。
+     */
+    private static String buildOracleListTablesSql(DatasourceEntity entity) {
+        String ownerFilter = "";
+        if (entity.getSchemaName() != null && !entity.getSchemaName().isBlank()) {
+            ownerFilter = " AND t.OWNER = UPPER('" + sanitizeIdentifier(entity.getSchemaName()) + "')";
         }
+        return "SELECT t.OWNER, t.TABLE_NAME, c.COMMENTS AS TABLE_COMMENT " +
+                "FROM ALL_TABLES t " +
+                "LEFT JOIN ALL_TAB_COMMENTS c ON c.OWNER = t.OWNER AND c.TABLE_NAME = t.TABLE_NAME " +
+                "WHERE UPPER(t.OWNER) NOT IN (" + ORACLE_SYSTEM_SCHEMAS + ")" + ownerFilter +
+                " ORDER BY t.OWNER, t.TABLE_NAME";
     }
 
     private String describeTable(Long datasourceId, String tableName) throws SQLException {
@@ -133,9 +158,24 @@ public class DatasourceTool {
             return error("describe_table 需要 datasourceId 和 tableName 参数");
         }
         DatasourceEntity entity = datasourceService.getDecrypted(datasourceId);
+
+        String sql = buildDescribeTableSql(entity, tableName);
+
+        try (Connection conn = connectionManager.getConnection(entity);
+             Statement stmt = conn.createStatement()) {
+            stmt.setQueryTimeout(15);
+            ResultSet rs = stmt.executeQuery(sql);
+            return formatResultSet(rs, 500);
+        }
+    }
+
+    /**
+     * 生成 describe_table 动作的元数据查询 SQL（package-private 便于单测）。
+     */
+    static String buildDescribeTableSql(DatasourceEntity entity, String tableName) {
         String dbType = entity.getDbType().toLowerCase();
 
-        String sql = switch (dbType) {
+        return switch (dbType) {
             case "mysql", "mariadb" -> String.format(
                     "SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_KEY, COLUMN_DEFAULT, COLUMN_COMMENT " +
                     "FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = '%s' AND TABLE_NAME = '%s' ORDER BY ORDINAL_POSITION",
@@ -155,16 +195,56 @@ public class DatasourceTool {
                     sanitizeIdentifier(entity.getSchemaName() != null ? entity.getSchemaName() : "public"),
                     sanitizeIdentifier(tableName));
             case "clickhouse" -> String.format("DESCRIBE TABLE %s", sanitizeIdentifier(tableName));
+            case "oracle" -> buildOracleDescribeTableSql(entity, tableName);
             default -> throw new IllegalArgumentException("不支持的数据库类型: " + dbType);
         };
-
-        try (Connection conn = connectionManager.getConnection(entity);
-             Statement stmt = conn.createStatement()) {
-            stmt.setQueryTimeout(15);
-            ResultSet rs = stmt.executeQuery(sql);
-            return formatResultSet(rs, 500);
-        }
     }
+
+    /**
+     * Oracle 11g/12c/19c 兼容的列详情查询。
+     * <p>
+     * 表名支持 {@code OWNER.TABLE} 前缀形式；未指定 owner 时在连接用户可见范围内按表名匹配
+     * （ALL_ 字典只返回当前用户有权限访问的对象）。主键以 ALL_CONSTRAINTS + ALL_CONS_COLUMNS 合并标记。
+     */
+    private static String buildOracleDescribeTableSql(DatasourceEntity entity, String tableName) {
+        String owner = entity.getSchemaName();
+        String table = tableName;
+        if ((owner == null || owner.isBlank()) && tableName.contains(".")) {
+            int idx = tableName.lastIndexOf('.');
+            owner = tableName.substring(0, idx);
+            table = tableName.substring(idx + 1);
+        }
+        String ownerFilter = "";
+        String pkOwnerFilter = "";
+        if (owner != null && !owner.isBlank()) {
+            String safeOwner = "UPPER('" + sanitizeIdentifier(owner) + "')";
+            ownerFilter = " AND c.OWNER = " + safeOwner;
+            pkOwnerFilter = " AND k.OWNER = " + safeOwner;
+        }
+        String safeTable = "UPPER('" + sanitizeIdentifier(table) + "')";
+
+        return "SELECT c.COLUMN_NAME, c.DATA_TYPE, c.NULLABLE, " +
+                "CASE WHEN pk.COLUMN_NAME IS NOT NULL THEN 'PRI' ELSE '' END AS COLUMN_KEY, " +
+                "c.DATA_DEFAULT AS COLUMN_DEFAULT, cm.COMMENTS AS COLUMN_COMMENT " +
+                "FROM ALL_TAB_COLUMNS c " +
+                "LEFT JOIN ALL_COL_COMMENTS cm ON cm.OWNER = c.OWNER AND cm.TABLE_NAME = c.TABLE_NAME AND cm.COLUMN_NAME = c.COLUMN_NAME " +
+                "LEFT JOIN (" +
+                "  SELECT cc.COLUMN_NAME FROM ALL_CONSTRAINTS k " +
+                "  JOIN ALL_CONS_COLUMNS cc ON cc.OWNER = k.OWNER AND cc.CONSTRAINT_NAME = k.CONSTRAINT_NAME AND cc.TABLE_NAME = k.TABLE_NAME " +
+                "  WHERE k.CONSTRAINT_TYPE = 'P'" + pkOwnerFilter + " AND UPPER(k.TABLE_NAME) = " + safeTable +
+                ") pk ON pk.COLUMN_NAME = c.COLUMN_NAME " +
+                "WHERE UPPER(c.TABLE_NAME) = " + safeTable + ownerFilter +
+                " ORDER BY c.COLUMN_ID";
+    }
+
+    /**
+     * Oracle 系统 schema 黑名单（从表列表中排除，防止把数据字典暴露给模型）。
+     * 11g/12c/19c 均存在这些 schema。
+     */
+    private static final String ORACLE_SYSTEM_SCHEMAS =
+            "'SYS','SYSTEM','XDB','CTXSYS','MDSYS','ORDSYS','WMSYS','DBSNMP','OUTLN'," +
+            "'APPQOSSYS','AUDSYS','DVSYS','DVF','GSMADMIN_INTERNAL','LBACSYS','OJVMSYS'," +
+            "'OLAPSYS','ORDDATA','ORDPLUGINS','SI_INFORMTN_SCHEMA','SYSBACKUP','SYSDG','SYSKM','SYSRAC'";
 
     /**
      * 将 ResultSet 格式化为 Markdown 表格

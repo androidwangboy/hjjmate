@@ -87,6 +87,10 @@ public class DatasourceConnectionManager implements DisposableBean {
         if (entity.getPassword() != null) {
             config.setPassword(entity.getPassword());
         }
+        // Oracle 薄驱动：显式指定驱动类，避免依赖 Hikari 的 URL 探测（jdbc:oracle:thin 前缀不可靠）
+        if ("oracle".equalsIgnoreCase(entity.getDbType())) {
+            config.setDriverClassName("oracle.jdbc.OracleDriver");
+        }
         // 安全：设置连接为只读模式
         config.setReadOnly(true);
         return config;
@@ -117,6 +121,12 @@ public class DatasourceConnectionManager implements DisposableBean {
                     String schemaParam = "currentSchema=" + entity.getSchemaName();
                     extra = (extra == null || extra.isBlank()) ? schemaParam : extra + "&" + schemaParam;
                 }
+                break;
+            case "oracle":
+                // Oracle Thin 驱动 Service Name 格式：jdbc:oracle:thin:@//host:port/<serviceName>
+                // databaseName 字段在 Oracle 语境下为 Service Name（11g/12c/19c 通用格式）。
+                // Oracle 无 currentSchema 连接参数：schema 过滤在元数据查询层（ALL_TABLES.OWNER）完成。
+                baseUrl = String.format("jdbc:oracle:thin:@//%s:%d/%s", host, port, dbName);
                 break;
             case "kingbase":
             case "kingbasees":
