@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 import reactor.core.Disposable;
 import vip.mate.agent.AgentService;
 import vip.mate.agent.context.ChatOrigin;
+import vip.mate.agent.context.GoalContinuationContext;
 import vip.mate.agent.runtime.ConversationTurnGate;
 import vip.mate.approval.ApprovalWorkflowService;
 import vip.mate.channel.web.AgentStreamAccumulator;
@@ -30,10 +31,11 @@ public class GoalSegmentRunner {
     private final ObjectMapper mapper;
     private final ConversationTurnGate gate;
     private final ConcurrentHashMap<Long,Worker> workers=new ConcurrentHashMap<>();
+    private volatile boolean closing;
     private static final class Worker {
         final String conversationId;
-        final Thread thread=Thread.currentThread();
         final AtomicBoolean cancelled=new AtomicBoolean();
+        final AtomicBoolean interrupted=new AtomicBoolean();
         final AtomicReference<ChatStreamTracker.RunHandle> handle=new AtomicReference<>();
         volatile boolean interactive;
         Worker(String conversationId) { this.conversationId=conversationId; }
@@ -64,10 +66,16 @@ public class GoalSegmentRunner {
         workers.values().stream().filter(w -> Objects.equals(w.conversationId,conversationId)).forEach(this::cancelWorker);
     }
 
+    public void cancelAll() {
+        closing=true;
+        workers.values().forEach(this::cancelWorker);
+    }
+
     private void cancelWorker(Worker worker) {
         worker.cancelled.set(true);
         streams.cancelRun(worker.handle.get());
-        worker.thread.interrupt();
+        // Stream disposal releases the completion latch. Never interrupt this
+        // worker: it also performs JDBC I/O on shared embedded database channels.
     }
 
     public Result run(GoalEntity goal, String prompt, boolean recovered) {
@@ -77,6 +85,11 @@ public class GoalSegmentRunner {
         Worker worker=new Worker(convId);
         try {
             workers.put(goal.getId(),worker);
+            // Register before checking the shutdown fence so cancellation cannot miss us.
+            if (closing) {
+                worker.cancelled.set(true);
+                return new Result("stopped",false);
+            }
             var conv=conversations.findByConversationId(convId);
             if (conv==null || !Objects.equals(conv.getWorkspaceId(),goal.getWorkspaceId())
                     || !Objects.equals(conv.getAgentId(),goal.getAgentId())
@@ -121,6 +134,7 @@ public class GoalSegmentRunner {
             } while (queued!=null);
             return result;
         } catch (RuntimeException error) {
+            if (Thread.interrupted()) worker.interrupted.set(true);
             // Accepted user input must survive even when this goal cannot continue.
             ChatStreamTracker.QueuedInput pending;
             while ((pending=streams.consumeQueuedInput(convId))!=null) {
@@ -130,8 +144,20 @@ public class GoalSegmentRunner {
                     "Goal execution interrupted. Queued input was saved; review the execution state before resuming."));
             throw error;
         } finally {
-            workers.remove(goal.getId(),worker);
-            permit.close();
+            try {
+                // Cooperative cancellation returns normally, bypassing the error path.
+                // Accepted input must still survive process exit, including attachments.
+                if (worker.cancelled.get()) {
+                    ChatStreamTracker.QueuedInput pending;
+                    while ((pending=streams.consumeQueuedInput(convId))!=null) {
+                        if (!pending.persisted()) conversations.saveMessage(convId,"user",pending.message(),pending.contentParts(),"queued");
+                    }
+                }
+            } finally {
+                workers.remove(goal.getId(),worker);
+                permit.close();
+                if (worker.interrupted.get()) Thread.currentThread().interrupt();
+            }
         }
     }
 
@@ -153,7 +179,7 @@ public class GoalSegmentRunner {
             if (worker.cancelled.get() || Thread.currentThread().isInterrupted()) throw new InterruptedException();
             conversations.updateStreamStatus(convId,"running");
             streams.broadcastObject(convId,"message_start",Map.of("role","assistant","trigger","goal"));
-            subscription=gate.withPermit(permit,() -> vip.mate.agent.context.GoalContinuationContext.call(() ->
+            subscription=gate.withPermit(permit,() -> GoalContinuationContext.call(!worker.interactive, () ->
                     reactor.core.publisher.Flux.defer(() -> {
                         if (worker.cancelled.get()) return reactor.core.publisher.Flux.empty();
                         return agents.chatStructuredStream(goal.getAgentId(),input,
@@ -184,10 +210,11 @@ public class GoalSegmentRunner {
             }
             return new Result(reason,accumulator.isAwaitingApproval(),evaluationUnavailable.get());
         } catch (InterruptedException interrupted) {
-            Thread.currentThread().interrupt();
+            worker.interrupted.set(true);
             throw new IllegalStateException("Goal worker interrupted; recover from persisted evidence",interrupted);
         } finally {
-            if (worker.cancelled.get() || Thread.currentThread().isInterrupted()) streams.cancelRun(handle);
+            if (Thread.interrupted()) worker.interrupted.set(true);
+            if (worker.cancelled.get() || worker.interrupted.get()) streams.cancelRun(handle);
             if (subscription!=null) subscription.dispose();
             try {
                 if (!persisted.get()) persist(convId,accumulator,"interrupted");

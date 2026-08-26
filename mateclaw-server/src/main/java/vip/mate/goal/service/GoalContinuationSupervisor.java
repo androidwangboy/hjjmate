@@ -92,6 +92,7 @@ public class GoalContinuationSupervisor {
     private void execute(GoalEntity initial, GoalContinuationStore.Continuation candidate, String token) {
         LocalDateTime now = LocalDateTime.now(clock);
         try {
+            if (closing) return;
             GoalEntity goal = goals.getById(initial.getId());
             if (!eligible(goal)) {
                 settle(initial,token,"paused",now,0,"goal_not_runnable"); return;
@@ -112,6 +113,8 @@ public class GoalContinuationSupervisor {
                 case CONTINUE -> { }
             }
             GoalSegmentRunner.Result result = runner.run(goal,decision.prompt(),"running".equals(candidate.state()));
+            // Shutdown cancellation is not user Stop: retain the lease for recovery.
+            if (closing) return;
             GoalEntity fresh = goals.getById(goal.getId());
             if (fresh.getStatus() == GoalStatus.COMPLETED) {
                 settle(goal,token,"completed",now,0,"goal_completed");
@@ -209,8 +212,10 @@ public class GoalContinuationSupervisor {
 
     @PreDestroy public void close() {
         closing=true;
+        runner.cancelAll();
         if (executor instanceof java.util.concurrent.ExecutorService workers) {
-            workers.shutdownNow();
+            // Cancellation must finish checkpoint persistence without interrupting JDBC I/O.
+            workers.shutdown();
             try {
                 if (!workers.awaitTermination(10,java.util.concurrent.TimeUnit.SECONDS)) {
                     log.warn("Goal workers did not finish shutdown persistence within 10 seconds");

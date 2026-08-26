@@ -68,6 +68,16 @@ class GoalContinuationSupervisorTest {
         verify(store).settle(eq(1L),anyString(),eq("completed"),any(),eq(0),anyString());
     }
 
+    @Test void shutdownCancellationLeavesLeaseForRestartRecovery() {
+        when(runner.run(any(),anyString(),anyBoolean())).thenAnswer(inv -> {
+            supervisor.close();
+            return new GoalSegmentRunner.Result("stopped",false);
+        });
+        supervisor.tick();
+        verify(runner).cancelAll();
+        verify(store,never()).settle(any(),anyString(),anyString(),any(),anyInt(),anyString());
+    }
+
     @Test void budgetReachedDuringSegmentIsReportedAsResumableBudgetLimit() {
         when(runner.run(any(),anyString(),anyBoolean())).thenAnswer(inv -> {
             goal.setStatus(GoalStatus.PAUSED);

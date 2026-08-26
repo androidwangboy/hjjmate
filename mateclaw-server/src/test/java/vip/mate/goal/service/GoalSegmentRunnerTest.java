@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import vip.mate.agent.AgentService;
+import vip.mate.agent.context.GoalContinuationContext;
 import vip.mate.agent.model.AgentEntity;
 import vip.mate.agent.runtime.ConversationTurnGate;
 import vip.mate.approval.ApprovalWorkflowService;
@@ -12,7 +13,12 @@ import vip.mate.channel.web.ChatStreamTracker;
 import vip.mate.goal.model.GoalEntity;
 import vip.mate.workspace.conversation.ConversationService;
 import vip.mate.workspace.conversation.model.ConversationEntity;
+import vip.mate.workspace.conversation.model.MessageContentPart;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -64,7 +70,10 @@ class GoalSegmentRunnerTest {
         var calls=new java.util.concurrent.atomic.AtomicInteger();
         when(agents.chatStructuredStream(eq(2L),anyString(),eq("conv"),eq("alice"),isNull(),any()))
                 .thenAnswer(inv -> Flux.defer(() -> {
-                    if(calls.incrementAndGet()==1) streams.enqueueMessage("conv","new user instruction",2L,false);
+                    boolean autonomous = calls.incrementAndGet()==1;
+                    assertTrue(GoalContinuationContext.active());
+                    assertEquals(autonomous, GoalContinuationContext.explicitPrompt());
+                    if(autonomous) streams.enqueueMessage("conv","new user instruction",2L,false);
                     return Flux.just(new AgentService.StreamDelta("output",null),
                             AgentService.StreamDelta.event("finish_reason",Map.of("reason","normal")));
                 }));
@@ -101,6 +110,81 @@ class GoalSegmentRunnerTest {
                 argThat(status -> "interrupted".equals(status) || "stopped".equals(status)),
                 anyInt(),anyInt(),anyInt(),anyInt(),anyInt(),anyString(),anyString(),anyString());
         assertNotNull(gate.tryAcquire("conv"));
+    }
+
+    @Test void cancellationDoesNotInterruptDatabasePersistence() throws Exception {
+        var saving = new CountDownLatch(1);
+        var release = new CountDownLatch(1);
+        var interrupted = new AtomicBoolean();
+        when(agents.chatStructuredStream(eq(2L),anyString(),eq("conv"),eq("alice"),isNull(),any()))
+                .thenReturn(Flux.just(new AgentService.StreamDelta("checkpoint", null)));
+        when(conversations.saveMessage(eq("conv"),eq("assistant"),anyString(),anyList(),anyString(),
+                anyInt(),anyInt(),anyInt(),anyInt(),anyInt(),anyString(),anyString(),anyString()))
+                .thenAnswer(inv -> {
+                    saving.countDown();
+                    try { release.await(3, TimeUnit.SECONDS); }
+                    catch (InterruptedException error) { interrupted.set(true); }
+                    return null;
+                });
+        Thread worker = Thread.ofVirtual().start(() -> runner.run(goal,"continue",false));
+        assertTrue(saving.await(3,TimeUnit.SECONDS));
+        runner.cancel(1L);
+        release.countDown();
+        worker.join(3000);
+        assertFalse(worker.isAlive());
+        assertFalse(interrupted.get(), "cancellation must not close embedded database channels by interrupting I/O");
+    }
+
+    @Test void shutdownPersistsQueuedInputWithAttachments() throws Exception {
+        var ready = new CountDownLatch(1);
+        MessageContentPart attachment = new MessageContentPart();
+        attachment.setType("file");
+        attachment.setPath("test-evidence.txt");
+        var parts = List.of(attachment);
+        when(agents.chatStructuredStream(eq(2L),anyString(),eq("conv"),eq("alice"),isNull(),any()))
+                .thenReturn(Flux.<AgentService.StreamDelta>never().doOnSubscribe(s -> ready.countDown()));
+        Thread worker = Thread.ofVirtual().start(() -> runner.run(goal,"continue",false));
+        assertTrue(ready.await(3,TimeUnit.SECONDS));
+        streams.enqueueMessage("conv","accepted steering",2L,false,parts);
+        runner.cancelAll();
+        worker.join(3000);
+        assertFalse(worker.isAlive());
+        verify(conversations).saveMessage("conv","user","accepted steering",parts,"queued");
+        assertFalse(streams.hasQueuedMessage("conv"));
+    }
+
+    @Test void shutdownRejectsLateWorkerAdmissionWithoutStartingModel() {
+        when(agents.chatStructuredStream(eq(2L),anyString(),eq("conv"),eq("alice"),isNull(),any()))
+                .thenReturn(Flux.just(AgentService.StreamDelta.event("finish_reason",Map.of("reason","normal"))));
+        runner.cancelAll();
+        assertEquals("stopped", runner.run(goal,"continue",false).finishReason());
+        verify(agents,never()).chatStructuredStream(any(),any(),any(),any(),any(),any());
+    }
+
+    @Test void externalInterruptIsRestoredOnlyAfterCheckpointPersistence() throws Exception {
+        var ready = new CountDownLatch(1);
+        var persisted = new AtomicBoolean();
+        var interruptRestored = new AtomicBoolean();
+        when(agents.chatStructuredStream(eq(2L),anyString(),eq("conv"),eq("alice"),isNull(),any()))
+                .thenReturn(Flux.concat(Flux.just(new AgentService.StreamDelta("partial",null)),
+                        Flux.<AgentService.StreamDelta>never().doOnSubscribe(s -> ready.countDown())));
+        when(conversations.saveMessage(eq("conv"),eq("assistant"),anyString(),anyList(),anyString(),
+                anyInt(),anyInt(),anyInt(),anyInt(),anyInt(),anyString(),anyString(),anyString()))
+                .thenAnswer(inv -> {
+                    assertFalse(Thread.currentThread().isInterrupted());
+                    persisted.set(true);
+                    return null;
+                });
+        Thread worker = Thread.ofVirtual().start(() -> {
+            try { runner.run(goal,"continue",false); }
+            catch (IllegalStateException expected) { interruptRestored.set(Thread.currentThread().isInterrupted()); }
+        });
+        assertTrue(ready.await(3,TimeUnit.SECONDS));
+        worker.interrupt();
+        worker.join(3000);
+        assertFalse(worker.isAlive());
+        assertTrue(persisted.get());
+        assertTrue(interruptRestored.get());
     }
 
     @Test void permanentFailurePersistsAcceptedQueuedInput() {
