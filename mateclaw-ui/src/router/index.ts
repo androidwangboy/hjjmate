@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import type { Capability } from '@/composables/capabilities'
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore'
+import { useGlobalLoadingStore } from '@/stores/useGlobalLoadingStore'
 import { i18n } from '@/i18n'
 
 // Augment vue-router's RouteMeta so each route can declare its capability gate.
@@ -403,6 +404,32 @@ router.beforeEach(async (to) => {
     return store.can('chat') ? { path: '/chat' } : { path: '/forbidden' }
   }
   return true
+})
+
+// ---------------------------------------------------------------------------
+// Global loading (A+B): top progress + skeleton for route transitions
+// ---------------------------------------------------------------------------
+// 200ms debounce avoids flash on fast navigations; skeleton stays ≥300ms
+// once visible. Initial loader (B) is handled by App.vue + index.html inline.
+router.beforeEach((to, from) => {
+  if (to.path !== from.path || JSON.stringify(to.query) !== JSON.stringify(from.query)) {
+    try {
+      const loading = useGlobalLoadingStore()
+      loading.startRouteLoading()
+    } catch {}
+  }
+})
+router.afterEach(() => {
+  try {
+    const loading = useGlobalLoadingStore()
+    loading.stopRouteLoading()
+  } catch {}
+})
+router.onError(() => {
+  try {
+    const loading = useGlobalLoadingStore()
+    loading.stopRouteLoading()
+  } catch {}
 })
 
 // ---------------------------------------------------------------------------

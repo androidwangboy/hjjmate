@@ -191,18 +191,21 @@
         </button>
         <span class="mobile-topbar-title">Mate<span class="logo-name-highlight">Claw</span></span>
       </div>
-      <!-- RFC-074 PR-1 fix: include route.path in the key so two different
-           keepAlive routes (e.g. /channels and /settings/models) don't collide
-           on the same vnode slot. Without this, switching between two keep-alive
-           routes leaves both component trees mounted because Vue sees identical
-           keys and patches in place. The comment must live OUTSIDE <keep-alive>
-           — KeepAlive treats comments as children and rejects "more than one". -->
-      <router-view v-slot="{ Component, route }">
-        <keep-alive>
-          <component :is="Component" :key="`${workspaceRouteKey}:${route.path}`" v-if="route.meta?.keepAlive" />
-        </keep-alive>
-        <component :is="Component" :key="`${workspaceRouteKey}:${route.path}`" v-if="!route.meta?.keepAlive" />
-      </router-view>
+      <div class="main-content__body">
+        <Transition name="route-loading-fade">
+          <div v-if="globalLoading.isRouteLoading" class="route-loading-overlay" aria-hidden="true">
+            <RouteSkeleton />
+          </div>
+        </Transition>
+        <div class="route-content" :class="{ 'route-content--loading': globalLoading.isRouteLoading }" :aria-busy="globalLoading.isRouteLoading">
+          <router-view v-slot="{ Component, route }">
+            <keep-alive>
+              <component :is="Component" :key="`${workspaceRouteKey}:${route.path}`" v-if="route.meta?.keepAlive" />
+            </keep-alive>
+            <component :is="Component" :key="`${workspaceRouteKey}:${route.path}`" v-if="!route.meta?.keepAlive" />
+          </router-view>
+        </div>
+      </div>
     </main>
 
     <OnboardingWizard v-if="showOnboarding" @close="showOnboarding = false" />
@@ -233,12 +236,15 @@ import { useWorkspaceStore } from '@/stores/useWorkspaceStore'
 import { applyLocale, currentLocale, type AppLocale } from '@/i18n'
 import { SwitchButton, Lock, Unlock } from '@element-plus/icons-vue'
 import ChangePasswordDialog from '@/components/ChangePasswordDialog.vue'
+import RouteSkeleton from '@/components/common/RouteSkeleton.vue'
+import { useGlobalLoadingStore } from '@/stores/useGlobalLoadingStore'
 
 const router = useRouter()
 const route = useRoute()
 const { t } = useI18n()
 const themeStore = useThemeStore()
 const workspaceStore = useWorkspaceStore()
+const globalLoading = useGlobalLoadingStore()
 const sidebarCollapsed = ref(localStorage.getItem('mc-sidebar-collapsed') === 'true')
 const footerPanelOpen = ref(false)
 
@@ -1383,6 +1389,54 @@ watch(() => workspaceStore.currentWorkspaceId, () => {
 
   .main-content {
     padding: 8px;
+  }
+}
+
+/* ===== Route loading overlay (A · 顶部进度+骨架) ===== */
+.main-content__body {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.route-loading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: var(--mc-chat-bg, #FAFAF8);
+  overflow: auto;
+  padding: 18px;
+}
+.route-content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  transition: opacity 0.25s ease, filter 0.25s ease;
+}
+.route-content--loading {
+  opacity: 0.55;
+  filter: blur(0.4px);
+  pointer-events: none;
+}
+.route-loading-fade-enter-active,
+.route-loading-fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+.route-loading-fade-enter-from,
+.route-loading-fade-leave-to {
+  opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .route-content,
+  .route-loading-overlay,
+  .route-loading-fade-enter-active,
+  .route-loading-fade-leave-active {
+    transition: none;
+  }
+  .route-content--loading {
+    filter: none;
   }
 }
 </style>

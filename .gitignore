@@ -135,3 +135,6 @@ __pycache__/
 *.pyc
 MEMORY.md
 .pi-run-backend.bat
+
+# Design scratch / prototypes
+_temp/
