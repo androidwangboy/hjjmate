@@ -2032,7 +2032,7 @@ const currentPromptTokens = computed(() => {
 })
 
 // ============ 消息发送和处理 ============
-async function handleSendMessage(content: string) {
+async function handleSendMessage(content: string, pendingApprovalId?: string) {
   // 允许在等待审批时发送审批命令
   const isApprovalCommand = /^\/(approve|deny)$/i.test(content.trim())
 
@@ -2076,6 +2076,7 @@ async function handleSendMessage(content: string) {
         conversationId: currentConversationId.value,
         agentId: selectedAgentId.value,
         contentParts: [],
+        pendingApprovalId,
       })
     } catch (e: any) {
       console.error('Approval stream failed:', e)
@@ -2215,12 +2216,12 @@ function handleToggleThinking(message: import('@/types').Message, expanded: bool
 // ============ 审批处理 ============
 async function handleApprove(pendingId: string) {
   if (!currentConversationId.value) return
-  await handleSendMessage('/approve')
+  await handleSendMessage('/approve', pendingId)
 }
 
 async function handleDeny(pendingId: string) {
   if (!currentConversationId.value) return
-  await handleSendMessage('/deny')
+  await handleSendMessage('/deny', pendingId)
 }
 
 // Always-approve: create the matching grant first, then send /approve as usual.
@@ -2248,7 +2249,7 @@ async function handleApproveAlways(
   }
   if (!scopeId) {
     ElMessage.error('Cannot resolve scope id for always-approve')
-    await handleSendMessage('/approve')
+    await handleSendMessage('/approve', payload.pendingId)
     return
   }
 
@@ -2274,7 +2275,7 @@ async function handleApproveAlways(
   } catch (e: any) {
     ElMessage.error(e?.message || 'Failed to create auto-approve rule')
   }
-  await handleSendMessage('/approve')
+  await handleSendMessage('/approve', payload.pendingId)
 }
 
 // 重连到运行中的流

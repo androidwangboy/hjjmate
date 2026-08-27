@@ -228,7 +228,8 @@ public class ChatController {
         boolean isDenyCommand = "/deny".equals(normalizedMsg) || "deny".equals(normalizedMsg);
 
         if (isApprovalCommand || isDenyCommand) {
-            PendingApproval pending = approvalService.findPendingByConversation(conversationId);
+            PendingApproval pending = findRequestedPendingApproval(
+                    conversationId, request.getPendingApprovalId());
             if (pending == null) {
                 try {
                     sendEvent(emitter, "error", Map.of("message", "当前没有待审批的工具调用"));
@@ -302,7 +303,7 @@ public class ChatController {
                                 conversationService.getMessageCount(conversationId)));
                         // deny 是正常 turn 终结，用户可能在 awaiting_approval 阶段排了消息
                         ChatStreamTracker.CompletionResult denyCr = streamTracker.completeAndConsumeIfLast(conversationId);
-                        if (denyCr.allDone() && hasQueuedInput(conversationId)) {
+                        if (denyCr.allDone() && shouldDrainQueuedInput(conversationId, "completed")) {
                             startQueuedMessage(conversationId, emitter, approvalEmitterDone, username, requestBaseUrl);
                         } else {
                             completeEmitterQuietly(emitter, approvalEmitterDone);
@@ -316,7 +317,7 @@ public class ChatController {
                         broadcastEvent(conversationId, "done", Map.of("status", "completed"));
                         // 审批记录被另一个请求消费，但用户可能在等待期间排了消息
                         ChatStreamTracker.CompletionResult consumedNullCr = streamTracker.completeAndConsumeIfLast(conversationId);
-                        if (consumedNullCr.allDone() && hasQueuedInput(conversationId)) {
+                        if (consumedNullCr.allDone() && shouldDrainQueuedInput(conversationId, "completed")) {
                             startQueuedMessage(conversationId, emitter, approvalEmitterDone, username, requestBaseUrl);
                         } else {
                             completeEmitterQuietly(emitter, approvalEmitterDone);
@@ -421,7 +422,7 @@ public class ChatController {
                                 } finally {
                                     ChatStreamTracker.CompletionResult cr = streamTracker.completeAndConsumeIfLast(conversationId);
                                     if (cr.allDone()) {
-                                        if (hasQueuedInput(conversationId)) {
+                                        if (shouldDrainQueuedInput(conversationId, persistStatus)) {
                                             startQueuedMessage(conversationId, emitter, approvalEmitterDone, username, requestBaseUrl);
                                         } else {
                                             conversationService.updateStreamStatus(conversationId, "idle");
@@ -522,7 +523,7 @@ public class ChatController {
                                 streamTracker.clearInterruptState(conversationId);
                                 ChatStreamTracker.CompletionResult cr = streamTracker.completeAndConsumeIfLast(conversationId);
                                 if (cr.allDone()) {
-                                    if (hasQueuedInput(conversationId)) {
+                                    if (shouldDrainQueuedInput(conversationId, errStatus)) {
                                         startQueuedMessage(conversationId, emitter, approvalEmitterDone, username, requestBaseUrl);
                                     } else {
                                         conversationService.updateStreamStatus(conversationId, "idle");
@@ -778,7 +779,7 @@ public class ChatController {
                                     // run it" condition; align with them. If the user
                                     // genuinely doesn't want continuation, no message would
                                     // have been in messageQueue to begin with.
-                                    if (hasQueuedInput(conversationId)) {
+                                    if (shouldDrainQueuedInput(conversationId, persistStatus)) {
                                         startQueuedMessage(conversationId, emitter, emitterDone, username, requestBaseUrl);
                                     } else {
                                         conversationService.updateStreamStatus(conversationId, "idle");
@@ -871,7 +872,7 @@ public class ChatController {
                                 streamTracker.clearInterruptState(conversationId);
                                 ChatStreamTracker.CompletionResult cr = streamTracker.completeAndConsumeIfLast(conversationId);
                                 if (cr.allDone()) {
-                                    if (hasQueuedInput(conversationId)) {
+                                    if (shouldDrainQueuedInput(conversationId, status)) {
                                         // 无论中断类型，都消费排队消息（修复 Disposable 不可用时队列被丢弃的 bug）
                                         startQueuedMessage(conversationId, emitter, emitterDone, username, requestBaseUrl);
                                     } else {
@@ -995,7 +996,7 @@ public class ChatController {
                                 // follow-up. Whoever puts a message in messageQueue means it
                                 // — just run it. Aligns with doOnComplete and the 4 other
                                 // queue-launch sites in this controller.
-                                if (hasQueuedInput(conversationId)) {
+                                if (shouldDrainQueuedInput(conversationId, status)) {
                                     startQueuedMessage(conversationId, emitter, emitterDone, username, requestBaseUrl);
                                 } else {
                                     conversationService.updateStreamStatus(conversationId, "idle");
@@ -1400,6 +1401,8 @@ public class ChatController {
         private String message;
         private String conversationId = "default";
         private List<MessageContentPart> contentParts;
+        /** Exact approval selected by the UI; absent for legacy FIFO clients. */
+        private String pendingApprovalId;
         /** true 表示断线重连，不发送新消息，只附着到已有的流 */
         private Boolean reconnect;
         /**
@@ -1588,7 +1591,7 @@ public class ChatController {
                     } finally {
                         ChatStreamTracker.CompletionResult cr = streamTracker.completeAndConsumeIfLast(conversationId);
                         if (cr.allDone()) {
-                            if (hasQueuedInput(conversationId)) {
+                            if (shouldDrainQueuedInput(conversationId, persistStatus)) {
                                 // 链式续跑：queued stream 期间又排了新消息
                                 startQueuedMessage(conversationId, emitter, emitterDone, requesterId, baseUrl);
                             } else {
@@ -1634,7 +1637,7 @@ public class ChatController {
                     }
                     ChatStreamTracker.CompletionResult cr = streamTracker.completeAndConsumeIfLast(conversationId);
                     if (cr.allDone()) {
-                        if (hasQueuedInput(conversationId)) {
+                        if (shouldDrainQueuedInput(conversationId, "failed")) {
                             startQueuedMessage(conversationId, emitter, emitterDone, requesterId, baseUrl);
                         } else {
                             conversationService.updateStreamStatus(conversationId, "idle");
@@ -1720,6 +1723,31 @@ public class ChatController {
     static String emptyAssistantPlaceholder(String status) {
         if ("awaiting_approval".equals(status)) return "[等待审批]";
         return "[本次没有输出]";
+    }
+
+    private boolean shouldDrainQueuedInput(String conversationId, String persistStatus) {
+        return shouldDrainQueuedInput(
+                persistStatus,
+                hasQueuedInput(conversationId),
+                approvalService.findPendingByConversation(conversationId) != null);
+    }
+
+    private PendingApproval findRequestedPendingApproval(String conversationId, String pendingApprovalId) {
+        if (pendingApprovalId == null || pendingApprovalId.isBlank()) {
+            return approvalService.findPendingByConversation(conversationId);
+        }
+        return approvalService.getPending(pendingApprovalId)
+                .filter(pending -> conversationId.equals(pending.getConversationId()))
+                .filter(pending -> "pending".equals(pending.getStatus()))
+                .orElse(null);
+    }
+
+    static boolean shouldDrainQueuedInput(String persistStatus,
+                                          boolean hasQueuedInput,
+                                          boolean hasPendingApproval) {
+        return hasQueuedInput
+                && !hasPendingApproval
+                && !"awaiting_approval".equals(persistStatus);
     }
 
     static boolean isAssistantPersisted(MessageEntity savedAssistant) {
