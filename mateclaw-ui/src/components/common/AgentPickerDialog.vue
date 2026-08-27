@@ -174,7 +174,7 @@ const props = withDefaults(defineProps<{
   /** Allow clearing the selection (shows a ✕ on the trigger and a "none" row). */
   clearable?: boolean
   /** Label shown when modelValue is set but the agent is not in `agents`
-   *  (e.g. a workflow step referencing a since-deleted employee). */
+   *  (e.g. a workflow step referencing a since-deleted expert). */
   unknownLabel?: string
 }>(), {
   disabled: false,
@@ -204,7 +204,7 @@ const selectedAgent = computed<PickableAgent | null>(() => {
 })
 
 /** modelValue is set but resolves to no known agent — the referenced
- *  employee was likely renamed or removed.
+ *  expert was likely renamed or removed.
  *  Requires agents to have loaded first: while the list is still empty
  *  (component just rebuilt, /agents in flight) we must NOT treat a missing
  *  match as "unknown" — otherwise the trigger flashes the raw numeric id

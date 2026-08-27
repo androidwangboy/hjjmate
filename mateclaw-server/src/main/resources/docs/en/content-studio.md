@@ -8,9 +8,9 @@ It's built entirely from MateClaw's own primitives — web search, page fetch, i
 
 ---
 
-## The seeded employee
+## The seeded expert
 
-Content Studio ships as a **pre-seeded digital employee** named *Content Studio* / *内容工作室*. It comes bound to the right skills and tools, with a system prompt that fixes the seven-stage workflow and the "confirm before the outward, irreversible step" discipline. You don't assemble it — you talk to it:
+Content Studio ships as a **pre-seeded digital expert** named *Content Studio* / *内容工作室*. It comes bound to the right skills and tools, with a system prompt that fixes the seven-stage workflow and the "confirm before the outward, irreversible step" discipline. You don't assemble it — you talk to it:
 
 > *"Write a 公众号 article about local LLM deployment, referencing these two: `<url1>` `<url2>`"*
 >
@@ -36,7 +36,7 @@ From the second post on, it already knows your voice — persona, style, topic d
 | **⑥ Layout** | Produces the platform artifact (inline-style HTML / vertical cards) | `render_html_image`, HTML templates |
 | **⑦ Deliver** | Stops at the outward, irreversible step for your confirmation | `gzh_publish` (draft) / `xhs_package` |
 
-**Templates are conversational.** Because layout is just HTML, the employee can create and refine templates by chatting — render a preview, look at the PNG, refine — and persist reusable custom templates into your own editable skill. Built-in skills stay immutable; your customizations live in a `custom` skill (see [Skills](./skills)).
+**Templates are conversational.** Because layout is just HTML, the expert can create and refine templates by chatting — render a preview, look at the PNG, refine — and persist reusable custom templates into your own editable skill. Built-in skills stay immutable; your customizations live in a `custom` skill (see [Skills](./skills)).
 
 ---
 
@@ -99,7 +99,7 @@ A heuristic script (`ai_trace_score`, pure Python, no LLM, deterministic and reg
 | **Paragraph evenness** | Mechanically equal paragraph lengths |
 | **Concreteness gap** | Too few numbers, names, first-person, time/place = vague |
 
-The employee rewrites **against the signals** — colloquial, first-person, concrete detail, varied sentence length, filler cut, tone tuned per platform (公众号 measured, 小红书 lively) — and **re-scores**, looping until it clears the bar or hits **`max_rounds = 3`** (then it keeps the best version and reports the score).
+The expert rewrites **against the signals** — colloquial, first-person, concrete detail, varied sentence length, filler cut, tone tuned per platform (公众号 measured, 小红书 lively) — and **re-scores**, looping until it clears the bar or hits **`max_rounds = 3`** (then it keeps the best version and reports the score).
 
 > **De-AI-ification is a heuristic quality boost, not a guarantee of bypassing any AI detector.** The skill and the output both say so.
 

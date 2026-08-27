@@ -29,7 +29,7 @@ import java.util.Map;
  * Natural-language → workflow draft generator.
  *
  * <p>Composes a system prompt + workspace-scoped context (available
- * digital employees + channels) + the user description, dispatches to
+ * digital experts + channels) + the user description, dispatches to
  * the workspace's default chat model, parses the JSON response, and
  * runs {@link WorkflowCompiler} against it without persisting. The
  * compile pass is "preview-only" — auto-publish is explicitly
@@ -77,7 +77,7 @@ public class WorkflowDraftGenerator {
 
             # v0 支持的 7 种 mode
 
-            sequential — 一个员工执行；必须 agentId/agentName + promptTemplate。outputContentType 只能 text 或 json。
+            sequential — 一个专家执行；必须 agentId/agentName + promptTemplate。outputContentType 只能 text 或 json。
             fan_out — 至少 2 个连续 fan_out，后接 collect；每个分支必须 agentId/agentName + promptTemplate。
             collect — 不带 agentId、agentName、promptTemplate；只能跟在 fan_out group 后。
             conditional — mode.expression 必填，使用 Pebble 子集语法。
@@ -116,9 +116,9 @@ public class WorkflowDraftGenerator {
 
             # 占位字段
 
-            找不到匹配的真实 ID/渠道/员工时使用占位：
+            找不到匹配的真实 ID/渠道/专家时使用占位：
             - agentName: "TODO_*_AGENT"
-            - employeeId: "TODO_EMPLOYEE_ID"
+            - employeeId: "TODO_EXPERT_ID"
             - channels[*]: "TODO_SELECT_CHANNEL"
             - targets["TODO_SELECT_CHANNEL"]: "TODO_TARGET_ID"
             - sourceWorkflowId: "TODO_WORKFLOW_ID"
@@ -306,7 +306,7 @@ public class WorkflowDraftGenerator {
                 .eq(ChannelEntity::getEnabled, true));
 
         StringBuilder sb = new StringBuilder();
-        sb.append("# 当前 workspace 可用数字员工\n[");
+        sb.append("# 当前 workspace 可用数字专家\n[");
         boolean first = true;
         for (AgentEntity a : agents) {
             if (!first) sb.append(",");

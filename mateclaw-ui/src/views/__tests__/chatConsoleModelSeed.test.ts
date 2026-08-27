@@ -4,15 +4,15 @@ import { describe, it, expect } from 'vitest'
 /**
  * 复刻 ChatConsole 中模型 seed 的核心判定逻辑做纯函数测试。
  *
- * 修复的 bug：员工编辑页选定的「模型」（per-Agent override）在网页对话里被
+ * 修复的 bug：专家编辑页选定的「模型」（per-Agent override）在网页对话里被
  * 全局默认模型覆盖。根因是 applyConversationModel 在会话无 pin 时直接回落全局
  * 默认，随后 handleSendMessage 把该默认 PIN 到会话行——而会话 pin 优先级高于
- * 员工 override，导致员工选的模型被静默覆盖。
+ * 专家 override，导致专家选的模型被静默覆盖。
  *
  * 修复后 seed 优先级与后端 AgentGraphBuilder.resolveRuntimeBaseModel 对齐：
- *   会话 pin  >  员工 modelName override  >  全局默认
+ *   会话 pin  >  专家 modelName override  >  全局默认
  *
- * 员工 override 这一层有两个来源（复刻 agentSeedModel）：
+ * 专家 override 这一层有两个来源（复刻 agentSeedModel）：
  *   1. agentCapabilities —— /agents/{id}/capabilities 的后端解析结果（异步、权威）
  *   2. currentAgent.modelName 在 enabledModels 里的同步解析（异步失败/切换/深链兜底）
  */
@@ -63,7 +63,7 @@ function resolveSeedModel(opts: {
 }
 
 // 复刻 selectedAgentId watcher 中的 re-seed 守卫：
-// 仅当会话无服务端 pin 且用户未手动选过模型时，才允许用刚加载的员工能力覆盖。
+// 仅当会话无服务端 pin 且用户未手动选过模型时，才允许用刚加载的专家能力覆盖。
 function shouldReseedFromAgentCaps(opts: {
   convProvider?: string | null
   convModel?: string | null
@@ -80,7 +80,7 @@ const ENABLED: EnabledModel[] = [
 ]
 
 describe('resolveSeedModel — 模型 seed 优先级', () => {
-  it('会话已有 pin 时，优先用会话 pin（压过员工与全局）', () => {
+  it('会话已有 pin 时，优先用会话 pin（压过专家与全局）', () => {
     const r = resolveSeedModel({
       convProvider: 'volcano', convModel: 'doubao-pro',
       capProvider: 'anthropic', capModel: 'claude-x',
@@ -89,7 +89,7 @@ describe('resolveSeedModel — 模型 seed 优先级', () => {
     expect(r).toEqual({ providerId: 'volcano', model: 'doubao-pro' })
   })
 
-  it('会话无 pin 时，用 capabilities 的员工 override（不再回落全局默认）', () => {
+  it('会话无 pin 时，用 capabilities 的专家 override（不再回落全局默认）', () => {
     const r = resolveSeedModel({
       capProvider: 'anthropic', capModel: 'claude-x',
       globalDefault: GLOBAL,
@@ -114,7 +114,7 @@ describe('resolveSeedModel — 模型 seed 优先级', () => {
     expect(r).toEqual(GLOBAL)
   })
 
-  it('员工的 modelName 不在 enabledModels（禁用/删除）时，同步兜底落空 → 全局默认', () => {
+  it('专家的 modelName 不在 enabledModels（禁用/删除）时，同步兜底落空 → 全局默认', () => {
     const r = resolveSeedModel({
       agentModelName: 'ghost-model', enabledModels: ENABLED,
       globalDefault: GLOBAL,

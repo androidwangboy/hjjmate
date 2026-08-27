@@ -251,9 +251,9 @@ mateclaw:
 
 ## Single-source SKILL.md (2.0.0+)
 
-Before 2.0.0 there was a hidden fork: the runtime read SKILL.md from the workspace directory while the admin console read the database column. An employee editing the file with shell tools in a chat session changed runtime behavior invisibly to the console; conversely, one failed export left agents executing stale content the console claimed was current.
+Before 2.0.0 there was a hidden fork: the runtime read SKILL.md from the workspace directory while the admin console read the database column. An expert editing the file with shell tools in a chat session changed runtime behavior invisibly to the console; conversely, one failed export left agents executing stale content the console claimed was current.
 
-Now the two sides run a **three-way reconcile**, anchored on a sidecar recording the hash at last sync: file-side edits ingest into the DB, DB-side edits materialize to the file, and a two-sided conflict resolves **DB-wins** with the file side kept as a `SKILL.md.bak` backup. A blank file never overwrites non-blank DB content; a blank DB backfills from the file. The reconcile runs on every convention-path resolve, and opening a skill's detail in the console performs a read-time reconcile too — **what you see in the console is what the employee executes.**
+Now the two sides run a **three-way reconcile**, anchored on a sidecar recording the hash at last sync: file-side edits ingest into the DB, DB-side edits materialize to the file, and a two-sided conflict resolves **DB-wins** with the file side kept as a `SKILL.md.bak` backup. A blank file never overwrites non-blank DB content; a blank DB backfills from the file. The reconcile runs on every convention-path resolve, and opening a skill's detail in the console performs a read-time reconcile too — **what you see in the console is what the expert executes.**
 
 (Skills with an explicit `skillDir` stay file-authoritative, mirroring their content into the DB column for display.)
 
@@ -263,7 +263,7 @@ Now the two sides run a **three-way reconcile**, anchored on a sidecar recording
 
 The detail drawer used to show and edit only SKILL.md; `scripts/` and `references/` had no console surface at all, and `templates/` wasn't even in the canonical store's bucket set. Now:
 
-- **`/api/v1/skills/{id}/files` admin endpoints**: list / read / upsert / delete a skill's bundle files. Writes land on the canonical `mate_skill_file` row, materialize the workspace cache, and re-resolve the skill immediately — **the employee's next call runs the new script**.
+- **`/api/v1/skills/{id}/files` admin endpoints**: list / read / upsert / delete a skill's bundle files. Writes land on the canonical `mate_skill_file` row, materialize the workspace cache, and re-resolve the skill immediately — **the expert's next call runs the new script**.
 - **`templates/` becomes a first-class bucket**: DB-persisted like `scripts/` and `references/`, included in sync and backfill, protected by the empty-bundle prune guard.
 - **Path envelope**: only the three convention buckets are allowed and traversal is blocked; built-in skill files stay read-only (restored from the shipped bundle on upgrade); virtual MCP / ACP skills own no files.
 - **Agent-side writes persist too**: when a skill edits its own bundle files via `write_file` in a session, the change mirrors into the canonical store — console and runtime never disagree again.
@@ -369,7 +369,7 @@ Each workspace gets its own copy of skills. When you enable a skill for a worksp
 
 - **Same-named skills coexist across workspaces.** Install dedup, name uniqueness, and reinstall/uninstall lookups all filter by workspace — workspace A's "book-meeting" skill no longer blocks workspace B from installing its own.
 - **Filesystem paths encode the workspace.** The skill directory scheme includes the workspaceId, so two same-named skills own separate directories — no more sharing one directory, overwriting each other, or scripts landing in the neighbor's house.
-- **Runtime resolution is scoped to the conversation's workspace.** `load_skill`, skill file reads, script runs and auto-redirect all resolve only within "this conversation's workspace + builtin + global virtual" — an employee in one workspace cannot read or execute another workspace's same-named skill.
+- **Runtime resolution is scoped to the conversation's workspace.** `load_skill`, skill file reads, script runs and auto-redirect all resolve only within "this conversation's workspace + builtin + global virtual" — an expert in one workspace cannot read or execute another workspace's same-named skill.
 
 See [Workspaces](./workspaces).
 
@@ -562,13 +562,13 @@ When disabled, the catalog guidance points at `readSkillFile` instead and `load_
 
 ## The `/skill` slash menu in chat (new in 1.5.0)
 
-Don't want to prompt the employee in natural language about which skill to use? Type `/` in the chat composer to open a **searchable skill picker**:
+Don't want to prompt the expert in natural language about which skill to use? Type `/` in the chat composer to open a **searchable skill picker**:
 
 - ↑↓ to move, Enter/Tab to select, Esc to close; typing filters the enabled skills live (up to 8 shown).
 - The list comes from `GET /api/v1/skills/enabled` — real skills plus MCP/ACP-derived virtual skills (a real skill shadows a same-named virtual one). Cached per workspace for 30 seconds so reopening doesn't re-fetch.
-- Selecting a skill inserts a directive into the box: `Use the "skill name" skill: `, cursor at the end, ready for you to add context and send. The employee sees the directive in message history and runs `load_skill` to pull it.
+- Selecting a skill inserts a directive into the box: `Use the "skill name" skill: `, cursor at the end, ready for you to add context and send. The expert sees the directive in message history and runs `load_skill` to pull it.
 
-The menu shows whenever **an employee is selected and that employee hasn't disabled skills** (the frontend checks `currentAgent && !skillsDisabled`) — it is unrelated to the global progressive-disclosure switch. Setting `mateclaw.skill.disclosure.load-skill-tool.enabled` to `false` globally only stops the backend from registering the `load_skill` tool; the menu still opens (the employee just falls back to pulling skills via `readSkillFile` and similar).
+The menu shows whenever **an expert is selected and that expert hasn't disabled skills** (the frontend checks `currentAgent && !skillsDisabled`) — it is unrelated to the global progressive-disclosure switch. Setting `mateclaw.skill.disclosure.load-skill-tool.enabled` to `false` globally only stops the backend from registering the `load_skill` tool; the menu still opens (the expert just falls back to pulling skills via `readSkillFile` and similar).
 
 ---
 
@@ -608,7 +608,7 @@ The Skills page picks up the lifecycle:
 - **Lifecycle tabs** — Enabled / Stale / Archived.
 - Cards show a **"last used"** badge.
 - The detail drawer adds **manual archive / restore / pin**.
-- Manually archiving a still-bound skill triggers a **confirm handshake** — you don't silently pull a skill out from under a digital employee that's still using it.
+- Manually archiving a still-bound skill triggers a **confirm handshake** — you don't silently pull a skill out from under a digital expert that's still using it.
 
 ---
 
@@ -626,7 +626,7 @@ Once installed:
 
 Templates: `claude-code-helper`, `codex-helper` — install and go.
 
-A digital employee calls an ACP skill the same way it calls a built-in tool.
+A digital expert calls an ACP skill the same way it calls a built-in tool.
 
 ### Virtual SKILL.md for MCP/ACP skills (new in v1.4)
 
@@ -645,7 +645,7 @@ Every skill card opens a drawer with eight tabs:
 - **Security** — content scan results, related Tool Guard rules
 - **Lessons** — `LESSONS.md` content
 - **Secrets** — env-var-style credentials (new in v1.3; see the "Secrets" section below)
-- **Memory** — digital employees bound to this skill
+- **Memory** — digital experts bound to this skill
 
 The card itself is slim — six fields and one status pill. **Clear beats comprehensive.**
 
@@ -681,10 +681,10 @@ See [Content Studio](./content-studio) for the full pipeline, publish chain, and
 2.1.0 expands LESSONS.md learning into an inspectable, reversible improvement chain:
 
 1. **Reflection** proposes a precise patch or new-skill candidate from a completed conversation.
-2. **Routine mining** clusters recent conversations' opening user requests per employee; it does not mine a full execution trace. The default window is 30 days, with at least three occurrences across three distinct days. Once enabled, the nightly job automatically promotes qualified candidates (two per sweep by default); admins may promote early, dismiss, or reopen.
-3. **Automatic binding** only handles a new skill with a source employee, and adds a row only when that employee already uses an explicit, non-empty skill allowlist. Inherit-all needs no binding, while an explicit no-skills choice is never overwritten.
+2. **Routine mining** clusters recent conversations' opening user requests per expert; it does not mine a full execution trace. The default window is 30 days, with at least three occurrences across three distinct days. Once enabled, the nightly job automatically promotes qualified candidates (two per sweep by default); admins may promote early, dismiss, or reopen.
+3. **Automatic binding** only handles a new skill with a source expert, and adds a row only when that expert already uses an explicit, non-empty skill allowlist. Inherit-all needs no binding, while an explicit no-skills choice is never overwritten.
 4. **Curator** organizes stale, archived, and overlapping skills per workspace. It starts preview-only and mutates only after admin activation; consolidation is separately enabled, with umbrella creation and source archiving transactional.
-5. **Adopt / release** transfers governance: adopt hands a user skill to autonomous curation, while release returns it to user ownership. It is not a record of which employee uses the skill.
+5. **Adopt / release** transfers governance: adopt hands a user skill to autonomous curation, while release returns it to user ownership. It is not a record of which expert uses the skill.
 6. **Snapshots** create a restore point before every activated mutating sweep and again before restore; five are retained per workspace by default.
 7. **Origin** distinguishes built-in, user, agent, and routine, while also serving as curator policy. Manual handover intentionally changes the user / agent state.
 

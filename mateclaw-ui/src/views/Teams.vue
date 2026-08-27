@@ -1624,7 +1624,7 @@ async function cancelTask() {
   flex: none;
 }
 
-/* Segmented switch — same pattern as the employees page view switch. */
+/* Segmented switch — same pattern as the experts page view switch. */
 .view-switch {
   display: inline-flex;
   background: var(--mc-bg-sunken);

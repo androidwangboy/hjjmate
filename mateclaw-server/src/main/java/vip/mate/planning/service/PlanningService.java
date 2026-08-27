@@ -39,7 +39,7 @@ public class PlanningService {
 
     /**
      * 创建执行计划，并绑定到产生它的对话/运行。
-     * conversationId 可空（历史调用方），便于把计划归到某次运行，支撑跨员工/协同看板。
+     * conversationId 可空（历史调用方），便于把计划归到某次运行，支撑跨专家/协同看板。
      */
     @Transactional
     public PlanEntity createPlan(String agentId, String conversationId, String goal, List<String> steps) {
@@ -179,7 +179,7 @@ public class PlanningService {
     }
 
     /**
-     * 跨员工获取最近的计划列表（用于团队/泳道看板）。
+     * 跨专家获取最近的计划列表（用于团队/泳道看板）。
      * 按创建时间倒序，limit 兜底防止全表拉取。
      */
     public List<PlanEntity> listRecentPlans(int limit) {

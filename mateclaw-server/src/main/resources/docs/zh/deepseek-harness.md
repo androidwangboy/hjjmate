@@ -1,17 +1,17 @@
 ---
 title: DeepSeek Harness 接入
-description: 在 MateClaw 中安装 DeepSeek Harness，并把它配置为数字员工运行时。
+description: 在 MateClaw 中安装 DeepSeek Harness，并把它配置为数字专家运行时。
 head:
   - - meta
     - name: keywords
-      content: DeepSeek Harness,DSH,数字员工,Agent runtime,JSON-RPC,Cordis
+      content: DeepSeek Harness,DSH,数字专家,Agent runtime,JSON-RPC,Cordis
 ---
 
 # DeepSeek Harness 接入
 
-本文说明如何把官方 DeepSeek Harness（简称 DSH）接入 MateClaw，并在员工页面创建一个由 DSH 驱动的数字员工。
+本文说明如何把官方 DeepSeek Harness（简称 DSH）接入 MateClaw，并在专家页面创建一个由 DSH 驱动的数字专家。
 
-DSH 在 MateClaw 中是**员工运行时**，不是 MCP 工具，也不是普通插件。MCP 负责为员工提供工具；DSH 负责启动外部 Agent 进程、运行 ReAct 循环并把思考、工具和文本事件流回 MateClaw。
+DSH 在 MateClaw 中是**专家运行时**，不是 MCP 工具，也不是普通插件。MCP 负责为专家提供工具；DSH 负责启动外部 Agent 进程、运行 ReAct 循环并把思考、工具和文本事件流回 MateClaw。
 
 ## 架构
 
@@ -28,7 +28,7 @@ dsh-jsonrpc-agent
 DeepSeek API + Cordis composition
 ```
 
-MateClaw 仍然负责员工、会话、权限、工作空间、消息持久化和 UI 投影。DSH 只负责运行时回合。API Key 由 MateClaw 的 DeepSeek 提供商配置注入到 DSH 子进程，不要把密钥写进 `runtimeConfig`、员工提示词或仓库文件。
+MateClaw 仍然负责专家、会话、权限、工作空间、消息持久化和 UI 投影。DSH 只负责运行时回合。API Key 由 MateClaw 的 DeepSeek 提供商配置注入到 DSH 子进程，不要把密钥写进 `runtimeConfig`、专家提示词或仓库文件。
 
 ## 前置条件
 
@@ -86,13 +86,13 @@ DSH_CWD=/var/lib/mateclaw/workspace
 4. 填入 DeepSeek API Key 和 Base URL。
 5. 确认至少有一个启用的 DeepSeek chat 模型。
 
-DSH 默认模型是 `deepseek-v4-flash`。如果员工没有绑定具体模型，MateClaw 会使用全局默认模型名，并从 `deepseek` 提供商注入凭证。自定义模型时，模型必须能由 DeepSeek Harness 的 DeepSeek provider route 使用。
+DSH 默认模型是 `deepseek-v4-flash`。如果专家没有绑定具体模型，MateClaw 会使用全局默认模型名，并从 `deepseek` 提供商注入凭证。自定义模型时，模型必须能由 DeepSeek Harness 的 DeepSeek provider route 使用。
 
-## 创建 DSH 数字员工
+## 创建 DSH 数字专家
 
-在 **数字员工 → 新建** 中：
+在 **数字专家 → 新建** 中：
 
-1. 填写员工名称、角色和目标。
+1. 填写专家名称、角色和目标。
 2. 将运行时选择为 **DSH / DeepSeek Harness**。
 3. 配置工作空间；留空时使用 `DSH_CWD`。
 4. `runtimeConfig` 使用 JSON 对象，例如：
@@ -105,13 +105,13 @@ DSH 默认模型是 `deepseek-v4-flash`。如果员工没有绑定具体模型�
 }
 ```
 
-5. 保存员工并进入聊天。
+5. 保存专家并进入聊天。
 
-运行时配置只描述员工级策略。不要在其中写 `DEEPSEEK_API_KEY`、Cookie、Bearer Token 或本机敏感路径。
+运行时配置只描述专家级策略。不要在其中写 `DEEPSEEK_API_KEY`、Cookie、Bearer Token 或本机敏感路径。
 
 ## 验证清单
 
-在 DSH 员工会话中发送：
+在 DSH 专家会话中发送：
 
 ```text
 请只回复：DSH_RUNTIME_OK
@@ -119,7 +119,7 @@ DSH 默认模型是 `deepseek-v4-flash`。如果员工没有绑定具体模型�
 
 成功标准：
 
-- 员工标题显示 `DSH Harness`。
+- 专家标题显示 `DSH Harness`。
 - 输入框发送后能看到思考状态和文本流。
 - 日志出现 `provider=deepseek` 和 `apiKeyConfigured=true`。
 - 日志出现 `turn/end` 且 `kind=completed`。
@@ -158,7 +158,7 @@ GET /api/v1/admin/agent-runtime/dsh/diagnostics
 
 1. 设置 → 模型中的 DeepSeek 提供商是否已启用。
 2. API Key 是否保存成功。
-3. 员工是否使用 DSH，而不是把 DSH 二进制配置成 MCP command。
+3. 专家是否使用 DSH，而不是把 DSH 二进制配置成 MCP command。
 4. 后端是否使用了修改后的 IDEA 配置并完成重启。
 
 日志中的 `apiKeyConfigured=false` 表示凭证没有进入 DSH 子进程。
@@ -189,9 +189,9 @@ chmod +x /absolute/path/to/dsh-jsonrpc-agent-pkg-macos-arm64
 |------|------------|-------------|
 | MCP | 提供文件、GitHub、数据库等工具 | 否 |
 | 插件 | 扩展 MateClaw 的工具、模型、渠道或记忆能力 | 否 |
-| DSH 员工运行时 | 承载 DeepSeek Harness 的 Agent 循环和外部进程 | 是员工运行时，不是工具 |
+| DSH 专家运行时 | 承载 DeepSeek Harness 的 Agent 循环和外部进程 | 是专家运行时，不是工具 |
 
-推荐组合是：**DSH 作为员工运行时，MCP 作为工具层，MateClaw 作为治理和可视化层**。
+推荐组合是：**DSH 作为专家运行时，MCP 作为工具层，MateClaw 作为治理和可视化层**。
 
 ## 安全建议
 

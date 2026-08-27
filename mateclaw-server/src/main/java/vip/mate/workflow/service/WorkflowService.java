@@ -190,7 +190,7 @@ public class WorkflowService {
         }
         // PublishContext is (workspaceId, publisherId) — mind the order.
         // ACL validators read ctx.workspaceId() to scope agent / channel /
-        // employee resolution; passing the publisherId in that slot
+        // expert resolution; passing the publisherId in that slot
         // would silently let cross-workspace references through.
         PublishContext ctx = new PublishContext(workflow.getWorkspaceId(),
                 publisherId == null ? 0L : publisherId);

@@ -155,7 +155,7 @@ The graph (both ReAct and Plan-Execute) now runs a `GoalEvaluationNode` after `F
 
 ### Other 1.4.0 runtime changes
 
-- **Progressive tool/skill disclosure** — a tool-disclosure layer splits tools into core and extension tiers; `enable_tool` / `load_skill` let an employee activate extension tools / load skills on demand, keeping the system prompt small.
+- **Progressive tool/skill disclosure** — a tool-disclosure layer splits tools into core and extension tiers; `enable_tool` / `load_skill` let an expert activate extension tools / load skills on demand, keeping the system prompt small.
 - **Multi-level subagent delegation** — parent-to-child delegation is recursive and depth-capped, forming a tree; child-graph events are relayed back to the root conversation in real time.
 - **ChannelToolProvider SPI** — channels (e.g. Feishu) can expose platform capabilities directly as agent tools without a separate MCP server.
 - **Workspace RBAC** — capabilities are resolved from a backend role→capability mapping that gates both REST endpoints and frontend routes/menus.

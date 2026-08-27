@@ -42,7 +42,7 @@ Each user is assigned to a workspace with one of four roles. Capabilities are **
 
 | Role | Capabilities (added on top of the tier below) |
 |------|-----------------------------------------------|
-| **Viewer** | `chat`, `view:wiki`. Read-only. So that chat works, a Viewer can also read the active model and read an employee's workspace files. |
+| **Viewer** | `chat`, `view:wiki`. Read-only. So that chat works, a Viewer can also read the active model and read an expert's workspace files. |
 | **Member** | Viewer + `view:memory`, `view:dashboard`, `manage:wiki`, `manage:agents` |
 | **Admin** | Member + `manage:skills`, `manage:channels`, `manage:models`, `manage:security`, `manage:settings` |
 | **Owner** | Same as Admin, plus owner-only: delete the workspace, transfer ownership |
@@ -62,7 +62,7 @@ System-level endpoints (models / providers / OAuth / datasources, user managemen
 
 Roles control **UI visibility** and **API access**, and **the backend is the single source of truth for capabilities**: it holds a `RoleCapabilities` mapping, and the frontend never derives them locally. After a workspace switch, or on a capability-related 403, the frontend calls `GET /api/v1/workspaces/{id}/access`, which returns `memberRole`, `isGlobalAdmin`, `effectiveRole`, and `capabilities`.
 
-The frontend gates on this: routes declare a required capability; the sidebar filters by capability (no menu flash before load); a Viewer lands on `/chat`; the sidebar also shows notification badges (pending approvals, stuck employees). The backend enforces the same rules on every API endpoint, so a request lacking the capability returns `403 Forbidden`.
+The frontend gates on this: routes declare a required capability; the sidebar filters by capability (no menu flash before load); a Viewer lands on `/chat`; the sidebar also shows notification badges (pending approvals, stuck experts). The backend enforces the same rules on every API endpoint, so a request lacking the capability returns `403 Forbidden`.
 
 ---
 
@@ -190,7 +190,7 @@ As of 2.0.0, **conversation id generation encodes the channel identity** — two
 
 ### Skills (2.0.0)
 
-Same-named skills coexist independently across workspaces: install dedup filters by workspace, disk directories encode the workspaceId, and runtime load / file reads / script runs resolve only within the conversation's workspace (+ builtin + global virtual). An employee in one workspace can neither read nor execute another workspace's same-named skill. See [Skills](./skills).
+Same-named skills coexist independently across workspaces: install dedup filters by workspace, disk directories encode the workspaceId, and runtime load / file reads / script runs resolve only within the conversation's workspace (+ builtin + global virtual). An expert in one workspace can neither read nor execute another workspace's same-named skill. See [Skills](./skills).
 
 ---
 

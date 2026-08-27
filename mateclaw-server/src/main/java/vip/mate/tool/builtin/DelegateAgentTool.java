@@ -134,7 +134,7 @@ public class DelegateAgentTool {
             "addGoalCriterion",
             "completeGoal",
             "getGoalStatus",
-            // Employee authoring spawns persistent agents; a delegated child
+            // Expert authoring spawns persistent agents; a delegated child
             // doing so risks recursive team creation and privilege creep, so
             // it stays with the parent (same stance as delegate* recursion
             // guards above). The read-only capability catalog is fine to keep.

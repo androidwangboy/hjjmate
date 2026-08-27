@@ -45,7 +45,7 @@ public class ToolController {
         return R.ok(toolService.listEnabledTools());
     }
 
-    @Operation(summary = "获取员工可绑定的全部原子工具（含 MCP）")
+    @Operation(summary = "获取专家可绑定的全部原子工具（含 MCP）")
     @GetMapping("/available")
     @RequireWorkspaceRole("member")
     public R<List<AvailableToolDTO>> listAvailable() {

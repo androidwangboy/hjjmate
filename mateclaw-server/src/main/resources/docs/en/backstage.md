@@ -1,17 +1,17 @@
 ---
 title: Backstage — Admin Runtime Console for Live Agent Visibility
-description: Backstage is the admin-only live view of every digital employee currently on the clock. State-ring avatars, saying lines, watchdog-based stuck and orphan detection, soft-stop, force-recycle, sweep-all, and per-subagent interrupt. Open one URL when a user says "the agent is stuck".
+description: Backstage is the admin-only live view of every digital expert currently on the clock. State-ring avatars, saying lines, watchdog-based stuck and orphan detection, soft-stop, force-recycle, sweep-all, and per-subagent interrupt. Open one URL when a user says "the agent is stuck".
 head:
   - - meta
     - name: keywords
-      content: agent runtime,admin console,force recycle,stuck agent,orphan run,multi-agent observability,SSE stream cleanup,digital employee,live agent visibility
+      content: agent runtime,admin console,force recycle,stuck agent,orphan run,multi-agent observability,SSE stream cleanup,digital expert,live agent visibility
 ---
 
 # Backstage — admin runtime console
 
 **The page you open when someone says "my agent is stuck."**
 
-A digital employee that's frozen mid-step is one of the few things in MateClaw that doesn't fix itself. Streams hang, subagents fan out into the void, the SSE buffer keeps a flux alive that nobody is reading. Backstage is the one screen that surfaces all of that and lets you reach in.
+A digital expert that's frozen mid-step is one of the few things in MateClaw that doesn't fix itself. Streams hang, subagents fan out into the void, the SSE buffer keeps a flux alive that nobody is reading. Backstage is the one screen that surfaces all of that and lets you reach in.
 
 It is **admin-only** (`ROLE_ADMIN`), live (auto-refresh every 5 s, pausable), and intentionally simple — one card per running agent, four actions, no menus.
 
@@ -19,19 +19,19 @@ It is **admin-only** (`ROLE_ADMIN`), live (auto-refresh every 5 s, pausable), an
 
 ## Where it lives
 
-::: tip 1.4.0: the live view folded into the Employees page
-As of v1.4.0, this live runtime view is folded into the **Employees page**. `/backstage` now **redirects to** `/agents?view=live`, and the Employees page has a segmented **Roster / Live** toggle — "Live" is the runtime console described here. The `/backstage` route below still works; it just lands on the Employees page's live view.
+::: tip 1.4.0: the live view folded into the Experts page
+As of v1.4.0, this live runtime view is folded into the **Experts page**. `/backstage` now **redirects to** `/agents?view=live`, and the Experts page has a segmented **Roster / Live** toggle — "Live" is the runtime console described here. The `/backstage` route below still works; it just lands on the Experts page's live view.
 :::
 
 - **Route:** `/backstage` (redirects to `/agents?view=live`)
-- **Sidebar:** the **Live** segment of the Employees page; when an employee is stuck, the sidebar surfaces an **orange "stuck employee" dot** that links straight to this live view
+- **Sidebar:** the **Live** segment of the Experts page; when an expert is stuck, the sidebar surfaces an **orange "stuck expert" dot** that links straight to this live view
 - **Authorization:** the JWT must carry `ROLE_ADMIN`. Non-admins get a 403 from every `/api/v1/admin/agent-runtime/*` endpoint, and the route guard hides the link from the sidebar entirely.
 
 ---
 
 ## What you see
 
-A grid of cards, one per running digital employee. The auto-refresh chip in the page header shows whether the live feed is active; click it to pause (e.g. when you're about to act and don't want the card to jump under your cursor mid-click).
+A grid of cards, one per running digital expert. The auto-refresh chip in the page header shows whether the live feed is active; click it to pause (e.g. when you're about to act and don't want the card to jump under your cursor mid-click).
 
 When nothing is running you see a calm "all quiet" empty state — that's a feature, not a missing page.
 

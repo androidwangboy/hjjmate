@@ -5,17 +5,17 @@ INSERT INTO mate_user (id, username, password, nickname, role, enabled, create_t
 VALUES (1, 'admin', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', 'MateClaw Admin', 'admin', TRUE, NOW(), NOW(), 0)
 ON CONFLICT (id) DO UPDATE SET username=EXCLUDED.username, password=EXCLUDED.password, nickname=EXCLUDED.nickname, role=EXCLUDED.role, enabled=EXCLUDED.enabled, update_time=EXCLUDED.update_time, deleted=EXCLUDED.deleted;
 
--- 默认数字员工：通用助手（ReAct 模式）
+-- 默认数字专家：通用助手（ReAct 模式）
 INSERT INTO mate_agent (id, name, description, agent_type, system_prompt, model_name, max_iterations, enabled, icon, tags, create_time, update_time, deleted)
 VALUES (1000000001, '通用助手', '日常问答、数据分析、工具调用都能搞定的全能助手', 'react', '你是 MateClaw 的通用助手。你可以帮助用户回答问题、分析数据、调用工具完成任务。请用中文回复，保持专业、友好的态度。', NULL, 100, TRUE, 'pi:robot-face-happy', 'default,assistant', NOW(), NOW(), 0)
 ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name, description=EXCLUDED.description, agent_type=EXCLUDED.agent_type, system_prompt=EXCLUDED.system_prompt, model_name=EXCLUDED.model_name, max_iterations=EXCLUDED.max_iterations, enabled=EXCLUDED.enabled, icon=EXCLUDED.icon, tags=EXCLUDED.tags, update_time=EXCLUDED.update_time, deleted=EXCLUDED.deleted;
 
--- 默认数字员工：任务规划师（Plan-Execute 模式）
+-- 默认数字专家：任务规划师（Plan-Execute 模式）
 INSERT INTO mate_agent (id, name, description, agent_type, system_prompt, model_name, max_iterations, enabled, icon, tags, create_time, update_time, deleted)
 VALUES (1000000002, '任务规划师', '把复杂目标拆成可执行步骤，逐步推进直到完成', 'plan_execute', '你是一位专业的任务规划师。你擅长将复杂目标分解为可执行的步骤，并逐步完成。请用中文回复。', NULL, 100, TRUE, 'pi:clipboard-note', 'planning,task', NOW(), NOW(), 0)
 ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name, description=EXCLUDED.description, agent_type=EXCLUDED.agent_type, system_prompt=EXCLUDED.system_prompt, model_name=EXCLUDED.model_name, max_iterations=EXCLUDED.max_iterations, enabled=EXCLUDED.enabled, icon=EXCLUDED.icon, tags=EXCLUDED.tags, update_time=EXCLUDED.update_time, deleted=EXCLUDED.deleted;
 
--- 默认数字员工：推理分析师（显式推理循环 + 工具调用）
+-- 默认数字专家：推理分析师（显式推理循环 + 工具调用）
 INSERT INTO mate_agent (id, name, description, agent_type, system_prompt, model_name, max_iterations, enabled, icon, tags, create_time, update_time, deleted)
 VALUES (1000000003, '推理分析师', '分步思考、推理过程清晰可见，适合需要"想清楚再回答"的问题', 'react', '你是一位推理分析师，善于深度推理。面对问题时，请先分步思考、清晰呈现推理过程，再调用工具或给出答案。请用中文回复，保持专业、友好的态度。', NULL, 100, TRUE, 'pi:cpu', 'react,reasoning,tools', NOW(), NOW(), 0)
 ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name, description=EXCLUDED.description, agent_type=EXCLUDED.agent_type, system_prompt=EXCLUDED.system_prompt, model_name=EXCLUDED.model_name, max_iterations=EXCLUDED.max_iterations, enabled=EXCLUDED.enabled, icon=EXCLUDED.icon, tags=EXCLUDED.tags, update_time=EXCLUDED.update_time, deleted=EXCLUDED.deleted;

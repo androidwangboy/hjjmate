@@ -678,7 +678,7 @@ curl -X PUT "http://localhost:18088/api/v1/auth/users/1/password?oldPassword=adm
 |---|---|---|
 | `GET` | `/api/v1/tools` | `获取工具列表` |
 | `POST` | `/api/v1/tools` | `创建工具（MCP）` |
-| `GET` | `/api/v1/tools/available` | `获取员工可绑定的全部原子工具（含 MCP）` |
+| `GET` | `/api/v1/tools/available` | `获取专家可绑定的全部原子工具（含 MCP）` |
 | `GET` | `/api/v1/tools/enabled` | `获取已启用工具列表` |
 | `DELETE` | `/api/v1/tools/{id}` | `删除工具` |
 | `GET` | `/api/v1/tools/{id}` | `获取工具详情` |
@@ -759,7 +759,7 @@ curl -X PUT "http://localhost:18088/api/v1/auth/users/1/password?oldPassword=adm
 | `GET` | `/api/v1/skills/{id}` | `获取技能详情` |
 | `PUT` | `/api/v1/skills/{id}` | `更新技能` |
 | `POST` | `/api/v1/skills/{id}/archive` | `手动归档技能` |
-| `GET` | `/api/v1/skills/{id}/employees` | `列出能使用该技能的员工` |
+| `GET` | `/api/v1/skills/{id}/employees` | `列出能使用该技能的专家` |
 | `POST` | `/api/v1/skills/{id}/export-workspace` | `将 skill 导出到工作区目录` |
 | `GET` | `/api/v1/skills/{id}/lessons` | `读取该技能的 LESSONS.md` |
 | `POST` | `/api/v1/skills/{id}/lessons/clear` | `清空该技能的所有 lessons` |

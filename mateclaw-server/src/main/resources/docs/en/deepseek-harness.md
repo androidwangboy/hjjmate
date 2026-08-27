@@ -1,17 +1,17 @@
 ---
 title: DeepSeek Harness Integration
-description: Install DeepSeek Harness and configure it as a digital employee runtime in MateClaw.
+description: Install DeepSeek Harness and configure it as a digital expert runtime in MateClaw.
 head:
   - - meta
     - name: keywords
-      content: DeepSeek Harness,DSH,digital employee,Agent runtime,JSON-RPC,Cordis
+      content: DeepSeek Harness,DSH,digital expert,Agent runtime,JSON-RPC,Cordis
 ---
 
 # DeepSeek Harness Integration
 
-This guide connects the official DeepSeek Harness (DSH) to MateClaw and creates a digital employee powered by the DSH runtime.
+This guide connects the official DeepSeek Harness (DSH) to MateClaw and creates a digital expert powered by the DSH runtime.
 
-In MateClaw, DSH is an **employee runtime**, not an MCP tool and not a regular plugin. MCP supplies tools; DSH owns the external Agent process, the ReAct loop, and the event stream that MateClaw projects into the conversation UI.
+In MateClaw, DSH is an **expert runtime**, not an MCP tool and not a regular plugin. MCP supplies tools; DSH owns the external Agent process, the ReAct loop, and the event stream that MateClaw projects into the conversation UI.
 
 ## Architecture
 
@@ -28,7 +28,7 @@ dsh-jsonrpc-agent
 DeepSeek API + Cordis composition
 ```
 
-MateClaw remains responsible for employees, sessions, permissions, workspaces, message persistence, and UI projection. DSH runs the turn. MateClaw injects the API key from the DeepSeek provider configuration into the DSH child process. Never put secrets in `runtimeConfig`, employee prompts, or the repository.
+MateClaw remains responsible for experts, sessions, permissions, workspaces, message persistence, and UI projection. DSH runs the turn. MateClaw injects the API key from the DeepSeek provider configuration into the DSH child process. Never put secrets in `runtimeConfig`, expert prompts, or the repository.
 
 ## Prerequisites
 
@@ -86,13 +86,13 @@ DSH_CWD=/var/lib/mateclaw/workspace
 4. Enter the DeepSeek API key and base URL.
 5. Confirm that at least one enabled DeepSeek chat model exists.
 
-The default DSH model is `deepseek-v4-flash`. If the employee has no explicit model, MateClaw uses the global model name and injects credentials from the `deepseek` provider. A custom model must be usable by the DeepSeek provider route in DSH.
+The default DSH model is `deepseek-v4-flash`. If the expert has no explicit model, MateClaw uses the global model name and injects credentials from the `deepseek` provider. A custom model must be usable by the DeepSeek provider route in DSH.
 
-## Create a DSH digital employee
+## Create a DSH digital expert
 
-Open **Digital Employees → New**:
+Open **Digital Experts → New**:
 
-1. Enter the employee name, role, and goal.
+1. Enter the expert name, role, and goal.
 2. Select **DSH / DeepSeek Harness** as the runtime.
 3. Set a workspace; when blank, `DSH_CWD` is used.
 4. Use a JSON object for `runtimeConfig`, for example:
@@ -105,13 +105,13 @@ Open **Digital Employees → New**:
 }
 ```
 
-5. Save the employee and open its chat.
+5. Save the expert and open its chat.
 
-Runtime configuration describes employee policy only. Do not put `DEEPSEEK_API_KEY`, cookies, bearer tokens, or sensitive local paths in it.
+Runtime configuration describes expert policy only. Do not put `DEEPSEEK_API_KEY`, cookies, bearer tokens, or sensitive local paths in it.
 
 ## Verification checklist
 
-Send this message in the DSH employee conversation:
+Send this message in the DSH expert conversation:
 
 ```text
 Reply with exactly: DSH_RUNTIME_OK
@@ -119,7 +119,7 @@ Reply with exactly: DSH_RUNTIME_OK
 
 Success means:
 
-- The employee header shows `DSH Harness`.
+- The expert header shows `DSH Harness`.
 - Thinking state and text deltas appear in the chat.
 - The log contains `provider=deepseek` and `apiKeyConfigured=true`.
 - The log contains a `turn/end` event with `kind=completed`.
@@ -158,7 +158,7 @@ Check that:
 
 1. The DeepSeek provider is enabled under Settings → Models.
 2. The API key was saved successfully.
-3. The employee uses DSH rather than configuring the DSH binary as an MCP command.
+3. The expert uses DSH rather than configuring the DSH binary as an MCP command.
 4. The backend was restarted with the updated IDEA configuration.
 
 `apiKeyConfigured=false` in the log means the credential did not reach the DSH child process.
@@ -189,9 +189,9 @@ Use the latest backend version. DSH emits text deltas followed by a final assist
 |-----------|----------|--------------|
 | MCP | File, GitHub, database, and other tools | No |
 | Plugin | Extending MateClaw tools, models, channels, or memory | No |
-| DSH employee runtime | Hosting the DeepSeek Harness Agent loop and process | It is the employee runtime, not a tool |
+| DSH expert runtime | Hosting the DeepSeek Harness Agent loop and process | It is the expert runtime, not a tool |
 
-The recommended composition is: **DSH as the employee runtime, MCP as the tool layer, and MateClaw as the governance and visualization layer**.
+The recommended composition is: **DSH as the expert runtime, MCP as the tool layer, and MateClaw as the governance and visualization layer**.
 
 ## Security recommendations
 

@@ -5,7 +5,7 @@ import vip.mate.agent.model.AgentEntity;
 
 import java.nio.file.Path;
 
-/** Selects, validates, and starts the provider chosen by an employee. */
+/** Selects, validates, and starts the provider chosen by an expert. */
 public final class AgentRuntimeCoordinator {
     private final RuntimeProviderRegistry providerRegistry;
     private final RuntimeSessionFactory sessionFactory;

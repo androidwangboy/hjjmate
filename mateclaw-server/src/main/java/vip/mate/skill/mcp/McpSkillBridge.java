@@ -24,7 +24,7 @@ import java.util.Map;
  * RFC-090 §3.2 / §5.7 / §10.2 Q2 — MCP server → virtual skill bridge.
  *
  * <p>MCP servers and skills are the same thing from the user's
- * perspective: capability supply for digital employees. The protocol
+ * perspective: capability supply for digital experts. The protocol
  * ({@code mate_mcp_server}) is implementation detail. This bridge
  * makes that consistent: every enabled MCP server becomes a virtual
  * {@link SkillEntity} + {@link ResolvedSkill} and shows up on the

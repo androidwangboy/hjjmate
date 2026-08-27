@@ -1,5 +1,5 @@
 /**
- * Per-role accent color for digital-employee icons.
+ * Per-role accent color for digital-expert icons.
  *
  * The pixelarticons SVGs render with `fill="currentColor"`, so wrapping
  * the icon in an element with a `color: ...` style tints the glyph

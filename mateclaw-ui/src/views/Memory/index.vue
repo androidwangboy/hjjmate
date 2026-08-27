@@ -14,7 +14,7 @@
             </button>
           </div>
 
-          <!-- Employee selector -->
+          <!-- Expert selector -->
           <div class="agent-selector">
             <AgentPickerDialog
               v-model="selectedAgentId"
@@ -296,7 +296,7 @@ function fmtTime(iso: string) {
   background: var(--mc-bg-elevated);
 }
 
-/* Employee selector */
+/* Expert selector */
 .agent-selector { position: relative; padding: 0 12px 8px; }
 
 /* Segment control */

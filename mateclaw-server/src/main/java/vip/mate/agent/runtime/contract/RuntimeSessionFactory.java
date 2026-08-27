@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 
-/** Builds and validates the runtime-neutral session boundary for an employee turn. */
+/** Builds and validates the runtime-neutral session boundary for an expert turn. */
 public final class RuntimeSessionFactory {
     private static final TypeReference<Map<String, Object>> CONFIG_TYPE = new TypeReference<>() {};
 

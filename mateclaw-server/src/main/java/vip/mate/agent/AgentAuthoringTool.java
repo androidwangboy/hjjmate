@@ -27,14 +27,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Agent-callable employee authoring tool.
+ * Agent-callable expert authoring tool.
  *
- * <p>Lets an agent design and persist a new specialized employee (Agent)
+ * <p>Lets an agent design and persist a new specialized expert (Agent)
  * from a plain-language role spec, then bind a focused capability set to
  * it. Pairs with the workflow drafting tool so a single chat turn can plan
- * a team of employees and chain them into a workflow:
+ * a team of experts and chain them into a workflow:
  * design roles → {@link #create_employee} for each → workflow drafting tool
- * referencing the just-created employees.
+ * referencing the just-created experts.
  *
  * <p>Workspace is taken from {@link ChatOrigin} on the active
  * {@link ToolContext}; the LLM can never write into a foreign workspace
@@ -56,19 +56,19 @@ public class AgentAuthoringTool {
     private static final int CATALOG_MAX_PER_SECTION = 200;
 
     @Tool(description = """
-            Create a new specialized employee (Agent) in the current workspace from a role spec, \
+            Create a new specialized expert (Agent) in the current workspace from a role spec, \
             and optionally bind a focused set of skills and tools to it. \
             Use this when a task needs a role that does not exist yet — design the role, then create it. \
             Returns the new agentId (string) and a short summary. \
             Leave skillNames/toolNames empty to make a generalist that inherits all globally-enabled capabilities. \
             Call list_capability_catalog first to learn the exact skill and tool names you can assign. \
-            The created employee is enabled immediately and can be referenced by the workflow drafting tool.""")
+            The created expert is enabled immediately and can be referenced by the workflow drafting tool.""")
     public String create_employee(
-            @ToolParam(description = "Employee name, unique within the workspace, e.g. \"market-research-analyst\".")
+            @ToolParam(description = "Expert name, unique within the workspace, e.g. \"market-research-analyst\".")
             String name,
-            @ToolParam(description = "One-line description of the employee's role and responsibility. Shown in pickers and used by the workflow planner to route work.")
+            @ToolParam(description = "One-line description of the expert's role and responsibility. Shown in pickers and used by the workflow planner to route work.")
             String description,
-            @ToolParam(description = "System prompt that defines the employee's persona, expertise, and working style. Be specific about its specialty.")
+            @ToolParam(description = "System prompt that defines the expert's persona, expertise, and working style. Be specific about its specialty.")
             String systemPrompt,
             @ToolParam(description = "Agent type: \"react\" (single-loop reasoning, default) or \"plan_execute\" (decompose then execute). Leave empty for react.", required = false)
             String agentType,
@@ -86,7 +86,7 @@ public class AgentAuthoringTool {
             return "[error] Cannot determine the current workspace; invoke this tool within a workspace context.";
         }
         if (name == null || name.isBlank()) {
-            return "[error] Employee name is required.";
+            return "[error] Expert name is required.";
         }
 
         AgentEntity agent = new AgentEntity();
@@ -106,7 +106,7 @@ public class AgentAuthoringTool {
         } catch (MateClawException e) {
             // Duplicate name / blank name surface here as a friendly message
             // so the planner can rename and retry instead of aborting.
-            return "[error] Failed to create employee: " + e.getMessage();
+            return "[error] Failed to create expert: " + e.getMessage();
         }
 
         List<String> requestedSkills = parseNameList(skillNames);
@@ -121,16 +121,16 @@ public class AgentAuthoringTool {
         result.put("agentType", created.getAgentType());
         result.put("skillsBound", boundSkills.isEmpty() ? "(inherits global defaults)" : boundSkills);
         result.put("toolsBound", boundTools.isEmpty() ? "(inherits global defaults)" : boundTools);
-        result.put("note", "Employee created and enabled. Reference it by name in the workflow drafting tool to chain it into a workflow.");
+        result.put("note", "Expert created and enabled. Reference it by name in the workflow drafting tool to chain it into a workflow.");
         try {
             return objectMapper.writeValueAsString(result);
         } catch (Exception e) {
-            return "Employee created: id=" + created.getId() + " name=" + created.getName();
+            return "Expert created: id=" + created.getId() + " name=" + created.getName();
         }
     }
 
     @Tool(description = """
-            List the capabilities you can assign when creating an employee: the enabled skill names \
+            List the capabilities you can assign when creating an expert: the enabled skill names \
             and the bindable tool names in the current workspace. \
             Call this before create_employee so you assign real, resolvable names rather than guessing.""")
     public String list_capability_catalog(@Nullable ToolContext ctx) {
@@ -217,7 +217,7 @@ public class AgentAuthoringTool {
         }
         if (ids.isEmpty()) return List.of();
         try {
-            // Best-effort: the employee is already persisted, so a late
+            // Best-effort: the expert is already persisted, so a late
             // binding failure (e.g. a skill row deleted between resolve and
             // bind) must not throw out of the tool and strand the caller with
             // an error on top of an already-created agent. The agent simply
@@ -260,7 +260,7 @@ public class AgentAuthoringTool {
         if (filtered.isEmpty()) return List.of();
         try {
             // Best-effort, same rationale as bindSkills: never throw after the
-            // employee has been created.
+            // expert has been created.
             agentBindingService.setToolBindings(agent.getId(), filtered);
         } catch (Exception e) {
             log.warn("[AgentAuthoringTool] tool binding failed for agent {}; left on global defaults: {}",

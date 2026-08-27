@@ -8,7 +8,7 @@ import lombok.Data;
 import java.util.List;
 
 /**
- * An AI-generated employee draft produced from a single natural-language
+ * An AI-generated expert draft produced from a single natural-language
  * requirement. The draft is never persisted on its own — the create wizard
  * shows it for review, lets the user tweak any field, then commits it through
  * the normal agent-create and capability-binding endpoints.
@@ -22,7 +22,7 @@ import java.util.List;
 @Builder
 public class AgentDraftVO {
 
-    /** Display name for the new employee. */
+    /** Display name for the new expert. */
     private String name;
 
     /** Emoji icon chosen to match the role. */

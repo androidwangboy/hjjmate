@@ -43,7 +43,7 @@ Pages you don't have permission to see (based on workspace role) are hidden.
 The sidebar surfaces live badges in two spots to flag things needing your attention:
 
 - **Pending approvals** — a red count badge; clicking jumps to [Security & Approval](./security)
-- **Stuck employees** — an orange dot; clicking jumps to the **Live** runtime view on the Employees page (see [Backstage](./backstage))
+- **Stuck experts** — an orange dot; clicking jumps to the **Live** runtime view on the Experts page (see [Backstage](./backstage))
 
 ### Auth guard
 
@@ -415,7 +415,7 @@ Pending and historical approvals.
 
 **Route:** `/backstage`  ·  **Requires:** `ROLE_ADMIN`
 
-A live view of every digital employee currently on the clock — status-ring avatars, watchdog-based stuck/orphan detection, soft stop, force recycle, sweep-all, per-subagent interrupt. The page you open when someone says "the agent is stuck."
+A live view of every digital expert currently on the clock — status-ring avatars, watchdog-based stuck/orphan detection, soft stop, force recycle, sweep-all, per-subagent interrupt. The page you open when someone says "the agent is stuck."
 
 Full guide: [Backstage](./backstage).
 

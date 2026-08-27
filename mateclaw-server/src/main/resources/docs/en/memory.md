@@ -67,7 +67,7 @@ Each layer operates at a different timescale. Short-term is *this turn*. Extract
 
 ## Memory knows who's who: per-owner isolation (1.5.0)
 
-Before, an employee's memory was **shared**: whether it was you logged into the web, a colleague in a Feishu group, or an end user coming in through a third-party API, the memory piled into the same `MEMORY.md`. One employee serving multiple people would cross wires.
+Before, an expert's memory was **shared**: whether it was you logged into the web, a colleague in a Feishu group, or an end user coming in through a third-party API, the memory piled into the same `MEMORY.md`. One expert serving multiple people would cross wires.
 
 1.5.0 gives every memory an **owner** and a **visibility scope**.
 
@@ -87,12 +87,12 @@ Whatever the identity source, it normalizes to one prefixed string:
 | scope | Who reads it | Typical content |
 |---|---|---|
 | **PERSONAL** | Only the matching owner | Memory extracted from conversations defaults here |
-| **TEAM** | Everyone using this employee | Agent config files (AGENTS.md / SOUL.md / PROFILE.md), backfilled legacy data |
-| **GLOBAL** | Always visible across employees / workspaces | Preset facts, system reference material |
+| **TEAM** | Everyone using this expert | Agent config files (AGENTS.md / SOUL.md / PROFILE.md), backfilled legacy data |
+| **GLOBAL** | Always visible across experts / workspaces | Preset facts, system reference material |
 
 ### Recall prefers personal memory
 
-The system prompt bakes in only the shared TEAM/GLOBAL memory (cacheable); each turn then **prefetches** that owner's personal memory by owner_key. So when someone asks "what stack does my project use," the employee recalls *that person's* private memory files first, not generic KB material.
+The system prompt bakes in only the shared TEAM/GLOBAL memory (cacheable); each turn then **prefetches** that owner's personal memory by owner_key. So when someone asks "what stack does my project use," the expert recalls *that person's* private memory files first, not generic KB material.
 
 > On the structured "fact" layer: the **fact recall query itself supports owner-visibility filtering** (PERSONAL is owner-only, TEAM/GLOBAL shared). But the current **automatic fact projection** is built mainly from shared memory files and doesn't set `ownerKey/scope` on insert — so personalization shows up more in the personal-memory-file prefetch; per-owner facts are still being filled in.
 
@@ -152,7 +152,7 @@ The first four are **injected into the system prompt on every turn** (if `enable
 - **MEMORY.md** — what the agent has decided matters enough to keep. Active projects, unresolved decisions, open threads, things you asked it to remember. Updated by both the extractor and the consolidator. Seed: `enabled=true`, `sort_order=3`.
 
 ::: tip New in 1.3.0: workflows can write memory
-From v1.3.0, the [workflow](./workflow) `write_memory` step can write the run's output directly into an employee's `MEMORY.md` (or any enabled memory file) when the flow completes. Four merge strategies: `append` / `replace_section` / `upsert_kv` / `overwrite`. Memory is no longer written exclusively by the conversation extractor or the Dreaming consolidator — a business-process outcome can be persisted too.
+From v1.3.0, the [workflow](./workflow) `write_memory` step can write the run's output directly into an expert's `MEMORY.md` (or any enabled memory file) when the flow completes. Four merge strategies: `append` / `replace_section` / `upsert_kv` / `overwrite`. Memory is no longer written exclusively by the conversation extractor or the Dreaming consolidator — a business-process outcome can be persisted too.
 :::
 
 ### Daily notes
@@ -407,17 +407,17 @@ Memory isn't just something that *happens to* an agent. The agent itself can act
 ### Keyword search over its own memory
 
 ::: tip New in 1.4.0
-An employee can do more than read whole files — during a conversation it can **search all of its workspace memory files by keyword** and jump straight to the line.
+An expert can do more than read whole files — during a conversation it can **search all of its workspace memory files by keyword** and jump straight to the line.
 :::
 
-This is an agent runtime capability: the employee supplies a keyword and the system searches across its own workspace memory files:
+This is an agent runtime capability: the expert supplies a keyword and the system searches across its own workspace memory files:
 
 - **Tokenization** — CJK is split into 2-character sliding windows, Latin text on whitespace, so both languages match
 - **Per-file weighted scoring** — hits in core files like `AGENTS.md` / `MEMORY.md` / `PROFILE.md` rank above hits in the daily ledger
 - **What comes back** — each hit gives a filename + line number + an 80-char context snippet (matched term highlighted) + a relevance score
 - **Scan scope** — up to ~50 candidate files, sorted by score, highest first
 
-Use it when the employee wants to confirm "did I note this before?" or recover a specific decision spread across many days of notes — without pulling whole files into context.
+Use it when the expert wants to confirm "did I note this before?" or recover a specific decision spread across many days of notes — without pulling whole files into context.
 
 ### Examples
 
@@ -463,14 +463,14 @@ Use it when the employee wants to confirm "did I note this before?" or recover a
 ## Memory snapshot export / import
 
 ::: tip New in 1.4.0
-An employee's entire accumulated memory can be packaged into a ZIP and taken with you — for backup, migration to another deployment, or cloning a coworker who "already knows you."
+An expert's entire accumulated memory can be packaged into a ZIP and taken with you — for backup, migration to another deployment, or cloning a coworker who "already knows you."
 :::
 
-A snapshot packages an employee's core memory into a single ZIP:
+A snapshot packages an expert's core memory into a single ZIP:
 
 - `AGENTS.md` / `MEMORY.md` / `PROFILE.md` / `SOUL.md` / `KNOWLEDGE.md`
 - daily ledger files (`memory/YYYY-MM-DD.md`)
-- a `manifest.json` (what's in the package, and which employee it came from)
+- a `manifest.json` (what's in the package, and which expert it came from)
 
 ### Three endpoints
 
@@ -486,7 +486,7 @@ Preview to see the diff, confirm, then import — you always know what will chan
 
 - **Whitelist** — only the file types listed above are accepted; everything else is ignored
 - **Zip-bomb guards** — ≤ 500 entries, ≤ 1 MB each (uncompressed), ≤ 16 MB total; anything over is rejected
-- **UI toggle state is not serialized** — `enabled` / `sortOrder` are kept out of the snapshot; on import into a new employee the target decides them by seed rules, rather than forcing the source's toggle state
+- **UI toggle state is not serialized** — `enabled` / `sortOrder` are kept out of the snapshot; on import into a new expert the target decides them by seed rules, rather than forcing the source's toggle state
 
 ### UI
 
@@ -595,7 +595,7 @@ Mem0 isolates by `user_id` + `agent_id`. MateClaw maps them as:
 | MateClaw field | Mem0 field | Notes |
 |---|---|---|
 | `ownerKey` (e.g. `user:42` / `feishu:sender_abc`) | `user_id` | Passed through verbatim |
-| `agentId` | `agent_id` | The digital employee ID |
+| `agentId` | `agent_id` | The digital expert ID |
 
 Both `prefetch` and `syncTurn` receive `ownerKey` from the platform, so writes and recalls are keyed by the same `user_id`. The variants without `ownerKey` skip (empty recall / dropped write) — Mem0 requires `user_id`, without it isolation is impossible.
 

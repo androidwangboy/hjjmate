@@ -10,7 +10,7 @@
           </div>
           <div class="header-right">
             <!-- Roster / Live view switch — one team, two states. Admin only.
-                 Sits on the header line, level with the New Employee button. -->
+                 Sits on the header line, level with the New Expert button. -->
             <div v-if="isAdminRole" class="view-switch">
               <button
                 class="view-seg"
@@ -96,7 +96,7 @@
             :class="{ 'agent-card--disabled': !agent.enabled }"
           >
             <!--
-              Employee-card layout: avatar, name, one-line tagline, primary
+              Expert-card layout: avatar, name, one-line tagline, primary
               chat action, and a hover-revealed overflow row. Anything that
               isn't identity-or-action lives behind the overflow row to keep
               the card readable at a glance.
@@ -1607,7 +1607,7 @@ async function toggleAgent(agent: Agent) {
 }
 
 /* ===== Roster / Live segmented switch ===== */
-/* Lives in the header row, level with the New Employee button. */
+/* Lives in the header row, level with the New Expert button. */
 .view-switch {
   display: inline-flex;
   background: var(--mc-bg-sunken);
@@ -1734,7 +1734,7 @@ html.dark .seg-count.warn {
   opacity: 0.55;
 }
 
-/* Employee-card layout — identity row on top, primary action row below.
+/* Expert-card layout — identity row on top, primary action row below.
    The card answers one question: "Who is this and how do I talk to them?" */
 .agent-card__top {
   display: flex;

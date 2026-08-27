@@ -419,11 +419,11 @@ Failover decides *who to switch to*; 2.0.0 also makes *how each error recovers* 
 Before 1.5.0, "per-agent priority" only affected the **failover order** — the primary model was still the global default. 1.5.0 makes that preference **actually decide primary-model selection**. The full precedence is:
 
 1. **A conversation-pinned model wins** — the chat-header ModelSelector bound a model to this conversation, so it's used (see [per-conversation model selection](./chat#per-conversation-model-selection))
-2. **then the per-agent model override (`modelName`)** — the employee has a model pinned on it
+2. **then the per-agent model override (`modelName`)** — the expert has a model pinned on it
 3. **then the global default model**
 4. **only when none of those are set does preferred-provider routing kick in** — picking the preferred provider's primary model
 
-Preferred-provider routing has a **capability gate**: if the employee's bound skills declare a need like `requires-model: vision`, routing first picks a provider that can satisfy those modalities; only if none can does it fall back unconstrained. Preferences are stored in `mate_agent_provider_preference` (ascending `sortOrder` = higher priority).
+Preferred-provider routing has a **capability gate**: if the expert's bound skills declare a need like `requires-model: vision`, routing first picks a provider that can satisfy those modalities; only if none can does it fall back unconstrained. Preferences are stored in `mate_agent_provider_preference` (ascending `sortOrder` = higher priority).
 
 ---
 

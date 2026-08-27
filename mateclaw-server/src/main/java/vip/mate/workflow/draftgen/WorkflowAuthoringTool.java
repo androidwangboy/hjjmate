@@ -38,11 +38,11 @@ public class WorkflowAuthoringTool {
     }
 
     @Tool(description = "把用户描述的业务流程转换成一个 MateClaw workflow 草稿并保存到当前 workspace。"
-            + "适用场景：用户说「把 X 这件事做成 workflow / 自动化 / 流程」、「每周一让 X 员工 ...」、"
+            + "适用场景：用户说「把 X 这件事做成 workflow / 自动化 / 流程」、「每周一让 X 专家 ...」、"
             + "「客户消息进来时让 X 应对」。工具会输出 workflowId + 简短摘要，前端会自动在 workflow 编辑器里打开。"
             + "不会自动发布，不会自动启用 trigger — 用户需要在编辑器里 review 后再 publish。")
     public String workflow_draft_generate(
-            @ToolParam(description = "用户对业务流程的自然语言描述，越具体越好；可以包含触发条件、参与员工、是否要审批、要发到哪个渠道。")
+            @ToolParam(description = "用户对业务流程的自然语言描述，越具体越好；可以包含触发条件、参与专家、是否要审批、要发到哪个渠道。")
             String description,
             // ChatOrigin-scoped workspace lookup; never trust the LLM to pass workspaceId.
             @Nullable ToolContext ctx) {

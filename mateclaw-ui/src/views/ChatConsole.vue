@@ -50,7 +50,7 @@
           <div class="chat-stage-copy" v-if="currentAgent">
             <div class="chat-stage-kicker">{{ $t('nav.chat') }}</div>
             <!--
-              Header reads as "who is this employee" — name + tagline.
+              Header reads as "who is this expert" — name + tagline.
               The runtime mode (ReAct / Plan-Execute) is technical jargon
               to end users and lives in the badge tooltip instead, so the
               header doesn't get polluted.
@@ -1312,7 +1312,7 @@ onActivated(async () => {
   startMermaid()
   // Issue #538: ChatConsole is kept alive by the router (meta.keepAlive), so
   // navigating away and back only fires onActivated, not onMounted — an
-  // agent created/edited/deleted elsewhere (e.g. the Employees page) never
+  // agent created/edited/deleted elsewhere (e.g. the Experts page) never
   // reached this component's own `agents` list otherwise, and stayed
   // invisible in the picker until a full page reload forced a fresh mount.
   await loadAgents()

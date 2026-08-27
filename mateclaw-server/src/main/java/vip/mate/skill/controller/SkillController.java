@@ -790,7 +790,7 @@ public class SkillController {
     // ==================== Reverse lookup (RFC-090 §7) ====================
 
     /**
-     * RFC-090 §7 / §14.2 — list agents (employees) for which this
+     * RFC-090 §7 / §14.2 — list agents (experts) for which this
      * skill is reachable.
      *
      * <p>Two coverage paths, both reflected in the response:
@@ -811,7 +811,7 @@ public class SkillController {
     @Operation(summary = "List agents that can use this skill (RFC-090 §14.2)")
     @GetMapping("/{id}/employees")
     @RequireWorkspaceRole("member")
-    public R<List<Map<String, Object>>> employees(@PathVariable Long id) {
+    public R<List<Map<String, Object>>> experts(@PathVariable Long id) {
         // Explicit bindings: agent_skill rows pointing to this skill.
         List<AgentSkillBinding> explicitBindings = agentSkillBindingMapper.selectList(
                 new LambdaQueryWrapper<AgentSkillBinding>()

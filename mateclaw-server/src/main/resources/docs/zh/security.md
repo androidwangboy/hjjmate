@@ -390,7 +390,7 @@ mateclaw:
 
 | 角色 | 能力（继承下层后新增） |
 |------|------------------------|
-| **Viewer** | `chat`、`view:wiki`。只读。为了让聊天能跑通，Viewer 还能读取当前激活模型、读取员工的工作空间文件。 |
+| **Viewer** | `chat`、`view:wiki`。只读。为了让聊天能跑通，Viewer 还能读取当前激活模型、读取专家的工作空间文件。 |
 | **Member** | Viewer + `view:memory`、`view:dashboard`、`manage:wiki`、`manage:agents` |
 | **Admin** | Member + `manage:skills`、`manage:channels`、`manage:models`、`manage:security`、`manage:settings` |
 | **Owner** | 与 Admin 相同，外加 owner 专属：删除工作空间、转移所有权 |

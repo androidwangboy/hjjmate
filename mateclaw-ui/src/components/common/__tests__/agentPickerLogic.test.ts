@@ -4,7 +4,7 @@ import type { PickableAgent } from '../AgentPickerDialog.vue'
 
 /**
  * 提取 AgentPickerDialog 中 isUnknown / triggerLabel 的核心判定逻辑做纯函数测试。
- * 这些 computed 的判定决定了触发器在「列表未加载」「员工被删除」等边界下显示什么，
+ * 这些 computed 的判定决定了触发器在「列表未加载」「专家被删除」等边界下显示什么，
  * 历史上因为缺少 agents.length > 0 的守卫，组件重建瞬间会闪现原始数字 ID（Bug 1）。
  */
 
@@ -64,10 +64,10 @@ describe('AgentPickerDialog isUnknown 判定', () => {
   })
 
   describe('正常匹配场景', () => {
-    it('数字 id 匹配到员工时不判定为未知', () => {
+    it('数字 id 匹配到专家时不判定为未知', () => {
       expect(computeIsUnknown(1000000001, AGENTS)).toBe(false)
     })
-    it('字符串 id 匹配到员工时不判定为未知（Snowflake 精度场景）', () => {
+    it('字符串 id 匹配到专家时不判定为未知（Snowflake 精度场景）', () => {
       expect(computeIsUnknown('1000000001', AGENTS)).toBe(false)
     })
   })
@@ -76,7 +76,7 @@ describe('AgentPickerDialog isUnknown 判定', () => {
     // 组件被 keepAlive 重建后 /agents 尚在飞行中，此时 agents=[]
     // 旧逻辑：hasValue && !selectedAgent → true → 显示原始 ID
     // 新逻辑：追加 agents.length > 0 → false → 走 placeholder
-    it('modelValue 有值但员工列表为空时不判定为未知', () => {
+    it('modelValue 有值但专家列表为空时不判定为未知', () => {
       expect(computeIsUnknown(1000000001, [])).toBe(false)
       expect(computeIsUnknown('1000000001', [])).toBe(false)
     })
@@ -85,13 +85,13 @@ describe('AgentPickerDialog isUnknown 判定', () => {
     })
   })
 
-  describe('员工被删除/改名场景', () => {
+  describe('专家被删除/改名场景', () => {
     it('modelValue 有值、列表非空但无匹配时判定为未知', () => {
       expect(computeIsUnknown(9999999999, AGENTS)).toBe(true)
       expect(computeIsUnknown('9999999999', AGENTS)).toBe(true)
     })
-    it('被删除的员工在恢复列表后仍显示未知标记，直到用户重新选择', () => {
-      // 模拟：员工 1000000001 被从列表移除
+    it('被删除的专家在恢复列表后仍显示未知标记，直到用户重新选择', () => {
+      // 模拟：专家 1000000001 被从列表移除
       const reduced = AGENTS.filter(a => a.id !== 1000000001)
       expect(computeIsUnknown(1000000001, reduced)).toBe(true)
     })
@@ -99,10 +99,10 @@ describe('AgentPickerDialog isUnknown 判定', () => {
 })
 
 describe('AgentPickerDialog triggerLabel 优先级链', () => {
-  const PLACEHOLDER = '请选择员工'
-  const UNKNOWN_LABEL = '未知员工'
+  const PLACEHOLDER = '请选择专家'
+  const UNKNOWN_LABEL = '未知专家'
 
-  it('选中员工时显示员工名称（最高优先级）', () => {
+  it('选中专家时显示专家名称（最高优先级）', () => {
     expect(computeTriggerLabel(1000000001, AGENTS, PLACEHOLDER, UNKNOWN_LABEL))
       .toBe('通用助手')
   })

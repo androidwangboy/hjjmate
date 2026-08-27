@@ -10,7 +10,7 @@ import java.util.List;
 
 /**
  * Publish-time access-control validator. For each step that touches an
- * external scope (agent / channel / employee memory), the validator asks
+ * external scope (agent / channel / expert memory), the validator asks
  * the {@link WorkflowAclPort} whether the reference resolves inside the
  * publishing workspace. Any negative answer is recorded as a
  * {@link CompileError}; downstream the publish flow refuses to write a new
@@ -85,7 +85,7 @@ public class WorkflowAclValidator {
             return;
         }
         // Pebble templates resolve at runtime — do not ACL-check expressions
-        // that aren't a literal employee id. Literal forms are the safe
+        // that aren't a literal expert id. Literal forms are the safe
         // common case worth guarding.
         if (w.employeeId() == null || w.employeeId().isBlank()) {
             return;

@@ -21,26 +21,26 @@ hero:
 
 features:
   - icon: 🧑‍💼
-    title: Digital employees, not chatbots
-    details: You hire coworkers, not a chat box. Each one has a role, a goal, a backstory, a pixel-art avatar, and a color of their own — six built-in templates ship ready to use. ReAct + Plan-and-Execute, parallel delegation between employees.
+    title: Digital experts, not chatbots
+    details: You hire coworkers, not a chat box. Each one has a role, a goal, a backstory, a pixel-art avatar, and a color of their own — six built-in templates ship ready to use. ReAct + Plan-and-Execute, parallel delegation between experts.
   - icon: 🤝
     title: Teams, not lone wolves
     details: One team request becomes one Team Run — objective, task DAG, worker execution, final synthesis, and deliverables stay together. Chat delivers outcomes, Agents observes live work, and Teams governs history and approvals. In 2.1.0, one round of collaboration is one complete work record.
   - icon: 🧩
     title: Skills are the skeleton, not a plugin
-    details: One SKILL.md plus one LESSONS.md that grows with use. Eight starter templates, a five-step creation wizard, pre-flight checks before install. MCP and ACP bridges — even Claude Code and Codex show up as employees.
+    details: One SKILL.md plus one LESSONS.md that grows with use. Eight starter templates, a five-step creation wizard, pre-flight checks before install. MCP and ACP bridges — even Claude Code and Codex show up as experts.
   - icon: 📚
     title: Knowledge, shaped
-    details: The LLM Wiki digests raw files into structured pages with summaries and backlinks. A library you can read, not a vector store you query. The hot cache auto-injects into your employees' system prompts.
+    details: The LLM Wiki digests raw files into structured pages with summaries and backlinks. A library you can read, not a vector store you query. The hot cache auto-injects into your experts' system prompts.
   - icon: 🧬
     title: Memory that compounds
     details: Session context, post-chat extraction, workspace files, and scheduled Dreaming consolidation. Tomorrow's conversation starts where today's ended.
   - icon: 👀
-    title: You see what every employee is doing
+    title: You see what every expert is doing
     details: The Admin Runtime Console shows who's running, what step they're on, how many tokens they've used, with a one-click force-recycle when stuck. Streaming is staged honestly, multi-agent delegation no longer fights itself, long tasks demand evidence-grounded answers.
   - icon: 🔀
     title: Business processes, not manual hand-offs
-    details: Workflows compose multiple employees plus system actions (approvals, channel dispatch, write-memory) into a publishable, triggerable, replayable linear DSL — seven step modes. Triggers wire system events to those flows — six pattern types cover cron, webhooks, channel messages, employee lifecycle, content match, and workflow completion.
+    details: Workflows compose multiple experts plus system actions (approvals, channel dispatch, write-memory) into a publishable, triggerable, replayable linear DSL — seven step modes. Triggers wire system events to those flows — six pattern types cover cron, webhooks, channel messages, expert lifecycle, content match, and workflow completion.
   - icon: 🌐
     title: Every surface that matters
     details: Web console, desktop app with bundled JRE 21, and eight chat channels. Same brain, same memory, wherever your team works.

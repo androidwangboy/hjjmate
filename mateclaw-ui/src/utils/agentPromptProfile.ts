@@ -2,7 +2,7 @@
  * Structured view over an agent's free-text systemPrompt.
  *
  * Templates and the editor split the prompt into four H2 sections so the UI
- * can show "who is this employee" as a tagline on the agent card and edit
+ * can show "who is this expert" as a tagline on the agent card and edit
  * each part separately. The on-disk format stays a single `systemPrompt`
  * string — these helpers parse it on read and serialize it on save, so the
  * backend schema is untouched and prompts authored before this feature

@@ -15,7 +15,7 @@ import vip.mate.workspace.document.model.WorkspaceFileEntity;
  * string. Looking the agent up by name was considered but pushes name
  * uniqueness into the runtime — the schema validator already accepts only
  * a string so the wire format does not change. When we add a "human
- * employee" surface this binding will grow a separate code path.
+ * expert" surface this binding will grow a separate code path.
  */
 @Component
 public class DefaultMemoryWriter implements MemoryWriter {

@@ -135,7 +135,7 @@ public class AgentController {
         }
     }
 
-    @Operation(summary = "根据一句话需求生成员工草稿（不落库）")
+    @Operation(summary = "根据一句话需求生成专家草稿（不落库）")
     @PostMapping("/generate")
     @RequireWorkspaceRole("member")
     public R<AgentDraftVO> generate(

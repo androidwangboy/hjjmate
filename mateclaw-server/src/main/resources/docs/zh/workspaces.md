@@ -44,7 +44,7 @@ Agent、技能（catalog + 运行时）、会话、工作空间文件全部按�
 
 | 角色 | 能力（继承下层后新增） |
 |------|------------------------|
-| **Viewer** | `chat`、`view:wiki`。只读。为了让聊天能跑通，Viewer 还能读取当前激活模型、读取员工的工作空间文件。 |
+| **Viewer** | `chat`、`view:wiki`。只读。为了让聊天能跑通，Viewer 还能读取当前激活模型、读取专家的工作空间文件。 |
 | **Member** | Viewer + `view:memory`、`view:dashboard`、`manage:wiki`、`manage:agents` |
 | **Admin** | Member + `manage:skills`、`manage:channels`、`manage:models`、`manage:security`、`manage:settings` |
 | **Owner** | 与 Admin 相同，外加 owner 专属：删除工作空间、转移所有权 |
@@ -64,7 +64,7 @@ Agent、技能（catalog + 运行时）、会话、工作空间文件全部按�
 
 角色控制 **UI 可见性**和 **API 访问**，而**后端是能力的唯一真相源**：后端维护一份 `RoleCapabilities` 映射，前端从不本地推导。切换工作空间后、或遇到与权限相关的 403 时，前端调用 `GET /api/v1/workspaces/{id}/access`，拿回 `memberRole`、`isGlobalAdmin`、`effectiveRole`、`capabilities`。
 
-前端据此 gating：路由声明所需能力；侧栏按能力过滤（加载完成前不会闪现菜单）；Viewer 登录后落在 `/chat`；侧栏还会显示通知角标（待审批、卡住的员工）。后端在每个 API 端点上执行同样的规则，所以能力不足的请求返回 `403 Forbidden`。
+前端据此 gating：路由声明所需能力；侧栏按能力过滤（加载完成前不会闪现菜单）；Viewer 登录后落在 `/chat`；侧栏还会显示通知角标（待审批、卡住的专家）。后端在每个 API 端点上执行同样的规则，所以能力不足的请求返回 `403 Forbidden`。
 
 ---
 
@@ -194,7 +194,7 @@ Wiki KB 的数据**永远不会离开它的工作空间**。工作空间 B 里�
 
 ### 技能（2.0.0）
 
-同名技能可在不同工作空间独立共存：安装查重按工作空间过滤、磁盘目录编入 workspaceId、运行时的 load / 读文件 / 跑脚本只在本会话工作空间（+ builtin + 全局 virtual）范围内解析。一个工作空间的员工读不到、也执行不了另一个工作空间的同名技能。详见[技能系统](./skills)。
+同名技能可在不同工作空间独立共存：安装查重按工作空间过滤、磁盘目录编入 workspaceId、运行时的 load / 读文件 / 跑脚本只在本会话工作空间（+ builtin + 全局 virtual）范围内解析。一个工作空间的专家读不到、也执行不了另一个工作空间的同名技能。详见[技能系统](./skills)。
 
 ---
 

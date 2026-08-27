@@ -1,10 +1,10 @@
 # 触发器（Triggers）
 
 ::: tip 1.3.0 新增
-触发器系统自 v1.3.0 起提供。在 v1.2.0 及更早版本里，工作流和员工对话只能被手动调起。
+触发器系统自 v1.3.0 起提供。在 v1.2.0 及更早版本里，工作流和专家对话只能被手动调起。
 :::
 
-**触发器是什么**：把"系统里发生的事件"和"要执行的动作"连起来。事件可以是定时（cron）、是 webhook 来了、是某个渠道收到消息、是某个员工跑完了某次对话、是另一个工作流跑完了。动作可以是启动某个工作流，也可以是直接给某个员工发消息让它处理。
+**触发器是什么**：把"系统里发生的事件"和"要执行的动作"连起来。事件可以是定时（cron）、是 webhook 来了、是某个渠道收到消息、是某个专家跑完了某次对话、是另一个工作流跑完了。动作可以是启动某个工作流，也可以是直接给某个专家发消息让它处理。
 
 **触发器不是什么**：
 - 不是 cron 任务管理器替代品——`mate_cron_job` 仍然存在并独立运作；触发器**复用**它的 ShedLock + 调度器底座，但**不写入** `mate_cron_job`
@@ -51,7 +51,7 @@ v0 = 6 种 pattern type + 2 种 dispatch target（agent / workflow）。安全�
 | `cron` | 按 cron 表达式定时（**不进 ingest 管道**，由 scheduler 直跑） | `cronExpression`、`timezone` | 复用 `cron/` 模块的 ShedLock + Spring TaskScheduler；**不写 mate_cron_job 实体、不调 CronJobService** |
 | `webhook` | 通用事件入口透传（**v0 不做更细过滤**——secret 校验在 channel 层；trigger 这边只看 `patternType=webhook` 命中） | （v0 无字段） | 通过 `POST /api/v1/triggers/events` 入口 + envelope wrap |
 | `channel_message` | 渠道收到消息 | `channelType`（可选，按 envelope `data.channelType` 比对）、`senderEquals`（可选，按 sender id 精确比对） | 旁路 `ChannelWebhookController`，原路由不变 |
-| `agent_lifecycle` | 员工生命周期事件 | `agentId`（可选）、`phase`（可选，取值 `spawned` / `enabled` / `disabled` / `terminated`；`crashed` 保留给后续版本） | 挂在 `AgentLifecycleEventBridge` 上 |
+| `agent_lifecycle` | 专家生命周期事件 | `agentId`（可选）、`phase`（可选，取值 `spawned` / `enabled` / `disabled` / `terminated`；`crashed` 保留给后续版本） | 挂在 `AgentLifecycleEventBridge` 上 |
 | `content_match` | 内容包含 substring 才命中 | `substring`（**必填**，envelope 的 `data.content` 字段大小写不敏感包含匹配） | 通用过滤层，事件源由 envelope 决定 |
 | `workflow_completion` | 工作流跑完进入终态 | `sourceWorkflowId`（可选）、`stateFilter`（可选，取值 `completed` / `failed` / `any`） | 监听 `WorkflowEngine` 终态事件；A→B→A 递归保护见下文 |
 
@@ -142,14 +142,14 @@ cron 表达式不必手写。点表达式输入框旁的编辑按钮打开**分�
 
 调度中心 **计划任务** tab 里的每条任务都有一个 `task_type`，决定它跑起来做什么。这是 cron 任务类型的权威清单（事件触发器的 6 种 pattern type 见上文）：
 
-| task type | 行为 | 是否绑定员工 | 备注 |
+| task type | 行为 | 是否绑定专家 | 备注 |
 |---|---|---|---|
-| `text` / `agent` / `reminder` | 按 cron 调起一次员工对话 | **是**（必填 agent） | 经典定时对话；结果路由到对应会话 |
+| `text` / `agent` / `reminder` | 按 cron 调起一次专家对话 | **是**（必填 agent） | 经典定时对话；结果路由到对应会话 |
 | `wiki_process` | 按 cron 离线处理某个知识库 | **否** | 1.4.0 新增——见下 |
 
 ### `wiki_process`：错峰处理知识库（1.4.0 新增）
 
-`wiki_process` 让你把**知识库的处理**安排到业务低峰时段离线跑，而不是上传完就立刻占满处理队列。它**不绑定任何员工**——它是个系统任务，不开对话、不进聊天。
+`wiki_process` 让你把**知识库的处理**安排到业务低峰时段离线跑，而不是上传完就立刻占满处理队列。它**不绑定任何专家**——它是个系统任务，不开对话、不进聊天。
 
 新建时只需要填：
 
@@ -294,6 +294,6 @@ v0 故意**不把 envelope 全文写进 `mate_trigger_event`**——大体量渠
 ## 相关链接
 
 - [工作流（Workflow）](./workflow.md) —— `target_type=workflow` 时 dispatch 到这里
-- [数字员工](./agents.md) —— `target_type=agent` 时 dispatch 到这里
+- [数字专家](./agents.md) —— `target_type=agent` 时 dispatch 到这里
 - [多渠道接入](./channels.md) —— `channel_message` pattern 监听的事件来源
 - [审批与安全](./security.md) —— webhook secret + ACL 兜底

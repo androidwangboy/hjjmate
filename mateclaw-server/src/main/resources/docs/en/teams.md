@@ -9,11 +9,11 @@ head:
 
 # Team Runs and Agent Teams (2.1.0+)
 
-> **Before: one employee with sub-tasks. Now: a team around a shared task board.**
+> **Before: one expert with sub-tasks. Now: a team around a shared task board.**
 
 Sub-agent delegation (`delegateToAgent`) solves "one person temporarily calls a helper": synchronous, one-to-one, black-box. But real complex delivery looks like a project: **break down tasks, declare dependencies, run in parallel, gate on approvals, archive deliverables, and see who is doing what at any time**.
 
-Agent Teams bring that project machinery into MateClaw: you create a **team**, assign one **lead** employee and several **members**; tell the lead a goal, it breaks the goal into tasks on a **shared task board**; the dispatch engine hands tasks to members and runs them **in parallel**; settled results are announced back to the lead, which reviews, re-dispatches, and drives the whole thing to done. You watch it all from the Teams page — or drop tasks onto the board yourself.
+Agent Teams bring that project machinery into MateClaw: you create a **team**, assign one **lead** expert and several **members**; tell the lead a goal, it breaks the goal into tasks on a **shared task board**; the dispatch engine hands tasks to members and runs them **in parallel**; settled results are announced back to the lead, which reviews, re-dispatches, and drives the whole thing to done. You watch it all from the Teams page — or drop tasks onto the board yourself.
 
 2.1.0 adds the first-class **Team Run** above individual tasks: one user request maps to one run, and one `runId` links the objective, task DAG, worker conversations, events, final synthesis, and deliverables. Instead of a sidebar full of “subtask” conversations, you get one outcome-first work record with progressive drill-down.
 
@@ -47,7 +47,7 @@ The run protocol is `start_run → create* → seal_run`: the lead creates a run
 
 | Concept | Description |
 |------|------|
-| **Team** | A group of employees plus one task board. An employee can belong to multiple teams. |
+| **Team** | A group of experts plus one task board. An expert can belong to multiple teams. |
 | **Role** | `lead` / `member` / `reviewer`. The lead decomposes and summarizes, members execute, reviewers review. |
 | **Task** | One work item on the board: subject, description, assignee, dependencies (`blockedBy`), progress, result, deliverables, comments, timeline. |
 | **Board** | A kanban grouped by status. The state machine is guarded by conditional database updates — under concurrency the first successful writer wins, so a task can never hold two states. |
@@ -91,7 +91,7 @@ The lead (and members) operate the board through the `team_tasks` tool, with rol
 | `cancel` | lead | Cancel — this **actually interrupts** a running member session, not just flips a status |
 | `retry` | lead | Retry a `failed` / `stale` task |
 
-**Team context injection**: employees on a team get the team roster and collaboration playbook injected into their system prompt; the lead additionally receives a **live board snapshot every turn** — it never has to call `list` first to know what's on the board, and long conversations can't drift into duplicate task creation.
+**Team context injection**: experts on a team get the team roster and collaboration playbook injected into their system prompt; the lead additionally receives a **live board snapshot every turn** — it never has to call `list` first to know what's on the board, and long conversations can't drift into duplicate task creation.
 
 ---
 
@@ -186,6 +186,6 @@ They coexist: a team member can still call `delegateToAgent` inside its own task
 ## Read next
 
 - [Agents](./agents) — how the ReAct and Plan-Execute graphs work
-- [Persistent Goals](./goals) — cross-turn follow-through for a single employee
+- [Persistent Goals](./goals) — cross-turn follow-through for a single expert
 - [Workflow](./workflow) — deterministic step orchestration (use workflows when the process is fixed, teams when it must be decomposed on the spot)
 - [Security & Approval](./security) — how tool approval relates to team task approval

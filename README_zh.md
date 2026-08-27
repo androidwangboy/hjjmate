@@ -38,7 +38,7 @@
 >
 > 多用户工作空间。敏感操作走审批。完整审计日志。Spring Boot Actuator 健康监控。单个渠道挂掉不影响其他渠道的错误隔离。一个 JAR 包跑在自己的环境里；持久化数据由你掌控，任务所需内容只会发送到你主动配置的模型、渠道或工具服务。
 >
-> **底下是个真 agent harness。** ReAct + Plan-and-Execute 跑在 StateGraph 运行时上——不是一次 RAG 调用披件外套。工具 · 技能 · MCP · ACP 收敛进同一个注册表，每位员工独立绑定。敏感工具调用走可审计的审批闸门。多厂商故障转移让循环在某家供应商挂掉时也不停。
+> **底下是个真 agent harness。** ReAct + Plan-and-Execute 跑在 StateGraph 运行时上——不是一次 RAG 调用披件外套。工具 · 技能 · MCP · ACP 收敛进同一个注册表，每位专家独立绑定。敏感工具调用走可审计的审批闸门。多厂商故障转移让循环在某家供应商挂掉时也不停。
 
 大多数 AI 工具一到厂商抽风那天就两手一摊。关一次标签页就忘了你是谁。给你一个聊天框，就敢叫产品。
 
@@ -68,7 +68,7 @@ MateClaw 的 **LLM Wiki** 把它消化成结构化页面，页面之间自己长
 
 | 入口 | 它是什么 |
 |---|---|
-| **Web 控制台** | 完整的管理后台——数字员工、模型、技能、知识、安全、定时任务、**运行时控制台**（看见每位员工正在干什么、一键回收） |
+| **Web 控制台** | 完整的管理后台——数字专家、模型、技能、知识、安全、定时任务、**运行时控制台**（看见每位专家正在干什么、一键回收） |
 | **桌面端** | Electron + 内嵌 JRE 21，双击即用，无需装 Java |
 | **网页嵌入式聊天** | 一个 `<script>` 标签就能嵌进任何网站 |
 | **IM 渠道** | 钉钉 · 飞书 · 企业微信 · 微信 · Telegram · Discord · QQ · Slack |
@@ -82,36 +82,36 @@ MateClaw 的 **LLM Wiki** 把它消化成结构化页面，页面之间自己长
 
 ## 盒子里有什么
 
-### 数字员工，不是聊天机器人
-你雇佣员工，不是开聊天框。每位有**角色**、**目标**、**背景故事**，像素艺术头像与专属配色——6 个内置模板（通用助手 · 产品助理 · 研究分析师 · 客服助理 · 数据分析师 · 代码审查员）开箱可用。**ReAct** 做迭代推理，**Plan-and-Execute** 做复杂多步任务，员工之间可以并行委派。动态上下文裁剪、智能截断、僵死流清理——让长对话真正能用的那些“不起眼”的基础设施。
+### 数字专家，不是聊天机器人
+你雇佣专家，不是开聊天框。每位有**角色**、**目标**、**背景故事**，像素艺术头像与专属配色——6 个内置模板（通用助手 · 产品助理 · 研究分析师 · 客服助理 · 数据分析师 · 代码审查员）开箱可用。**ReAct** 做迭代推理，**Plan-and-Execute** 做复杂多步任务，专家之间可以并行委派。动态上下文裁剪、智能截断、僵死流清理——让长对话真正能用的那些“不起眼”的基础设施。
 
 ### Team Run（2.1.0+）
 一次请求对应一个持久化的 **Team Run**。稳定的 `runId` 串起用户目标、任务 DAG、成员执行、最终汇总与交付物。Chat 是成果交付面，Agents Live 按运行聚合成员并展示实时状态，Teams 管理历史与治理；三处读取同一份服务端投影。成员子会话不再挤进普通会话列表，摘要和文件优先展示，任务、证据、审批与只读成员记录按需下钻。底层继续使用 2.0 的共享任务板，保留依赖编排、并行派发、前置结果传递、执行租约、取消中断和人工审批卡点。
 
 ### 知识与记忆
-- **LLM Wiki** — 原始材料消化成有链接、带引用的结构化页面；**热点缓存**自动注入到员工的 system prompt。**加工器引擎**（1.3.0+）把 Wiki 从"搜索索引"升级为"处理流水线"
+- **LLM Wiki** — 原始材料消化成有链接、带引用的结构化页面；**热点缓存**自动注入到专家的 system prompt。**加工器引擎**（1.3.0+）把 Wiki 从"搜索索引"升级为"处理流水线"
 - **工作区记忆** — `AGENTS.md` / `SOUL.md` / `PROFILE.md` / `MEMORY.md` / 每日笔记
-- **记忆生命周期** — 对话后自动提取 · 定时整理 · Dreaming 工作流。工作流也可以通过 `write_memory` step 直接写进员工的 `MEMORY.md`
+- **记忆生命周期** — 对话后自动提取 · 定时整理 · Dreaming 工作流。工作流也可以通过 `write_memory` step 直接写进专家的 `MEMORY.md`
 
 ### 技能 · MCP · ACP — 三种"接外部能力"的方式
 - **SKILL.md 技能包** — 一份 manifest + prompt + 工具列表 + **LESSONS.md**。2.1 可通过对话反思与跨会话重复请求挖掘形成可复用改进，并以候选晋升、受约束自动绑定、curator 治理、来源策略、快照和恢复点保证过程可观察、按工作空间隔离且可回滚；所有自动能力均由独立开关控制。另有 8 个起步模板、5 步创作向导和安装前 **Pre-flight 检查**
-- **MCP** — stdio / SSE / Streamable HTTP 三种传输，接入任意外部工具服务器。**每位员工独立绑定**（1.3.0+）——一位员工装的工具不会渗到其他人的工具栏里
-- **ACP** — 把 Claude Code、Codex 这种顶级编码 Agent 以"员工"身份接入，桥接成技能卡 + 包装工具
+- **MCP** — stdio / SSE / Streamable HTTP 三种传输，接入任意外部工具服务器。**每位专家独立绑定**（1.3.0+）——一位专家装的工具不会渗到其他人的工具栏里
+- **ACP** — 把 Claude Code、Codex 这种顶级编码 Agent 以"专家"身份接入，桥接成技能卡 + 包装工具
 - **Tool Guard** — RBAC + 审批流 + 文件路径保护。能力必须有边界
 
 ### 业务流程编排（1.3.0+）
-- **工作流（Workflow）** — 把多位员工 + 系统动作（审批 / 渠道分发 / 写记忆）按线性 step DSL 编排成一条可发布、可触发、可重放的业务流程。7 种 step mode（`sequential` / `fan_out` / `collect` / `conditional` / `await_approval` / `dispatch_channel` / `write_memory`）。JSON-first 编辑（Monaco + JSON schema + Pebble 静态检查），或者用一句话生成草稿
-- **触发器（Trigger）** — 把"系统里发生的事"自动接到工作流或员工对话上。6 种 pattern type（`cron` / `webhook` / `channel_message` / `agent_lifecycle` / `content_match` / `workflow_completion`）。事件治理默认开：去重、per-trigger 限速、bot 自循环过滤、A→B→A 递归保护、未知 pattern fail-closed
+- **工作流（Workflow）** — 把多位专家 + 系统动作（审批 / 渠道分发 / 写记忆）按线性 step DSL 编排成一条可发布、可触发、可重放的业务流程。7 种 step mode（`sequential` / `fan_out` / `collect` / `conditional` / `await_approval` / `dispatch_channel` / `write_memory`）。JSON-first 编辑（Monaco + JSON schema + Pebble 静态检查），或者用一句话生成草稿
+- **触发器（Trigger）** — 把"系统里发生的事"自动接到工作流或专家对话上。6 种 pattern type（`cron` / `webhook` / `channel_message` / `agent_lifecycle` / `content_match` / `workflow_completion`）。事件治理默认开：去重、per-trigger 限速、bot 自循环过滤、A→B→A 递归保护、未知 pattern fail-closed
 - **Wiki 加工器** — Wiki 不再只是被动检索。用户自定义模板对原料或现有页面跑模板，跨原料 map-reduce 聚合，reverse-citation 绑定到源 chunk，JSON 输出 + 可选 JSON Schema，每个模板独立选模型
 
-### 你看得见每位员工正在干什么
-**Admin 运行时控制台**（`后台 → 系统 → 运行时`）——谁在跑、跑到哪一步、占多少 token、卡住了一键回收。流式阶段如实区分思考 / 工具 / 回答；每轮推理保留真实发生顺序，界面显示实际耗时，线性 trajectory 导出则按顺序展开推理、调用、观察与回答。SSE 每事件 ID 支持安全重连，Team Run 将成员工作聚合到同一次运行下。
+### 你看得见每位专家正在干什么
+**Admin 运行时控制台**（`后台 → 系统 → 运行时`）——谁在跑、跑到哪一步、占多少 token、卡住了一键回收。流式阶段如实区分思考 / 工具 / 回答；每轮推理保留真实发生顺序，界面显示实际耗时，线性 trajectory 导出则按顺序展开推理、调用、观察与回答。SSE 每事件 ID 支持安全重连，Team Run 将成专家作聚合到同一次运行下。
 
 ### 多模态创作
 语音合成 · 语音识别 · 图片 · 音乐 · 视频 · 3D。一等公民，不是附加插件。**多模态旁路**（1.3.0+）让纯文本主模型遇到图片附件时自动调用配置好的视觉模型转描述，主对话保持便宜。**图像编辑**也到位：用 `msg:<id>:<idx>` 引用会话里更早的某张图，让模型改色、改风格。**4 个文档生成工具**（`DocxRenderTool` / `XlsxRenderTool` / `PptxRenderTool` / `PdfRenderTool`）在 JVM 内把 Markdown 直接渲染成 Office 文件——不 fork 子进程、不依赖 npm、不需要装 Office。
 
 ### 内容工作室（1.8.0+）
-一个招牌*场景*，不是工具——预置的「内容工作室」员工把一句话变成可发布成品：选题 → 搜集 → 成文 → 配图 → **去 AI 化** → 排版 → 交付。**微信公众号（公众号）**文章以内联样式 HTML 进入草稿箱，正文图自动上传到微信；**小红书**笔记打包成 ≥3 张竖版 3:4 卡片并在线预览。去 AI 化围绕一个**可度量的 AI 痕迹评分**运行；每次交付都经过合规扫描，并记入按选题指纹去重的**内容日历**。
+一个招牌*场景*，不是工具——预置的「内容工作室」专家把一句话变成可发布成品：选题 → 搜集 → 成文 → 配图 → **去 AI 化** → 排版 → 交付。**微信公众号（公众号）**文章以内联样式 HTML 进入草稿箱，正文图自动上传到微信；**小红书**笔记打包成 ≥3 张竖版 3:4 卡片并在线预览。去 AI 化围绕一个**可度量的 AI 痕迹评分**运行；每次交付都经过合规扫描，并记入按选题指纹去重的**内容日历**。
 
 ### 企业就绪
 RBAC + JWT。**Personal Access Token** 给无人值守脚本和 CI 使用。**Webhook 出站 HMAC-SHA-256 签名**。**Cron 分布式锁**避免多实例重复执行。完整审计事件流。Flyway 管理数据库 schema。一个 JAR 交付。开发环境可用 H2；公开 Docker 栈默认使用 PostgreSQL 16，同时保留 MySQL profile，Kingbase 驱动为按需启用。
@@ -142,7 +142,7 @@ RBAC + JWT。**Personal Access Token** 给无人值守脚本和 CI 使用。**We
 
 **OpenClaw 和 Hermes Agent 是优秀的个人 AI 平台**——如果你是一个人、一台笔记本、习惯从 CLI 搭自己的 agent、所有东西都靠手工配置文件调优，选它们没问题。两家的社区规模今天都大于 MateClaw。
 
-**MateClaw 是那个给团队用的版本。** 数字员工、模型与工具都纳入权限和工作空间边界。危险动作可暂停等待审批，关键操作进入审计事件流。Admin 运行时控制台集中展示正在执行的员工与供应商状态，卡住时可回收。底座是 Spring Boot，适合并入已有 Java 服务体系。
+**MateClaw 是那个给团队用的版本。** 数字专家、模型与工具都纳入权限和工作空间边界。危险动作可暂停等待审批，关键操作进入审计事件流。Admin 运行时控制台集中展示正在执行的专家与供应商状态，卡住时可回收。底座是 Spring Boot，适合并入已有 Java 服务体系。
 
 **同一套"完整一整套"哲学，不同的重心。**
 
@@ -213,7 +213,7 @@ mateclaw/
 | 层次 | 技术 |
 |---|---|
 | 后端 | Spring Boot 3.5 · Spring AI Alibaba 1.1 · MyBatis Plus · Flyway |
-| 数字员工运行时 | StateGraph · ReAct + Plan-Execute · 角色 / 目标 / 背景故事 · Skill 自进化闭环 · Team Run + 共享任务板（2.1.0+）|
+| 数字专家运行时 | StateGraph · ReAct + Plan-Execute · 角色 / 目标 / 背景故事 · Skill 自进化闭环 · Team Run + 共享任务板（2.1.0+）|
 | 业务编排 | 工作流（7 step mode · Pebble DSL）· 触发器（6 pattern type · 事件治理）· Wiki 加工器（1.3.0+）|
 | 能力扩展 | SKILL.md 包 · MCP（stdio / SSE / HTTP · per-agent 绑定）· ACP 桥接（Claude Code / Codex） |
 | 数据库 | H2（开发）· PostgreSQL 16（Docker 默认）· MySQL 8.0+（支持）· Kingbase（按需驱动）|
@@ -253,9 +253,9 @@ mateclaw/
 
 完整故事见 [v2.0.0 release notes](https://claw.mate.vip/docs/zh/releases/2.0.0)。
 
-**v1.8.0（2026-07-12 发布）** — 员工*转向对外、干完一整件活*:**内容工作室**——第一个完全用 MateClaw 自身原子能力端到端搭起来的招牌场景:
+**v1.8.0（2026-07-12 发布）** — 专家*转向对外、干完一整件活*:**内容工作室**——第一个完全用 MateClaw 自身原子能力端到端搭起来的招牌场景:
 
-- **内容工作室——一句话到可发布成品** — 预置「内容工作室」员工跑通 选题 → 搜集 → 成文 → 配图 → 去 AI 化 → 排版 → 交付。**微信公众号(公众号)** 图文文章(内联样式 HTML → 草稿箱)与 **小红书** 以图为主图文笔记(≥3 张竖版 3:4 卡片 + 在线预览)首批一等公民
+- **内容工作室——一句话到可发布成品** — 预置「内容工作室」专家跑通 选题 → 搜集 → 成文 → 配图 → 去 AI 化 → 排版 → 交付。**微信公众号(公众号)** 图文文章(内联样式 HTML → 草稿箱)与 **小红书** 以图为主图文笔记(≥3 张竖版 3:4 卡片 + 在线预览)首批一等公民
 - **可度量的去 AI 化** — 启发式 AI 痕迹评分(无 LLM、确定性)驱动 检测 → 改写 → 复检 闭环,硬上限 3 轮
 - **为长期投产而加固的发布链** — 正文图上传进微信(不再外链发布即裂)、AES-GCM 加密密钥、服务复用 + token 持久化、重试 + 中文错误提示、兜底封面;草稿箱优先,发表走审批
 - **会去重、会记账的内容日历** — 每次交付都合规扫描 + 自动落台账、选题指纹防重复选题、只读内容日历页展示草稿/已打包/已发布/失败
@@ -277,13 +277,13 @@ mateclaw/
 
 完整故事见 [v1.7.0 release notes](https://claw.mate.vip/docs/zh/releases/1.7.0)。
 
-**v1.6.0（2026-06-22 发布）** — 让自驱的数字员工*更快、更会看、更易嵌入*：技能两段式载入 + prefix 压缩（首字节更快）· `execute_code` 原生沙箱代码执行 · 图片跨轮次留存 + `image_analyze` · 可嵌入/无头 webchat 按 `endUserId` 隔离记忆 · 真正可读的 Wiki（阅读与管理分离 · 统一 Sources 标签 · 可点击 `[[wikilinks]]`）· 高负载更稳（MCP 自愈 · 工具调用恢复 · 计划证据闸门）。完整故事见 [v1.6.0 release notes](https://claw.mate.vip/docs/zh/releases/1.6.0)。
+**v1.6.0（2026-06-22 发布）** — 让自驱的数字专家*更快、更会看、更易嵌入*：技能两段式载入 + prefix 压缩（首字节更快）· `execute_code` 原生沙箱代码执行 · 图片跨轮次留存 + `image_analyze` · 可嵌入/无头 webchat 按 `endUserId` 隔离记忆 · 真正可读的 Wiki（阅读与管理分离 · 统一 Sources 标签 · 可点击 `[[wikilinks]]`）· 高负载更稳（MCP 自愈 · 工具调用恢复 · 计划证据闸门）。完整故事见 [v1.6.0 release notes](https://claw.mate.vip/docs/zh/releases/1.6.0)。
 
-**v1.5.0（2026-06-04 发布）** — Goal 可勾选清单（模糊评分 → 逐项打勾）· Wiki 自维护（`[[wikilinks]]` · 事实层/经验层 · pageType 模板与权限 · 知识库流水线 · 本地目录接入）· 按拥有者隔离记忆（`owner_key` + 可见域 + `endUserId` 透传）· 每员工绑定主知识库 · 偏好 provider 驱动选型。完整故事见 [v1.5.0 release notes](https://claw.mate.vip/docs/zh/releases/1.5.0)。
+**v1.5.0（2026-06-04 发布）** — Goal 可勾选清单（模糊评分 → 逐项打勾）· Wiki 自维护（`[[wikilinks]]` · 事实层/经验层 · pageType 模板与权限 · 知识库流水线 · 本地目录接入）· 按拥有者隔离记忆（`owner_key` + 可见域 + `endUserId` 透传）· 每专家绑定主知识库 · 偏好 provider 驱动选型。完整故事见 [v1.5.0 release notes](https://claw.mate.vip/docs/zh/releases/1.5.0)。
 
-**v1.4.0（2026-05-23 发布）** — 持续目标（锁定目标，每轮自评）· 子员工委派树（最深 3 层 · 同步 / 并行 / 异步 · 一句话组队）· 工具/技能渐进式披露 · 工作空间 RBAC（Owner / Admin / Member / Viewer）· 飞书一等公民（交互卡 / 审批卡 / 流式卡 · 渠道原生工具）。详见 [v1.4.0 release notes](https://claw.mate.vip/docs/zh/releases/1.4.0)。
+**v1.4.0（2026-05-23 发布）** — 持续目标（锁定目标，每轮自评）· 子专家委派树（最深 3 层 · 同步 / 并行 / 异步 · 一句话组队）· 工具/技能渐进式披露 · 工作空间 RBAC（Owner / Admin / Member / Viewer）· 飞书一等公民（交互卡 / 审批卡 / 流式卡 · 渠道原生工具）。详见 [v1.4.0 release notes](https://claw.mate.vip/docs/zh/releases/1.4.0)。
 
-**v1.3.0（2026-05-13 发布）** — 工作流引擎 · 6 种 pattern 触发器 · Wiki 加工器 · 每员工独立 MCP 绑定 · 多模态旁路路由 · 4 个 JVM 原生文档生成工具 · 图像编辑。详见 [v1.3.0 release notes](https://claw.mate.vip/docs/zh/releases/1.3.0)。
+**v1.3.0（2026-05-13 发布）** — 工作流引擎 · 6 种 pattern 触发器 · Wiki 加工器 · 每专家独立 MCP 绑定 · 多模态旁路路由 · 4 个 JVM 原生文档生成工具 · 图像编辑。详见 [v1.3.0 release notes](https://claw.mate.vip/docs/zh/releases/1.3.0)。
 
 ## 参与贡献
 

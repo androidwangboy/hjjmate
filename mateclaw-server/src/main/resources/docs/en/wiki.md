@@ -174,7 +174,7 @@ Available on every new KB; cover common enterprise jobs:
 |---|---|---|
 | **Manual** | Pick a source in the UI, click Run | Single-shot prompt iteration |
 | **Apply default** | Toggle on the template; upload a new material | "Every new contract gets risk-extracted on arrival" |
-| **Agent tool** | Agent calls `wiki_apply_transformation(name, rawId)` | Digital employee decides which template to run |
+| **Agent tool** | Agent calls `wiki_apply_transformation(name, rawId)` | Digital expert decides which template to run |
 | **Aggregate** | "Aggregate all runs" button / `wiki_aggregate_transformation` | Map-reduce N per-source outputs into one KB-level synthesis page |
 
 ### Input: raw materials or existing pages

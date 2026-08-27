@@ -14,8 +14,8 @@ v1.3.0 lands a wave of long-run stability and group-collaboration work in the ch
 - **Group-chat per-sender attribution + debounce boundary** — two people talking in the same group no longer get their messages mixed up
 - **Adaptive debounce window for paste-split long messages** — a long paste broken into five messages auto-merges back into one
 - **WeCom approval cards + keepalive + chunk dedup** — long-task cards survive upstream session timeouts
-- **Async tool results forward back to the originating channel** — employee runs a long task, the result lands in Feishu / DingTalk / WeCom / Slack with files uploaded per-channel
-- **Scrubbed fake generated-file URLs** — employees no longer hand back `https://example.com/file.docx`-style fictitious links
+- **Async tool results forward back to the originating channel** — expert runs a long task, the result lands in Feishu / DingTalk / WeCom / Slack with files uploaded per-channel
+- **Scrubbed fake generated-file URLs** — experts no longer hand back `https://example.com/file.docx`-style fictitious links
 
 WeCom-specific tuning lives in [WeCom deep tuning](./wecom-tuning).
 :::
@@ -37,7 +37,7 @@ Feishu specifics are spelled out in the [Feishu](#feishu-lark) section below.
 
 ::: tip 1.5.0 channel improvements
 - **Shared inbound media pipeline** — **WeChat and WeCom** are currently wired onto a shared inbound-media downloader + magic-byte type detection + exponential-backoff retry (other IM channels to follow). File types are decided from content bytes (no more hardcoded `image/*`); HEIC / WEBP / DOCX / XLSX and friends are detected correctly, with automatic retry on download failure.
-- **Feishu: follow-up text auto-carries recent files (#201)** — send a file in a Feishu chat first (even without @-mentioning the employee), then a text message, and the cached files are auto-attached as content parts for the employee — 5 files per chat, 60-minute TTL.
+- **Feishu: follow-up text auto-carries recent files (#201)** — send a file in a Feishu chat first (even without @-mentioning the expert), then a text message, and the cached files are auto-attached as content parts for the expert — 5 files per chat, 60-minute TTL.
 :::
 
 ---
@@ -667,7 +667,7 @@ In any IM channel, a message that is entirely a `/`-prefixed command is intercep
 |------|--------|
 | `/new` | Start a fresh conversation (current context is archived) |
 | `/clear` | Clear the current conversation's context (the conversation itself survives; the 1.8-era clear command folds into this framework) |
-| `/status` | Show the conversation's state — bound employee, model, whether a task is running |
+| `/status` | Show the conversation's state — bound expert, model, whether a task is running |
 | `/stop` | Stop the running task — intercepted at the enqueue gate, so it preempts a long task mid-flight |
 | `/model` | With no argument, list available models (current pin marked); `/model <name>` or `/model <provider>:<name>` switches **this conversation's** model, effective from the next message; `/model reset` restores the default. Fuzzy names get suggestion lists |
 | `/help` | List all commands with descriptions |
@@ -699,7 +699,7 @@ The worst part of long tasks in IM is the "message dropped into a void" feeling.
 
 ## Proactive push and targeted Cron delivery (2.1.0+)
 
-An employee can proactively notify an IM conversation when the task explicitly asks for it:
+An expert can proactively notify an IM conversation when the task explicitly asks for it:
 
 1. call `list_channel_sessions` to list recent pushable conversations in the current workspace;
 2. select the exact returned `conversation_id`;

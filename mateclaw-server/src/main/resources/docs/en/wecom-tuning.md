@@ -1,6 +1,6 @@
 # WeCom Deep Tuning
 
-**A bot that actually works for a group of 50 internal employees needs much more than "just connecting".**
+**A bot that actually works for a group of 50 internal experts needs much more than "just connecting".**
 
 The [Channels → WeCom](./channels#wecom) section covers wiring up the channel; this document covers what MateClaw does **after** the channel is up — every non-obvious optimization, every platform corner the adapter handles, and why.
 

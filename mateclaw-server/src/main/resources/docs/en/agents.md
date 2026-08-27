@@ -9,18 +9,18 @@ head:
 
 # Multi-Agent Engine
 
-> **They're called "digital employees" now.** The back office uses that term throughout. The runtime is still an Agent under the hood, but the UI, the mental model, and the templates treat each one as a coworker on your team.
-> The renaming brings a worldview shift with it: you give an employee a **Role**, a **Goal**, and a **Backstory** — they know who they are and why they exist. You don't have to write a cold system prompt asking an "agent" to please understand the task.
+> **They're called "digital experts" now.** The back office uses that term throughout. The runtime is still an Agent under the hood, but the UI, the mental model, and the templates treat each one as a coworker on your team.
+> The renaming brings a worldview shift with it: you give an expert a **Role**, a **Goal**, and a **Backstory** — they know who they are and why they exist. You don't have to write a cold system prompt asking an "agent" to please understand the task.
 
-An employee is a personality with tools. Multiple employees form a team.
+An expert is a personality with tools. Multiple experts form a team.
 
-That's the short version. The longer one: an employee is a name, a system prompt that defines how it thinks (built from role / goal / backstory), a model that actually thinks, a set of tools it's allowed to reach for, optional knowledge bases it can read, optional skills that extend what it can do, its own slice of memory, and a choice of how to approach hard problems — incrementally (ReAct) or with a plan (Plan-and-Execute).
+That's the short version. The longer one: an expert is a name, a system prompt that defines how it thinks (built from role / goal / backstory), a model that actually thinks, a set of tools it's allowed to reach for, optional knowledge bases it can read, optional skills that extend what it can do, its own slice of memory, and a choice of how to approach hard problems — incrementally (ReAct) or with a plan (Plan-and-Execute).
 
-You can have many employees. Each one is specialized. You give them different jobs.
+You can have many experts. Each one is specialized. You give them different jobs.
 
 ---
 
-## What a digital employee has
+## What a digital expert has
 
 | Piece | What it is |
 |-------|-----------|
@@ -29,7 +29,7 @@ You can have many employees. Each one is specialized. You give them different jo
 | **Role** | One sentence — "I'm the product researcher" / "I'm customer support" |
 | **Goal** | One sentence — "I help you see how the market is moving" |
 | **Backstory** | Where they came from, why they exist, what they care about; auto-spliced into the final system prompt |
-| **Employee-card tagline** | The "self-introduction" shown on the card |
+| **Expert-card tagline** | The "self-introduction" shown on the card |
 | **System prompt** | Their personality, rules, style, priorities (role/goal/backstory inject automatically) |
 | **Type** | `react` or `plan_execute` |
 | **Tools** | Which tools they're allowed to call (built-in, MCP, skills, ACP-bridged) |
@@ -44,7 +44,7 @@ Models resolve in this order: **conversation pin → agent model override → gl
 
 ## Templates: hire a coworker who already knows the job
 
-You do not have to start from scratch. `Digital Employees → New` opens a picker populated from the server's `classpath:templates/*.json`; you can also skip templates and continue to the blank form.
+You do not have to start from scratch. `Digital Experts → New` opens a picker populated from the server's `classpath:templates/*.json`; you can also skip templates and continue to the blank form.
 
 ### 6 built-in templates (recommended)
 
@@ -114,12 +114,12 @@ Example: coding agent takes the Jira ticket, research agent pulls competitor dat
 ### Multi-level subagent delegation tree
 
 ::: tip New in 1.4.0
-Delegation is no longer flat. A parent employee can delegate to children, and those children can delegate further — **recursively, up to 3 levels deep**. A temporary team can grow its own hierarchy for a specific task.
+Delegation is no longer flat. A parent expert can delegate to children, and those children can delegate further — **recursively, up to 3 levels deep**. A temporary team can grow its own hierarchy for a specific task.
 :::
 
 Three delegation tools, one per cadence:
 
-- **`delegateToAgent`** — synchronous. Hand a sub-task to a specific employee, wait for it to finish, and return only after the child's final result. Optional `inheritParentContext` carries the parent conversation's recent context to the child, so you don't have to re-explain the background.
+- **`delegateToAgent`** — synchronous. Hand a sub-task to a specific expert, wait for it to finish, and return only after the child's final result. Optional `inheritParentContext` carries the parent conversation's recent context to the child, so you don't have to re-explain the background.
 - **`delegateParallel`** — fan out. Delegate to several children at once; each runs in its own isolated session and the results are collected together.
 - **`delegateAsync`** — background. Returns a `task_id` immediately while the child runs in the background; fetch the result later with **`taskOutput`**. `taskOutput` has an **attribution gate** — only the **same conversation + the same user** that spawned the task can read its result, preventing cross-conversation / cross-user leakage.
 
@@ -128,7 +128,7 @@ Children deny a default set of tools so the tree can't run away:
 - `delegateToAgent` / `delegateParallel` / `listAvailableAgents` (recursion guard — children can't launch their own synchronous/parallel delegations and can't enumerate sibling agents)
 - `setGoal` / `addGoalCriterion` / `completeGoal` / `getGoalStatus` (goal ownership stays with the parent)
 - `remember` / `remember_structured` / `forget_structured` (children can't write into the parent's long-term memory)
-- `create_employee` (children can't conjure new employees)
+- `create_employee` (children can't conjure new experts)
 
 This default deny list is tunable via `mateclaw.delegation.child-denied-tools`.
 
@@ -149,7 +149,7 @@ The ChatConsole draws the whole delegation tree, not a flat log:
 ## Plan Kanban
 
 ::: tip New
-The `Digital Employees` page now has a three-way toggle at the top: **Roster / Live / Plan Kanban**. The Kanban surfaces every plan produced by every employee in the workspace, sorted by status into a single board so you can see at a glance who's doing what and where things are stuck. (Visible to admins only.)
+The `Digital Experts` page now has a three-way toggle at the top: **Roster / Live / Plan Kanban**. The Kanban surfaces every plan produced by every expert in the workspace, sorted by status into a single board so you can see at a glance who's doing what and where things are stuck. (Visible to admins only.)
 :::
 
 The board is a global view of **Plan-and-Execute plans**, with four columns that plans fall into automatically:
@@ -161,54 +161,54 @@ The board is a global view of **Plan-and-Execute plans**, with four columns that
 | **Done** | All steps completed |
 | **Failed** | A step failed and won't be retried |
 
-The layout is **swimlane-style**: each employee that has plans gets its own row, ordered by most-recent activity, with a top-of-page dropdown to filter to a single employee. Multiple re-plans for the same goal collapse into **one card + ×N badge** — no stacking. Each card shows the goal text, a progress bar (completed / total steps), and step-distribution chips (N pending / M running / K done).
+The layout is **swimlane-style**: each expert that has plans gets its own row, ordered by most-recent activity, with a top-of-page dropdown to filter to a single expert. Multiple re-plans for the same goal collapse into **one card + ×N badge** — no stacking. Each card shows the goal text, a progress bar (completed / total steps), and step-distribution chips (N pending / M running / K done).
 
-The board is **read-only** — state is driven by execution, not drag-and-drop. Click a card and a **plan detail panel** slides in from the right: assigned employee, status, KPIs (step count / progress / creation date), execution output (Markdown rendered), and an expandable step timeline. A "Goals" button at the top links directly to the active [Goals](./goals) list.
+The board is **read-only** — state is driven by execution, not drag-and-drop. Click a card and a **plan detail panel** slides in from the right: assigned expert, status, KPIs (step count / progress / creation date), execution output (Markdown rendered), and an expandable step timeline. A "Goals" button at the top links directly to the active [Goals](./goals) list.
 
-REST: `GET /api/v1/plans?limit=N` (most-recent N plans across all employees), `GET /api/v1/plans?agentId=...` (by employee), `GET /api/v1/plans/{id}` (with step detail).
+REST: `GET /api/v1/plans?limit=N` (most-recent N plans across all experts), `GET /api/v1/plans?agentId=...` (by expert), `GET /api/v1/plans/{id}` (with step detail).
 
-### Per-step delegation to specialist employees
+### Per-step delegation to specialist experts
 
 ::: tip New
-A multi-step plan doesn't have to be run by a single employee from start to finish. When generating a plan, the planner can assign **individual steps** to more-specialized employees in the workspace.
+A multi-step plan doesn't have to be run by a single expert from start to finish. When generating a plan, the planner can assign **individual steps** to more-specialized experts in the workspace.
 :::
 
-The mechanism is **automatic** — no manual wiring required. During planning, the system shows the planner every other enabled employee in the workspace (name and description included); the planner marks a step for a specialist employee when that step clearly falls within the specialist's domain, leaving the remaining steps to itself. Most steps typically need no delegation.
+The mechanism is **automatic** — no manual wiring required. During planning, the system shows the planner every other enabled expert in the workspace (name and description included); the planner marks a step for a specialist expert when that step clearly falls within the specialist's domain, leaving the remaining steps to itself. Most steps typically need no delegation.
 
-- Delegation is recorded in `mate_sub_plan.assigned_agent_id`; a blue badge — **"Delegated to &lt;employee name&gt;"** — appears below the step in the plan detail panel
+- Delegation is recorded in `mate_sub_plan.assigned_agent_id`; a blue badge — **"Delegated to &lt;expert name&gt;"** — appears below the step in the plan detail panel
 - Delegated steps execute in a **sub-conversation** scoped to the parent plan's conversation — they do **not** leak into the top-level conversation list as independent sessions
 - Step-level delegation shares the same semantics as the [Goals](./goals) system and the [multi-level delegation tree](#multi-level-subagent-delegation-tree) above: the parent breaks up the work, specialists do their part
 
 ---
 
-## Build a team from one sentence: the digital-employee builder skill
+## Build a team from one sentence: the digital-expert builder skill
 
 ::: tip New in 1.4.0
-Don't want to create employees one at a time? Give it a sentence and let the "digital-employee builder" skill assemble the whole team for you.
+Don't want to create experts one at a time? Give it a sentence and let the "digital-expert builder" skill assemble the whole team for you.
 :::
 
 The skill starts from your one sentence and runs the full chain:
 
 1. **Clarify the requirement** — it pins down the vague sentence first, confirming the problem you're actually trying to solve
 2. **Design the roles** — breaks it into **2 to 6** complementary roles
-3. **Create each one** — calls `create_employee` per role to produce real, usable employees
-4. **Chain them into a workflow draft** — links the employees into a [workflow](./workflow) draft you can tweak right away
+3. **Create each one** — calls `create_employee` per role to produce real, usable experts
+4. **Chain them into a workflow draft** — links the experts into a [workflow](./workflow) draft you can tweak right away
 
-The companion tool **`list_capability_catalog`** lets the skill survey which tools / skills / knowledge bases the deployment has available before assigning capabilities to roles. Created employees are **enabled on creation** — no extra toggle to flip.
+The companion tool **`list_capability_catalog`** lets the skill survey which tools / skills / knowledge bases the deployment has available before assigning capabilities to roles. Created experts are **enabled on creation** — no extra toggle to flip.
 
 ---
 
-## Single-employee creation wizard
+## Single-expert creation wizard
 
 ::: tip New
-The team-builder skill above creates a whole team in one shot. If you only need **one** employee and don't want to fill in every field by hand, use the **Create Wizard** button in the top-right corner of the employee list — describe what you want in a sentence, and the AI drafts the employee for you to tweak before saving.
+The team-builder skill above creates a whole team in one shot. If you only need **one** expert and don't want to fill in every field by hand, use the **Create Wizard** button in the top-right corner of the expert list — describe what you want in a sentence, and the AI drafts the expert for you to tweak before saving.
 :::
 
-This is a separate three-step UI wizard (`Digital Employees → Create Wizard`), distinct from the team-builder skill: the skill outputs a team through a chat interface; the wizard outputs a single employee through a dedicated page.
+This is a separate three-step UI wizard (`Digital Experts → Create Wizard`), distinct from the team-builder skill: the skill outputs a team through a chat interface; the wizard outputs a single expert through a dedicated page.
 
 1. **Describe** — type a natural-language sentence in the input box ("an operations assistant that tracks competitor news and writes a daily brief"). Example chips below the box let you fill one in with a single click
 2. **Review** — the AI returns a draft: name, avatar emoji, role, goal, system prompt, type (`react` / `plan_execute`), suggested opening question, tags, and **recommended tool / skill / knowledge-base bindings**. Every field is editable; the capabilities list uses a searchable picker
-3. **Publish** — confirm and the employee is created along with all tool / skill / KB bindings in one go; you're offered "Start chatting / Create another / Back to list"
+3. **Publish** — confirm and the expert is created along with all tool / skill / KB bindings in one go; you're offered "Start chatting / Create another / Back to list"
 
 **Hallucination prevention** is the key design decision here: the AI can only suggest tools, skills, and KBs that **actually exist** in your deployment — anything the model invents that doesn't match a real capability is verified and discarded server-side during generation, before the draft ever reaches the wizard. Every binding shown in the draft is immediately usable.
 
@@ -226,14 +226,14 @@ Not every question deserves deep reasoning, but some do. MateClaw lets you turn 
 
 ---
 
-## Hiring a digital employee
+## Hiring a digital expert
 
-`Digital Employees → New`:
+`Digital Experts → New`:
 
 1. Pick a built-in template, or start from a custom configuration
 2. Name them, choose an avatar (pixel-art library, or upload your own)
 3. Write a one-sentence **Role**, a one-sentence **Goal**, a few-sentence **Backstory**
-4. Write a one-line **employee-card tagline** — the self-introduction shown on the card
+4. Write a one-line **expert-card tagline** — the self-introduction shown on the card
 5. Choose the type (`react` or `plan_execute`)
 6. Write (or edit) the system prompt (role / goal / backstory get auto-appended — don't repeat them)
 7. Pick which tools they can use, bind any knowledge bases they should read
@@ -245,84 +245,84 @@ Live immediately. Call them from chat or via API.
 ### Tool binding (per-agent tool picker)
 
 ::: tip New in 1.3.0
-In v1.2.0 the employee's tool binding was a flat "check what you want" list. v1.3.0 reworks this into a **grouped + status-aware + namespace-aware** picker, specifically to handle MCP tool grime.
+In v1.2.0 the expert's tool binding was a flat "check what you want" list. v1.3.0 reworks this into a **grouped + status-aware + namespace-aware** picker, specifically to handle MCP tool grime.
 :::
 
-Open the digital-employee editor's Tools tab and you get:
+Open the digital-expert editor's Tools tab and you get:
 
 - **Grouped by source**: built-in tools / skill-injected tools / MCP tools (further grouped per server) / ACP tools
 - **Status badges**: each tool carries a tag —
   - `connected` — currently usable
   - `stale` — this MCP server is currently unreachable, but the binding is preserved (it'll work as soon as the server is back)
-  - `unavailable` — server / skill has been disabled; binding is preserved but the runtime won't surface it to the employee
+  - `unavailable` — server / skill has been disabled; binding is preserved but the runtime won't surface it to the expert
   - `orphan` — references a tool that **no longer exists** (server removed, tool renamed); the save action **rejects** orphan references and forces cleanup
-- **Namespace collisions**: when two different MCP servers expose the same tool name (e.g. both have `read_file`), the picker shows the fully prefixed names (`server-a__read_file` / `server-b__read_file`); the employee's system prompt maps them back to the originals so the LLM doesn't get confused
+- **Namespace collisions**: when two different MCP servers expose the same tool name (e.g. both have `read_file`), the picker shows the fully prefixed names (`server-a__read_file` / `server-b__read_file`); the expert's system prompt maps them back to the originals so the LLM doesn't get confused
 - **Validation on save**: every checked tool runs through `AgentBindingService.validate(...)` — any orphan reference fails save and must be cleared
 - **MCP server rename**: bindings tied to a renamed server **follow automatically** (matched via persisted tool cache) — no need to re-tick
 
-UI: `Agents → pick employee → Tools`.
+UI: `Agents → pick expert → Tools`.
 
 Implementation details: see [MCP](./mcp#per-agent-tool-binding).
 
 ### Knowledge base binding (per-agent primary KB)
 
 ::: tip New in 1.5.0
-The employee editor has a new "Knowledge Base" tab where you can pick a **primary KB** for each employee. Knowledge bases stay workspace-shared — binding only declares "this is the one I default to," it doesn't restrict other employees' access.
+The expert editor has a new "Knowledge Base" tab where you can pick a **primary KB** for each expert. Knowledge bases stay workspace-shared — binding only declares "this is the one I default to," it doesn't restrict other experts' access.
 :::
 
-**Short version: each employee can pick one knowledge base as their "primary KB" — the default they query. Or pick none.**
+**Short version: each expert can pick one knowledge base as their "primary KB" — the default they query. Or pick none.**
 
 The model (worth reading once so it doesn't surprise you later):
 
-- **Knowledge bases are workspace-shared.** A KB belongs to the workspace it was created in; every employee in that workspace can see it. Binding a KB to an employee does **not** make it exclusive — other employees can still use it
+- **Knowledge bases are workspace-shared.** A KB belongs to the workspace it was created in; every expert in that workspace can see it. Binding a KB to an expert does **not** make it exclusive — other experts can still use it
 - **The "primary KB" is just a default.** It tells the wiki tools (`wiki_search` / `wiki_read` / `wiki_backlinks` / ...): "when the caller doesn't specify `kbName` / `kbId`, use this one"
-- **Multiple employees can pick the same KB as primary.** They don't interfere — each one's binding is its own, the KB itself isn't mutated
+- **Multiple experts can pick the same KB as primary.** They don't interfere — each one's binding is its own, the KB itself isn't mutated
 - **Not binding is fine.** With no primary set, the runtime falls back to the most-recently-updated KB in the workspace
 
-UI: `Employees → pick employee → Edit → Knowledge Base`.
+UI: `Experts → pick expert → Edit → Knowledge Base`.
 
 | Option | Behavior |
 |--------|----------|
-| **🚫 No primary KB** | Clear the binding; the next time the employee's wiki tools omit `kbName`, the runtime falls back to the workspace's most-recently-active KB |
+| **🚫 No primary KB** | Clear the binding; the next time the expert's wiki tools omit `kbName`, the runtime falls back to the workspace's most-recently-active KB |
 | **📚 &lt;KB name&gt;** | Set this KB as primary; wiki tools default to it. The row also shows the KB's page count |
 
-Each row shows: icon, name, description, page count. The list is the **full set** of KBs in the current workspace — including ones already picked as primary by other employees.
+Each row shows: icon, name, description, page count. The list is the **full set** of KBs in the current workspace — including ones already picked as primary by other experts.
 
 #### How the runtime decides "which KB to read"
 
-When an employee invokes a wiki tool, the resolution order is:
+When an expert invokes a wiki tool, the resolution order is:
 
 1. The tool call explicitly carried `kbName` / `kbId` — use that
-2. No explicit target → check the employee's `primaryKbId`; if it points to a workspace-visible KB, use that
+2. No explicit target → check the expert's `primaryKbId`; if it points to a workspace-visible KB, use that
 3. No `primaryKbId` either → pick the most-recently-updated KB from the workspace's visible set
 4. The workspace has zero KBs → tool returns empty, the LLM decides what to do next
 
-Migration note: early versions persisted the binding on `mate_wiki_knowledge_base.agent_id` (one-to-one, exclusive semantics). Starting with the V130 migration, every legacy `kb.agent_id` is backfilled into the corresponding `agent.primary_kb_id`; the old column stays around as a read-only fallback, but new writes only touch `agent.primary_kb_id`. If you relied on `kb.agent_id` to isolate a KB to a specific agent, revisit those bindings in the editor — KBs are now visible to every employee in the workspace.
+Migration note: early versions persisted the binding on `mate_wiki_knowledge_base.agent_id` (one-to-one, exclusive semantics). Starting with the V130 migration, every legacy `kb.agent_id` is backfilled into the corresponding `agent.primary_kb_id`; the old column stays around as a read-only fallback, but new writes only touch `agent.primary_kb_id`. If you relied on `kb.agent_id` to isolate a KB to a specific agent, revisit those bindings in the editor — KBs are now visible to every expert in the workspace.
 
-#### Disable knowledge bases entirely for an employee
+#### Disable knowledge bases entirely for an expert
 
 ::: tip New
-The top of the "Knowledge Base" tab now has a toggle: **This employee does not use any knowledge base**. It is the symmetric counterpart to the tool-disable and skill-disable opt-out switches.
+The top of the "Knowledge Base" tab now has a toggle: **This expert does not use any knowledge base**. It is the symmetric counterpart to the tool-disable and skill-disable opt-out switches.
 :::
 
 There are two distinct meanings of "no KB selected":
 
-- **Selector left empty** = "I haven't specified one" → at runtime, the employee **inherits all workspace KBs** (the default behavior)
-- **Toggle switched on** = "I explicitly want zero KBs" → at runtime, the employee's visible KB set is treated as **empty**
+- **Selector left empty** = "I haven't specified one" → at runtime, the expert **inherits all workspace KBs** (the default behavior)
+- **Toggle switched on** = "I explicitly want zero KBs" → at runtime, the expert's visible KB set is treated as **empty**
 
-After saving with the toggle on, the employee's KB binding is cleared and marked as "explicitly KB-free"; a **Disabled** badge appears on the tab. The effect:
+After saving with the toggle on, the expert's KB binding is cleared and marked as "explicitly KB-free"; a **Disabled** badge appears on the tab. The effect:
 
 - `wiki_read_page` / `wiki_search_pages` / `wiki_semantic_search` and every other wiki tool return `"no knowledge base"` — the tools are still in the toolset, they just produce no results
-- The webchat `/wiki/pages` endpoint returns an empty list for this employee
+- The webchat `/wiki/pages` endpoint returns an empty list for this expert
 - All KB injection and grounding is off
 
-**Off by default** — all existing employees are unaffected. The toggle can be removed at any time: selecting at least one KB in the picker and saving automatically clears the flag (a non-empty binding takes precedence over the opt-out, preventing contradictory state).
+**Off by default** — all existing experts are unaffected. The toggle can be removed at any time: selecting at least one KB in the picker and saving automatically clears the flag (a non-empty binding takes precedence over the opt-out, preventing contradictory state).
 
 The flag lives in `mate_agent.wiki_disabled` (V154 migration, covering H2 / MySQL / KingbaseES).
 
 ### System prompt best practices
 
-The system prompt is the employee's voice, priorities, and constraints. **Role / Goal / Backstory**, skill instructions, and workspace memory all get automatically appended to the final prompt — you don't write those yourself.
+The system prompt is the expert's voice, priorities, and constraints. **Role / Goal / Backstory**, skill instructions, and workspace memory all get automatically appended to the final prompt — you don't write those yourself.
 
 Your part should cover:
 
@@ -398,7 +398,7 @@ These are things the runtime does so agents don't fail in ways you'd have to deb
 - **429 retry** — LLM rate-limit errors trigger automatic retries with backoff.
 - **Repetition detection** — agents looping on the same tool call get forced out.
 - **Stall detection + re-planning** — in Plan-and-Execute mode, when a step throws an exception or repeatedly fails inside a tool loop, the runtime discards the current plan, carries the failure reason back to the planning node, and **re-plans** to route around the broken step — rather than pushing a garbage result forward. See [Goals · Stall detection and re-planning](./goals#stall-detection-and-re-planning).
-- **Hard continuation on the iteration cap** — an employee with an active goal that hits its iteration limit can **resume with a full fresh iteration budget** instead of stopping and waiting for you to send another message. See [Goals · Hard continuation](./goals#hard-continuation-on-the-iteration-cap).
+- **Hard continuation on the iteration cap** — an expert with an active goal that hits its iteration limit can **resume with a full fresh iteration budget** instead of stopping and waiting for you to send another message. See [Goals · Hard continuation](./goals#hard-continuation-on-the-iteration-cap).
 - **Configurable tool timeouts** — one slow tool can't freeze a turn.
 - **Channel health monitor** — failing channel adapters restart with exponential backoff.
 
@@ -478,6 +478,6 @@ You'll see node-by-node execution: state transitions, dispatcher routing, iterat
 - [Skills](./skills) — how to extend what agents can do
 - [LLM Wiki](./wiki) — how knowledge gets read by agents
 - [Memory](./memory) — how agents remember across conversations
-- [Workflow](./workflow) (1.3.0+) — orchestrate multiple digital employees and system actions into a business process
+- [Workflow](./workflow) (1.3.0+) — orchestrate multiple digital experts and system actions into a business process
 - [Triggers](./triggers) (1.3.0+) — let events automatically start workflows or agent conversations
 - [Architecture](./architecture) — the StateGraph runtime in depth

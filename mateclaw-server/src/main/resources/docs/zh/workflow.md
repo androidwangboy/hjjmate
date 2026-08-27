@@ -4,7 +4,7 @@
 工作流编排自 v1.3.0 起提供。在 v1.2.0 及更早版本里没有这个能力。
 :::
 
-**工作流是什么**：把多个数字员工 + 系统操作（审批 / 渠道分发 / 写记忆）按线性 step 编排成一条业务流程。每一步可以被前一步的输出条件控制，可以并行扇出，可以等待人工审批，可以把结果写进员工的 MEMORY.md。
+**工作流是什么**：把多个数字专家 + 系统操作（审批 / 渠道分发 / 写记忆）按线性 step 编排成一条业务流程。每一步可以被前一步的输出条件控制，可以并行扇出，可以等待人工审批，可以把结果写进专家的 MEMORY.md。
 
 **工作流不是什么**：
 - 不是 ReAct / Plan-and-Execute 的替代品——单 agent 的多轮推理仍然在那两条引擎里
@@ -74,11 +74,11 @@ v0 = internal alpha。**7 种 step mode + 6 种 trigger pattern**。`loop` / `in
 ```
 
 读法：
-1. `enrich` 让数据员工把客户信息结构化为 JSON
-2. 如果客户层级是 `enterprise`，让企业销售员工跑 VIP onboarding
+1. `enrich` 让数据专家把客户信息结构化为 JSON
+2. 如果客户层级是 `enterprise`，让企业销售专家跑 VIP onboarding
 3. 同时（fan_out）扇出到飞书通知 + 邮件通知 step
 4. `collect` 等两个通知都返回再继续
-5. 把结果追加写到员工的 `MEMORY.md`
+5. 把结果追加写到专家的 `MEMORY.md`
 
 ---
 
@@ -94,9 +94,9 @@ v0 = internal alpha。**7 种 step mode + 6 种 trigger pattern**。`loop` / `in
 | `conditional` | Pebble 表达式 true 才执行 | `expression` | false 时跳过；`{{input}}` 不变（保留上一步） |
 | `await_approval` | 暂停 run，发审批 | `approvalKind`、`approverChannels[]` | resume 后继续下一步；超时按 workspace 政策处理 |
 | `dispatch_channel` | 把 `{{input}}` 多渠道分发 | `channels[]` | 单渠道失败按 errorMode 处理 |
-| `write_memory` | 写员工记忆文件 | `employeeId`、`file`、`mergeStrategy` | 4 种策略：`append` / `replace_section` / `upsert_kv` / `overwrite` |
+| `write_memory` | 写专家记忆文件 | `employeeId`、`file`、`mergeStrategy` | 4 种策略：`append` / `replace_section` / `upsert_kv` / `overwrite` |
 
-> **不在 v1.3.0 里**：`loop`（迭代 N 次或对数组逐项处理）、`invoke_skill`（直接调用 skill 不经过员工）。等用户反馈再加。
+> **不在 v1.3.0 里**：`loop`（迭代 N 次或对数组逐项处理）、`invoke_skill`（直接调用 skill 不经过专家）。等用户反馈再加。
 
 > **`await_approval` 的渠道通知（1.7.0 起真正生效）**：`approverChannels[]` 的每个元素是
 > - `"channelType"`（如 `"web"`）—— **不主动推送**，运营到管理端 resolve；
@@ -142,7 +142,7 @@ v0 = internal alpha。**7 种 step mode + 6 种 trigger pattern**。`loop` / `in
 | 连续多个 `fan_out` 后没 `collect` | `{{input}}` 进入下一步歧义 |
 | `collect` 没有前置 `fan_out` | 没东西可 collect |
 | `fan_out` 组里混入 `await_approval` | 多审批并发同时触发，没法聚合 |
-| `agentName` 指向员工不存在 / 已禁用 / 跨 workspace | ACL 失败 |
+| `agentName` 指向专家不存在 / 已禁用 / 跨 workspace | ACL 失败 |
 | Pebble 表达式引用未声明的变量 | 编译期 |
 | `outputs.X.field` 但 step X 是 `text` 类型 | 编译期类型错 |
 | `dispatch_channel` 引用的 channel 不在 workspace allowlist | ACL |
@@ -285,7 +285,7 @@ v0 **没有** `POST /api/v1/workflows/{id}/runs` 这种"立即手动跑一次"�
 ### 跨 workspace 隔离
 
 发布期跑 `WorkflowAclValidator.checkAll(graphJson)`：
-- `agentName` 引用的员工必须在当前 workspace 内
+- `agentName` 引用的专家必须在当前 workspace 内
 - `dispatch_channel` 的 channel 必须在 workspace allowlist 内
 - `write_memory` 的 employeeId 必须在当前 workspace 内
 
@@ -293,7 +293,7 @@ v0 **没有** `POST /api/v1/workflows/{id}/runs` 这种"立即手动跑一次"�
 
 ### 与 [MCP 每 agent 工具绑定](./mcp.md) 的关系
 
-工作流**不能**给员工额外的工具。Agent step 调工具时会跑 `AgentBindingService.getEffectiveToolNames(agentId)` 算出的同一套 ACL——员工在工作流里能用什么工具，跟它在普通对话里能用什么工具完全一致。
+工作流**不能**给专家额外的工具。Agent step 调工具时会跑 `AgentBindingService.getEffectiveToolNames(agentId)` 算出的同一套 ACL——专家在工作流里能用什么工具，跟它在普通对话里能用什么工具完全一致。
 
 ---
 
@@ -341,6 +341,6 @@ UI 渲染时按需 lazy-load。
 
 - [触发器（Triggers）](./triggers.md) —— 工作流的事件入口
 - [审批与安全](./security.md) —— `await_approval` 走的就是这条审批通道
-- [数字员工](./agents.md) —— Step 里 `agentName` 引用的就是它们
+- [数字专家](./agents.md) —— Step 里 `agentName` 引用的就是它们
 - [多渠道接入](./channels.md) —— `dispatch_channel` 能投递到哪些渠道
-- [记忆系统](./memory.md) —— `write_memory` 写到员工的哪份文件
+- [记忆系统](./memory.md) —— `write_memory` 写到专家的哪份文件

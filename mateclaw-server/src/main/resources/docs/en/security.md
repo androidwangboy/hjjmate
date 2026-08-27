@@ -390,7 +390,7 @@ Capabilities are **additive** — a higher role inherits everything below it.
 
 | Role | Capabilities (added on top of the tier below) |
 |------|-----------------------------------------------|
-| **Viewer** | `chat`, `view:wiki`. Read-only. So that chat works, a Viewer can also read the active model and read an employee's workspace files. |
+| **Viewer** | `chat`, `view:wiki`. Read-only. So that chat works, a Viewer can also read the active model and read an expert's workspace files. |
 | **Member** | Viewer + `view:memory`, `view:dashboard`, `manage:wiki`, `manage:agents` |
 | **Admin** | Member + `manage:skills`, `manage:channels`, `manage:models`, `manage:security`, `manage:settings` |
 | **Owner** | Same as Admin, plus owner-only: delete the workspace, transfer ownership |

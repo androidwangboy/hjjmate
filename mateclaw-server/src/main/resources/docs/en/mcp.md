@@ -273,7 +273,7 @@ Agent tool set
 ## Per-agent tool binding
 
 ::: tip New in 1.3.0
-Before v1.2.0, all employees could call every MCP tool by default — it was a global switch. v1.3.0 makes the binding **per-employee**, and adds dirty-state detection plus namespace collision handling.
+Before v1.2.0, all experts could call every MCP tool by default — it was a global switch. v1.3.0 makes the binding **per-expert**, and adds dirty-state detection plus namespace collision handling.
 :::
 
 ### Three problems it solves
@@ -282,7 +282,7 @@ Before v1.2.0, all employees could call every MCP tool by default — it was a g
 Two MCP servers both expose `read_file` — which one wins? v1.3.0 internally uses a **stable server-prefixed callback name** (`{serverName}__{toolName}`) and persists it to `mate_mcp_server.tools_cache_json`. The picker shows them as `serverA__read_file` and `serverB__read_file`; the agent's prompt maps them back to original names to save tokens and avoid LLM confusion.
 
 **Problem 2: MCP server / tool rename breaks bindings.**
-In v1.2.0, renaming a server orphaned every employee bound to it. v1.3.0 introduces a **persistent tool cache**: every successful list-tools writes tool metadata to a `tools_cache_json` JSON column on `mate_mcp_server`. When validating bindings and the server is temporarily unreachable, the cache is consulted as fallback — bindings stay marked `stale` and become live again the moment the server reconnects.
+In v1.2.0, renaming a server orphaned every expert bound to it. v1.3.0 introduces a **persistent tool cache**: every successful list-tools writes tool metadata to a `tools_cache_json` JSON column on `mate_mcp_server`. When validating bindings and the server is temporarily unreachable, the cache is consulted as fallback — bindings stay marked `stale` and become live again the moment the server reconnects.
 
 **Problem 3: Save silently accepted non-existent tool references.**
 A typo'd `nonexistent-server.weird-tool` would save fine and blow up at runtime. v1.3.0 runs `AgentBindingService.validate(...)` on save:
@@ -296,7 +296,7 @@ A typo'd `nonexistent-server.weird-tool` would save fine and blow up at runtime.
 
 ### Where to see tool status
 
-`Agents → pick employee → Tools` — see [Agent tool binding](./agents#tool-binding-per-agent-tool-picker).
+`Agents → pick expert → Tools` — see [Agent tool binding](./agents#tool-binding-per-agent-tool-picker).
 
 ### Data contract
 

@@ -52,7 +52,7 @@ public sealed interface StepMode {
         @Override public String typeName() { return "dispatch_channel"; }
     }
 
-    /** Write memory — apply a merge strategy to an employee's memory file. */
+    /** Write memory — apply a merge strategy to an expert's memory file. */
     record WriteMemory(
             String employeeId,
             String file,

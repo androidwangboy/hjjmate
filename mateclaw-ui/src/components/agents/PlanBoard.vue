@@ -1,7 +1,7 @@
 <template>
   <!--
-    Team plan board: every employee's recent plans laid out as assignee swimlanes
-    (rows = employee, columns = plan status). Cross-agent by default — the picker
+    Team plan board: every expert's recent plans laid out as assignee swimlanes
+    (rows = expert, columns = plan status). Cross-agent by default — the picker
     is a filter, not a requirement. Click a plan to open its step detail. Read-only;
     status is execution-driven.
   -->
@@ -193,8 +193,8 @@ const agentById = computed(() => {
   return m
 })
 
-// Group plans into assignee lanes; only employees with at least one plan get a
-// lane. Optional picker narrows to a single employee. Lanes ordered by most
+// Group plans into assignee lanes; only experts with at least one plan get a
+// lane. Optional picker narrows to a single expert. Lanes ordered by most
 // recent plan activity so the busy ones surface first.
 const lanes = computed<Lane[]>(() => {
   const src = filterAgentId.value

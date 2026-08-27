@@ -497,7 +497,7 @@ const STEP_TEMPLATES: Record<string, object> = {
     name: 'step-memory',
     mode: {
       type: 'write_memory',
-      employeeId: 'employee-id',
+      employeeId: 'expert-id',
       file: 'workspace.md',
       mergeStrategy: 'append',
       content: '{{ inputs.payload }}',

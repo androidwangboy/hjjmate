@@ -23,7 +23,7 @@ public class PlanningController {
 
     private final PlanningService planningService;
 
-    @Operation(summary = "获取计划列表（带 agentId 则按员工，否则跨员工取最近 N 条）")
+    @Operation(summary = "获取计划列表（带 agentId 则按专家，否则跨专家取最近 N 条）")
     @GetMapping
     public R<List<PlanEntity>> list(@RequestParam(required = false) String agentId,
                                     @RequestParam(required = false, defaultValue = "100") int limit) {

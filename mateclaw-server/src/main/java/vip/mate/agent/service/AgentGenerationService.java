@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Turns a single natural-language requirement into a ready-to-review employee
+ * Turns a single natural-language requirement into a ready-to-review expert
  * draft. The model is given the workspace's real capability catalog (tools,
  * skills, knowledge bases) and asked to pick from it, so the resulting draft
  * proposes a name, persona, type and a coherent set of capabilities in one
@@ -63,7 +63,7 @@ public class AgentGenerationService {
     public AgentDraftVO generateDraft(String requirement, Long workspaceId) {
         if (requirement == null || requirement.isBlank()) {
             throw new MateClawException("err.agent.generate_empty", 400,
-                    "Please describe the employee you want to create");
+                    "Please describe the expert you want to create");
         }
         long wsId = workspaceId != null ? workspaceId : 1L;
 
@@ -93,7 +93,7 @@ public class AgentGenerationService {
         } catch (Exception e) {
             log.warn("[AgentGen] LLM call failed: {}", e.getMessage());
             throw new MateClawException("err.agent.generate_failed", 500,
-                    "Failed to generate employee draft");
+                    "Failed to generate expert draft");
         }
 
         JsonNode root = parseJson(raw);
@@ -151,9 +151,9 @@ public class AgentGenerationService {
 
     private String buildSystemPrompt() {
         return """
-                You are an employee (AI agent) configuration generator for an agent platform.
+                You are an expert (AI agent) configuration generator for an agent platform.
                 Given a one-sentence requirement, output a single JSON object describing one
-                ready-to-use employee. Respond in the SAME language as the requirement.
+                ready-to-use expert. Respond in the SAME language as the requirement.
 
                 Output ONLY the JSON object, no prose, no markdown fences. Schema:
                 {
@@ -162,7 +162,7 @@ public class AgentGenerationService {
                   "description": "one concise sentence shown on the roster card",
                   "agentType": "react | plan_execute",
                   "role": "short role label",
-                  "goal": "one short sentence on what this employee achieves",
+                  "goal": "one short sentence on what this expert achieves",
                   "systemPrompt": "the full persona prompt: who it is, how it works, constraints",
                   "tags": ["1-3 short tags"],
                   "recommendedQuestions": ["2-4 starter questions a user might ask first"],
@@ -232,7 +232,7 @@ public class AgentGenerationService {
                                  List<SkillEntity> skills, List<WikiKnowledgeBaseEntity> kbs) {
         String name = text(root, "name");
         if (name.isBlank()) {
-            name = "New employee";
+            name = "New expert";
         }
         String agentType = text(root, "agentType");
         if (!"plan_execute".equals(agentType)) {

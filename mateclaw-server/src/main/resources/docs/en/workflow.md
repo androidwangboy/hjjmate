@@ -4,7 +4,7 @@
 Workflow orchestration is available from v1.3.0. Earlier releases (v1.2.0 and below) do not ship this capability.
 :::
 
-**What workflow is**: a way to compose multiple digital employees plus system actions (approval / channel dispatch / memory write) into a linear-step business process. Each step can be gated by the previous step's output, fan out in parallel, wait for human approval, or persist results into an employee's `MEMORY.md`.
+**What workflow is**: a way to compose multiple digital experts plus system actions (approval / channel dispatch / memory write) into a linear-step business process. Each step can be gated by the previous step's output, fan out in parallel, wait for human approval, or persist results into an expert's `MEMORY.md`.
 
 **What workflow is not**:
 - Not a replacement for ReAct / Plan-and-Execute — single-agent multi-turn reasoning still lives in those engines
@@ -75,10 +75,10 @@ v0 = internal alpha. **7 step modes + 6 trigger pattern types**. `loop` and `inv
 
 How it reads:
 1. `enrich` asks the data analyst to structure the customer info as JSON
-2. If `tier == enterprise`, route to the enterprise-sales employee for VIP onboarding
+2. If `tier == enterprise`, route to the enterprise-sales expert for VIP onboarding
 3. In parallel (fan_out), notify Feishu and notify email
 4. `collect` waits for both notifications
-5. Append the result to the employee's `MEMORY.md`
+5. Append the result to the expert's `MEMORY.md`
 
 ---
 
@@ -94,9 +94,9 @@ How it reads:
 | `conditional` | Runs only if the Pebble expression is true | `expression` | When false, skipped; `{{input}}` is preserved (carries over previous step's) |
 | `await_approval` | Pauses the run; sends an approval | `approvalKind`, `approverChannels[]` | Resumes to next step on approval; timeout follows workspace policy |
 | `dispatch_channel` | Multi-channel delivery of `{{input}}` | `channels[]` | Per-channel failure follows `errorMode` |
-| `write_memory` | Writes employee memory file | `employeeId`, `file`, `mergeStrategy` | Four strategies: `append` / `replace_section` / `upsert_kv` / `overwrite` |
+| `write_memory` | Writes expert memory file | `employeeId`, `file`, `mergeStrategy` | Four strategies: `append` / `replace_section` / `upsert_kv` / `overwrite` |
 
-> **Not in v1.3.0**: `loop` (iterate N times or per-item over an array) and `invoke_skill` (call a skill without going through an employee). Coming based on user feedback.
+> **Not in v1.3.0**: `loop` (iterate N times or per-item over an array) and `invoke_skill` (call a skill without going through an expert). Coming based on user feedback.
 
 > **`await_approval` channel notifications (actually delivered since 1.7.0)**: each element of `approverChannels[]` is either
 > - `"channelType"` (e.g. `"web"`) — **not actively pushed**; resolve from the admin side; or
@@ -142,7 +142,7 @@ Each step's `outputContentType` decides how downstream steps can access it:
 | Multiple consecutive `fan_out` with no `collect` to terminate | `{{input}}` for the next step is ambiguous |
 | `collect` without preceding `fan_out` | Nothing to collect |
 | `await_approval` mixed inside a `fan_out` group | Multiple concurrent approvals fired with no aggregation UX |
-| `agentName` references a non-existent / disabled / cross-workspace employee | ACL fail |
+| `agentName` references a non-existent / disabled / cross-workspace expert | ACL fail |
 | Pebble expression references an undeclared variable | Compile-time |
 | `outputs.X.field` but step X is `text` | Compile-time type error |
 | `dispatch_channel` references a channel not in the workspace allowlist | ACL |
@@ -285,7 +285,7 @@ Every step carries in its ExecutionContext:
 ### Cross-workspace isolation
 
 At publish time `WorkflowAclValidator.checkAll(graphJson)` runs:
-- `agentName` references must point to an employee in the current workspace
+- `agentName` references must point to an expert in the current workspace
 - `dispatch_channel` channels must be in the workspace allowlist
 - `write_memory` employeeIds must be inside the current workspace
 
@@ -293,7 +293,7 @@ Any failure → publish fails, transaction rolls back, **no revision row written
 
 ### Relationship with [MCP per-agent tool binding](./mcp.md)
 
-Workflow **cannot** grant employees additional tools. When an agent step calls a tool, it goes through the same `AgentBindingService.getEffectiveToolNames(agentId)` ACL — what an employee can do inside a workflow is exactly what it can do in normal chat.
+Workflow **cannot** grant experts additional tools. When an agent step calls a tool, it goes through the same `AgentBindingService.getEffectiveToolNames(agentId)` ACL — what an expert can do inside a workflow is exactly what it can do in normal chat.
 
 ---
 

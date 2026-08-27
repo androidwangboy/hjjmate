@@ -213,7 +213,7 @@ async function onTemplatePick() {
   }
   if (!description.value.trim()) description.value = tpl.description
   // Run the actual compile. Templates with TODO placeholders that resolve
-  // to ACL-protected ids (agent / channel / employee) will fail here, and
+  // to ACL-protected ids (agent / channel / expert) will fail here, and
   // that failure has to surface — the user can either edit the draft to
   // fill placeholders before Accept, or accept the failed draft and fix
   // it in the editor with the diagnostics shown.

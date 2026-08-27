@@ -4,7 +4,7 @@
 The trigger system is available from v1.3.0. In v1.2.0 and earlier, workflows and agent conversations could only be invoked manually.
 :::
 
-**What triggers are**: a connector between "events that happen in the system" and "actions to perform". Events can be a cron schedule, a webhook arriving, a channel message, an employee finishing a conversation, or another workflow completing. Actions are either starting a workflow or sending a message to an employee for processing.
+**What triggers are**: a connector between "events that happen in the system" and "actions to perform". Events can be a cron schedule, a webhook arriving, a channel message, an expert finishing a conversation, or another workflow completing. Actions are either starting a workflow or sending a message to an expert for processing.
 
 **What triggers are not**:
 - Not a replacement cron-job manager — `mate_cron_job` still exists and runs independently; triggers **share** its ShedLock + scheduler base but **do not write into** `mate_cron_job`
@@ -142,14 +142,14 @@ The input itself also carries a one-line readable preview, so you can confirm wh
 
 Every job on the **Scheduled Jobs** tab of the Scheduler has a `task_type` that decides what it does when it runs. This is the authoritative list of cron task types (the six event-trigger pattern types are covered above):
 
-| task type | Behavior | Binds an employee? | Notes |
+| task type | Behavior | Binds an expert? | Notes |
 |---|---|---|---|
-| `text` / `agent` / `reminder` | Starts an employee conversation on the cron schedule | **Yes** (agent required) | Classic scheduled conversation; the result routes to the conversation |
+| `text` / `agent` / `reminder` | Starts an expert conversation on the cron schedule | **Yes** (agent required) | Classic scheduled conversation; the result routes to the conversation |
 | `wiki_process` | Processes a knowledge base offline on the cron schedule | **No** | New in 1.4.0 — see below |
 
 ### `wiki_process`: off-peak KB processing (new in 1.4.0)
 
-`wiki_process` lets you schedule **knowledge-base processing** to run offline during low-traffic windows instead of saturating the processing queue the moment an upload finishes. It **binds no employee** — it's a system task: no conversation, no chat.
+`wiki_process` lets you schedule **knowledge-base processing** to run offline during low-traffic windows instead of saturating the processing queue the moment an upload finishes. It **binds no expert** — it's a system task: no conversation, no chat.
 
 When creating one you only fill in:
 

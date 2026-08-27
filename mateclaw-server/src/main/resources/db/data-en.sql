@@ -5,21 +5,21 @@ MERGE INTO mate_user (id, username, password, nickname, role, enabled, create_ti
 KEY (id)
 VALUES (1, 'admin', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', 'MateClaw Admin', 'admin', TRUE, NOW(), NOW(), 0);
 
--- Default digital employee: General Assistant (ReAct mode)
+-- Default digital expert: General Assistant (ReAct mode)
 MERGE INTO mate_agent (id, name, description, agent_type, system_prompt, model_name, max_iterations, enabled, icon, tags, create_time, update_time, deleted)
 KEY (id)
 VALUES (1000000001, 'General Assistant', 'All-purpose helper for day-to-day questions, data analysis, and tool calling', 'react',
         'You are MateClaw''s General Assistant. You can help users answer questions, analyze data, and call tools to get things done. Please respond professionally and in a friendly manner.',
         NULL, 100, TRUE, 'pi:robot-face-happy', 'default,assistant', NOW(), NOW(), 0);
 
--- Default digital employee: Task Planner (Plan-Execute mode)
+-- Default digital expert: Task Planner (Plan-Execute mode)
 MERGE INTO mate_agent (id, name, description, agent_type, system_prompt, model_name, max_iterations, enabled, icon, tags, create_time, update_time, deleted)
 KEY (id)
 VALUES (1000000002, 'Task Planner', 'Breaks complex goals into executable steps and drives them forward to completion', 'plan_execute',
         'You are a professional Task Planner. You excel at breaking complex goals into executable steps and completing them systematically.',
         NULL, 100, TRUE, 'pi:clipboard-note', 'planning,task', NOW(), NOW(), 0);
 
--- Default digital employee: Reasoning Analyst (explicit reasoning loops + tool calling)
+-- Default digital expert: Reasoning Analyst (explicit reasoning loops + tool calling)
 MERGE INTO mate_agent (id, name, description, agent_type, system_prompt, model_name, max_iterations, enabled, icon, tags, create_time, update_time, deleted)
 KEY (id)
 VALUES (1000000003, 'Reasoning Analyst', 'Thinks step by step with visible reasoning, ideal for problems that need thorough deliberation', 'react',

@@ -269,7 +269,7 @@ Agent 工具集
 ## Per-agent 工具绑定
 
 ::: tip 1.3.0 新增
-v1.2.0 之前所有员工默认能用全部 MCP 工具——这是个全局开关。v1.3.0 把粒度拆细到**每个员工独立绑定哪些 MCP 工具**，并加了脏状态识别 + 命名空间防撞。
+v1.2.0 之前所有专家默认能用全部 MCP 工具——这是个全局开关。v1.3.0 把粒度拆细到**每个专家独立绑定哪些 MCP 工具**，并加了脏状态识别 + 命名空间防撞。
 :::
 
 ### 三个解决的问题
@@ -277,11 +277,11 @@ v1.2.0 之前所有员工默认能用全部 MCP 工具——这是个全局开�
 **问题 1：工具命名空间冲突**
 两个 MCP server 都暴露 `read_file`——agent 调用时哪个赢？v1.3.0 在内部使用**带 server 前缀的稳定 callback name**（`{serverName}__{toolName}`），并把它持久化到 `mate_mcp_server.tools_cache_json`。两个 read_file 在 picker 里显示为 `serverA__read_file` 和 `serverB__read_file`，agent 看到的 prompt 里映射回原始名以减少 token + 不让 LLM 困惑。
 
-**问题 2：MCP server 改名 / 工具改名 → 员工绑定全部失效**
-v1.2.0 时 server 一改名，绑这个 server 的员工全瞎了。v1.3.0 引入**持久化 tool cache**：每次成功 list-tools 后把工具元数据写到 `mate_mcp_server.tools_cache_json` JSON 列。agent binding 校验时如果 server 暂时连不上，就走 cache fallback——绑定保留为 `stale`，连接恢复后立即可用。
+**问题 2：MCP server 改名 / 工具改名 → 专家绑定全部失效**
+v1.2.0 时 server 一改名，绑这个 server 的专家全瞎了。v1.3.0 引入**持久化 tool cache**：每次成功 list-tools 后把工具元数据写到 `mate_mcp_server.tools_cache_json` JSON 列。agent binding 校验时如果 server 暂时连不上，就走 cache fallback——绑定保留为 `stale`，连接恢复后立即可用。
 
-**问题 3：员工保存时静默接受不存在的工具引用**
-v1.2.0 时员工配置里写了一个 `nonexistent-server.weird-tool`，保存成功，运行时报错。v1.3.0 在保存时跑 `AgentBindingService.validate(...)`：
+**问题 3：专家保存时静默接受不存在的工具引用**
+v1.2.0 时专家配置里写了一个 `nonexistent-server.weird-tool`，保存成功，运行时报错。v1.3.0 在保存时跑 `AgentBindingService.validate(...)`：
 
 | 状态 | 含义 | 保存行为 |
 |---|---|---|
@@ -292,7 +292,7 @@ v1.2.0 时员工配置里写了一个 `nonexistent-server.weird-tool`，保存�
 
 ### 工具状态在哪里看
 
-`Agents → 选员工 → 工具`——见 [数字员工的工具绑定](./agents#工具绑定per-agent-tool-picker)。
+`Agents → 选专家 → 工具`——见 [数字专家的工具绑定](./agents#工具绑定per-agent-tool-picker)。
 
 ### 数据契约
 

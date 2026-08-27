@@ -137,7 +137,7 @@ export const agentApi = {
   list: (params?: { enabled?: boolean }) => http.get('/agents', { params }),
   get: (id: string | number) => http.get(`/agents/${id}`),
   create: (data: any) => http.post('/agents', data),
-  /** Generate a reviewable employee draft from a one-sentence requirement (no persistence). */
+  /** Generate a reviewable expert draft from a one-sentence requirement (no persistence). */
   generate: (requirement: string) => http.post('/agents/generate', { requirement }),
   update: (id: string | number, data: any) => http.put(`/agents/${id}`, data),
   delete: (id: string | number) => http.delete(`/agents/${id}`),
@@ -285,7 +285,7 @@ export const skillApi = {
   requirements: (id: string | number) => http.get(`/skills/${id}/requirements`),
   getLessons: (id: string | number) => http.get(`/skills/${id}/lessons`),
   clearLessons: (id: string | number) => http.post(`/skills/${id}/lessons/clear`),
-  employees: (id: string | number) => http.get(`/skills/${id}/employees`),
+  experts: (id: string | number) => http.get(`/skills/${id}/employees`),
   /**
    * Per-skill secrets — env-var-shaped key/value pairs that get injected
    * into the script subprocess at runtime. Plaintext values never leave

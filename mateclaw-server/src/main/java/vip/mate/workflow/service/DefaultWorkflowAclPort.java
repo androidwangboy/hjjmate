@@ -12,7 +12,7 @@ import vip.mate.workflow.compiler.WorkflowAclPort;
  * Production binding for {@link WorkflowAclPort}. Reads agents from
  * {@code mate_agent}, channels from {@code mate_channel}, and treats every
  * non-blank {@code employeeId} as a workspace member — until a real
- * "human employee" registry exists in the system, the workflow's
+ * "human expert" registry exists in the system, the workflow's
  * {@code employeeId} is interpreted as the agent id of the agent that owns
  * the memory file.
  */

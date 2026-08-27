@@ -226,7 +226,7 @@ The conversation sidebar grew from a plain history list into an actionable opera
 
 - **Pin / unpin** — from each row's `⋮` overflow menu. Important threads stay at the top in a "Pinned" group.
 - **Multi-select batch delete** — enter multi-select mode and a checkbox appears on each row; tick several and delete them in one go.
-- **Filter by employee** — when the workspace has **2 or more employees**, a dropdown appears at the top of the sidebar to filter the list by employee (hidden with a single employee, so there's no pointless control).
+- **Filter by expert** — when the workspace has **2 or more experts**, a dropdown appears at the top of the sidebar to filter the list by expert (hidden with a single expert, so there's no pointless control).
 - **Status dots** — read each conversation's state at a glance: currently generating (blue pulse), an active goal in progress, or unread content.
 
 ### Global keyboard shortcuts
@@ -237,7 +237,7 @@ Two global shortcuts let you jump between conversations without touching the mou
 
 | Shortcut | Action |
 |----------|--------|
-| `Ctrl/Cmd + K` | Open the employee picker to jump to any chat |
+| `Ctrl/Cmd + K` | Open the expert picker to jump to any chat |
 | `Ctrl/Cmd + N` | Start a new conversation |
 
 `Ctrl+N` does not fire while you're typing in an input or textarea — its native behavior is left alone.
@@ -256,13 +256,13 @@ This page exists for the "lots of conversations" case:
 - **Inline editable model chip** — each row shows and switches that conversation's model directly, without entering it first.
 - **Back button** — one click returns you to the chat console.
 
-### Shared employee picker
+### Shared expert picker
 
 ::: tip Added in 1.4.0
 A single shared picker dialog is reused in three places: the sidebar, the `Ctrl+K` shortcut, and the new-conversation modal.
 :::
 
-All three entry points open the **same dialog** with identical behavior. Agent icons inside it are **color-coded per employee**, so in a multi-employee workspace you can tell who's who at a glance.
+All three entry points open the **same dialog** with identical behavior. Agent icons inside it are **color-coded per expert**, so in a multi-expert workspace you can tell who's who at a glance.
 
 ---
 

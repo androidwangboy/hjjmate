@@ -49,7 +49,7 @@ public class WorkflowDraftTemplateLibrary {
         return new WorkflowDraftTemplate(
                 "weekly-summary",
                 "周报汇总 / Weekly summary",
-                "每周固定时间让数字员工汇总数据，再发到群里。常见于销售周报、运营日报。",
+                "每周固定时间让数字专家汇总数据，再发到群里。常见于销售周报、运营日报。",
                 List.of("每周", "周报", "周一", "weekly", "summary", "汇总"),
                 """
                 {"steps":[
@@ -72,7 +72,7 @@ public class WorkflowDraftTemplateLibrary {
         return new WorkflowDraftTemplate(
                 "approval-and-notify",
                 "审批后通知 / Approval then notify",
-                "数字员工出方案 → 老板审批 → 通过后发到群里。常见于费用申请、采购、合同。",
+                "数字专家出方案 → 老板审批 → 通过后发到群里。常见于费用申请、采购、合同。",
                 List.of("审批", "确认", "老板", "approval", "approve", "确认通过"),
                 """
                 {"steps":[
@@ -96,7 +96,7 @@ public class WorkflowDraftTemplateLibrary {
         return new WorkflowDraftTemplate(
                 "customer-message-routing",
                 "客户消息路由 / Customer message routing",
-                "渠道里出现关键词时，让客服员工应对，并把结果记到员工记忆。",
+                "渠道里出现关键词时，让客服专家应对，并把结果记到专家记忆。",
                 List.of("客户", "客服", "关键词", "customer", "support", "回复"),
                 """
                 {"steps":[
@@ -143,8 +143,8 @@ public class WorkflowDraftTemplateLibrary {
     private static WorkflowDraftTemplate dailyMemoryWrite() {
         return new WorkflowDraftTemplate(
                 "daily-memory-write",
-                "每日记入员工记忆 / Daily memory append",
-                "每天定时让员工写一段记忆，作为后续对话的上下文。",
+                "每日记入专家记忆 / Daily memory append",
+                "每天定时让专家写一段记忆，作为后续对话的上下文。",
                 List.of("每天", "daily", "记忆", "写入", "memory"),
                 """
                 {"steps":[
@@ -152,7 +152,7 @@ public class WorkflowDraftTemplateLibrary {
                    "promptTemplate":"用一段话总结今天的{{ inputs.topic }}。",
                    "outputVar":"summary","outputContentType":"text"},
                   {"name":"persist-memory",
-                   "mode":{"type":"write_memory","employeeId":"TODO_EMPLOYEE_ID",
+                   "mode":{"type":"write_memory","employeeId":"TODO_EXPERT_ID",
                            "file":"daily-log.md","mergeStrategy":"append",
                            "content":"### {{ inputs.date }}\\n{{ outputs.summary }}\\n"}}
                 ]}""",
@@ -168,7 +168,7 @@ public class WorkflowDraftTemplateLibrary {
         return new WorkflowDraftTemplate(
                 "parallel-analysis",
                 "并行多角度分析 / Parallel multi-angle analysis",
-                "三个不同员工同时从不同角度分析同一份输入，最后由 collect 汇合。",
+                "三个不同专家同时从不同角度分析同一份输入，最后由 collect 汇合。",
                 List.of("分别", "并行", "多角度", "parallel", "fan_out"),
                 """
                 {"steps":[
