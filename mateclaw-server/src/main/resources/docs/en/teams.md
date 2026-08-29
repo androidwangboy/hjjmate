@@ -1,10 +1,10 @@
 ---
 title: Team Runs — from one team request to a complete, deliverable execution
-description: A MateClaw Team Run links the lead, task DAG, worker executions, final synthesis, and deliverables under one runId and one shared view across Chat, Agents, and Teams.
+description: A HjjMate Team Run links the lead, task DAG, worker executions, final synthesis, and deliverables under one runId and one shared view across Chat, Agents, and Teams.
 head:
   - - meta
     - name: keywords
-      content: agent teams,task board,kanban,multi-agent collaboration,dispatch,deliverables,MateClaw
+      content: agent teams,task board,kanban,multi-agent collaboration,dispatch,deliverables,HjjMate
 ---
 
 # Team Runs and Agent Teams (2.1.0+)
@@ -13,7 +13,7 @@ head:
 
 Sub-agent delegation (`delegateToAgent`) solves "one person temporarily calls a helper": synchronous, one-to-one, black-box. But real complex delivery looks like a project: **break down tasks, declare dependencies, run in parallel, gate on approvals, archive deliverables, and see who is doing what at any time**.
 
-Agent Teams bring that project machinery into MateClaw: you create a **team**, assign one **lead** expert and several **members**; tell the lead a goal, it breaks the goal into tasks on a **shared task board**; the dispatch engine hands tasks to members and runs them **in parallel**; settled results are announced back to the lead, which reviews, re-dispatches, and drives the whole thing to done. You watch it all from the Teams page — or drop tasks onto the board yourself.
+Agent Teams bring that project machinery into HjjMate: you create a **team**, assign one **lead** expert and several **members**; tell the lead a goal, it breaks the goal into tasks on a **shared task board**; the dispatch engine hands tasks to members and runs them **in parallel**; settled results are announced back to the lead, which reviews, re-dispatches, and drives the whole thing to done. You watch it all from the Teams page — or drop tasks onto the board yourself.
 
 2.1.0 adds the first-class **Team Run** above individual tasks: one user request maps to one run, and one `runId` links the objective, task DAG, worker conversations, events, final synthesis, and deliverables. Instead of a sidebar full of “subtask” conversations, you get one outcome-first work record with progressive drill-down.
 

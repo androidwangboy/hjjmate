@@ -2,7 +2,7 @@
 
 **先配一个。后面随时加。**
 
-MateClaw 不关心你用哪个 LLM。它通过五个协议适配器跟所有主流供应商对话，支持 15+ 个云端供应商和 4 个本地运行时，你可以在运行时**不动 Agent 配置**直接切模型。MateClaw 唯一的意见是——**从一个开始，需要再加**，不是第一天就把所有东西配好。
+HjjMate 不关心你用哪个 LLM。它通过五个协议适配器跟所有主流供应商对话，支持 15+ 个云端供应商和 4 个本地运行时，你可以在运行时**不动 Agent 配置**直接切模型。HjjMate 唯一的意见是——**从一个开始，需要再加**，不是第一天就把所有东西配好。
 
 ---
 
@@ -80,10 +80,10 @@ MateClaw 不关心你用哪个 LLM。它通过五个协议适配器跟所有主�
 ## 原生 Gemini
 
 ::: tip 1.4.0 新增
-Gemini 不再走 OpenAI 兼容层——MateClaw 直接对接 Google 的**原生 `generateContent` API**。
+Gemini 不再走 OpenAI 兼容层——HjjMate 直接对接 Google 的**原生 `generateContent` API**。
 :::
 
-很多产品把 Gemini 当成"又一个 OpenAI 兼容端点"来接，结果在系统指令、函数调用、内联图片这些地方处处碰壁。MateClaw 走的是 Gemini 自己的协议：
+很多产品把 Gemini 当成"又一个 OpenAI 兼容端点"来接，结果在系统指令、函数调用、内联图片这些地方处处碰壁。HjjMate 走的是 Gemini 自己的协议：
 
 - **原生 chat builder** —— 正确映射 `systemInstruction`（系统指令）、`functionCall` / `functionResponse`（工具调用回合）、以及内联图片 part（多模态输入）
 - **流式 SSE 解析** —— 按 Gemini 的流式响应格式逐块解析
@@ -96,7 +96,7 @@ Gemini 不再走 OpenAI 兼容层——MateClaw 直接对接 Google 的**原生 
 
 ## 添加一个供应商
 
-**新装的 MateClaw 主列表是空的。这是故意的。**
+**新装的 HjjMate 主列表是空的。这是故意的。**
 
 你不需要看见 16 个供应商，你需要**一个能跑的**。
 
@@ -134,13 +134,13 @@ Gemini 不再走 OpenAI 兼容层——MateClaw 直接对接 Google 的**原生 
 
 ### ChatGPT OAuth —— 不需要 API Key
 
-有 ChatGPT Plus 或 Pro 账号？MateClaw 可以通过**浏览器 OAuth** 对接 OpenAI 的 chat 端点——你按平常方式登录，你的订阅被直接使用。GPT-4o、o3、o4-mini 立刻可用。
+有 ChatGPT Plus 或 Pro 账号？HjjMate 可以通过**浏览器 OAuth** 对接 OpenAI 的 chat 端点——你按平常方式登录，你的订阅被直接使用。GPT-4o、o3、o4-mini 立刻可用。
 
 `设置 → 模型 → 添加供应商 → OpenAI OAuth`。浏览器窗口弹出。Token 交换在后端完成，**凭证不离开你的机器**。
 
 ### 设备授权（Device Authorization Grant）—— 远程 / 无头部署专用
 
-浏览器回调式 OAuth 要求 IDP 的重定向能落回 *你的浏览器* 能访问的某个 `localhost` 端口。这事儿在 MateClaw 跑你笔记本上时没问题，一旦你把它放到服务器、容器、或任何不向客户端暴露 loopback socket 的宿主上，就立刻坏掉。
+浏览器回调式 OAuth 要求 IDP 的重定向能落回 *你的浏览器* 能访问的某个 `localhost` 端口。这事儿在 HjjMate 跑你笔记本上时没问题，一旦你把它放到服务器、容器、或任何不向客户端暴露 loopback socket 的宿主上，就立刻坏掉。
 
 针对这种情况，OpenAI OAuth 会自动切到 **设备授权（RFC 8628）**——和 ChatGPT 桌面端、`gh auth login` 用的是同一个流程。不需要回调，不需要端口映射。
 
@@ -152,7 +152,7 @@ Gemini 不再走 OpenAI 兼容层——MateClaw 直接对接 Google 的**原生 
 
 把用户码填进浏览器、授权完成，对话框会在后端轮询拿到 `COMPLETED` 的瞬间自动关闭。
 
-**MateClaw 怎么决定走哪个流：**
+**HjjMate 怎么决定走哪个流：**
 
 | `mateclaw.oauth.openai.deployment-mode` | 行为 |
 |---|---|
@@ -181,7 +181,7 @@ token 持久化和刷新走的是和浏览器回调流**完全相同**的代码�
 
 `设置 → 模型 → 添加供应商 → Anthropic Claude Code OAuth`。支持两种流程：
 
-- **浏览器回调** —— 本地安装，浏览器弹窗，点完授权 token 落到 MateClaw
+- **浏览器回调** —— 本地安装，浏览器弹窗，点完授权 token 落到 HjjMate
 - **MANUAL_PASTE** —— 远程服务器部署、浏览器到不了后端时，本地浏览器完成授权后把 token 粘回来
 
 通过 anti-abuse 反滥用门：注入 Claude Code 身份到系统 prompt，请求形态（UA / accept 头 / `system` 数组形式 / `mcp_` 工具名前缀）与 Claude Code 在线协议完全对齐，请求不会被拒绝。
@@ -190,7 +190,7 @@ token 持久化和刷新走的是和浏览器回调流**完全相同**的代码�
 
 ## 模型发现
 
-提供模型列表的供应商（OpenAI、Ollama、LM Studio、OpenRouter 等）支持**模型发现**——一键让 MateClaw 拉取这个供应商下的所有模型。
+提供模型列表的供应商（OpenAI、Ollama、LM Studio、OpenRouter 等）支持**模型发现**——一键让 HjjMate 拉取这个供应商下的所有模型。
 
 - `设置 → 模型 → [供应商卡片] → 发现模型`
 - 系统查询供应商的 `/v1/models` 端点
@@ -248,7 +248,7 @@ ollama pull gemma3
 ollama pull qwen3
 ```
 
-重启 MateClaw。自动发现、添加、启用。
+重启 HjjMate。自动发现、添加、启用。
 
 ---
 
@@ -327,7 +327,7 @@ ollama pull qwen3
 
 ## 运行时切换活跃模型
 
-MateClaw 用一个**活跃模型**作为全局默认。没有指定自己模型的 Agent 都用它。
+HjjMate 用一个**活跃模型**作为全局默认。没有指定自己模型的 Agent 都用它。
 
 - **UI：** `设置 → 模型 → [模型卡片] → 设为活跃`
 - **API：** `PUT /api/v1/models/active`
@@ -511,7 +511,7 @@ LLM API Key **不再读取环境变量**——`DASHSCOPE_API_KEY` / `OPENAI_API_
 
 ## 单模型上下文窗口（2.1.0+）
 
-MateClaw 不再把所有模型统一当作 128K。运行时预算解析顺序是：**管理员覆盖值 → 本地模型实时探测或供应商超限反馈的短期缓存 → 内置模型目录 → 原有全局默认值**。模型列表为了避免 I/O，只显示覆盖值或目录值；未知模型仍由调用方使用全局默认。这会直接影响系统提示词、记忆、Wiki、历史消息与工具 schema 的预算分配。
+HjjMate 不再把所有模型统一当作 128K。运行时预算解析顺序是：**管理员覆盖值 → 本地模型实时探测或供应商超限反馈的短期缓存 → 内置模型目录 → 原有全局默认值**。模型列表为了避免 I/O，只显示覆盖值或目录值；未知模型仍由调用方使用全局默认。这会直接影响系统提示词、记忆、Wiki、历史消息与工具 schema 的预算分配。
 
 - 已知模型（含 GLM-5V-Turbo、Kimi coding alias 等）自动使用目录窗口；
 - 自定义/私有模型可在模型管理页填写准确的最大输入 token；

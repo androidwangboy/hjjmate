@@ -2036,6 +2036,7 @@ function getSkillTypeLabel(type: string) {
   gap: 10px;
   padding: 10px 14px;
   align-items: center;
+  margin-top: 12px;
   backdrop-filter: blur(14px) saturate(1.1);
   -webkit-backdrop-filter: blur(14px) saturate(1.1);
 }

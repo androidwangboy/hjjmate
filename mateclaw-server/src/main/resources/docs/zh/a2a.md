@@ -1,6 +1,6 @@
 # A2A 协议
 
-MateClaw 可以把已启用智能体暴露为 A2A JSON-RPC 端点，也可以通过工具调用其他 A2A 对端。
+HjjMate 可以把已启用专家暴露为 A2A JSON-RPC 端点，也可以通过工具调用其他 A2A 对端。
 
 ## 配置
 
@@ -14,17 +14,17 @@ mateclaw:
     task-ttl-seconds: 3600
 ```
 
-生产环境必须配置 `base-url`。为空时，MateClaw 会按入站请求推导名片 URL，这依赖反向代理正确传递 Host 与协议头。
+生产环境必须配置 `base-url`。为空时，HjjMate 会按入站请求推导名片 URL，这依赖反向代理正确传递 Host 与协议头。
 
 ## 入站
 
 - `GET /.well-known/agent-card.json` 和匿名 `GET /api/a2a/card` 返回最小公开名片，不包含 `skills`。
-- 带 Bearer 访问 `GET /api/a2a/card` 返回 enabled 智能体列表到 `skills[]`；调用时把智能体 id 放到 `message.metadata.skillId`。
-- `POST /api/a2a` 复用 MateClaw Bearer token 鉴权，支持 `message/send`、`message/stream`、`tasks/get`、`tasks/cancel`。
+- 带 Bearer 访问 `GET /api/a2a/card` 返回 enabled 专家列表到 `skills[]`；调用时把专家 id 放到 `message.metadata.skillId`。
+- `POST /api/a2a` 复用 HjjMate Bearer token 鉴权，支持 `message/send`、`message/stream`、`tasks/get`、`tasks/cancel`。
 
 ## 出站工具
 
-智能体可调用 `call_a2a_agent`：
+专家可调用 `call_a2a_agent`：
 
 ```json
 {

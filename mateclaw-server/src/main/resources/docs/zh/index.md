@@ -2,12 +2,12 @@
 layout: home
 
 hero:
-  name: MateClaw
+  name: HjjMate
   text: 公司允许部署的那一个 AI。
-  tagline: 别的 AI 助手是给一个人用的。MateClaw 是给一个团队用的——多用户工作空间、敏感操作走审批、完整审计日志、生产级健康监控。一个 JAR 包自部署，持久化数据与外发集成边界由你掌控。
+  tagline: 别的 AI 助手是给一个人用的。HjjMate 是给一个团队用的——多用户工作空间、敏感操作走审批、完整审计日志、生产级健康监控。一个 JAR 包自部署，持久化数据与外发集成边界由你掌控。
   image:
     src: /logo.png
-    alt: MateClaw
+    alt: HjjMate
   actions:
     - theme: brand
       text: 开始使用 →

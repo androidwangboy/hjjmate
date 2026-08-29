@@ -1,6 +1,6 @@
 ---
 title: Multi-Agent Engine — ReAct + Plan-and-Execute
-description: MateClaw's multi-agent system runs in two modes — ReAct for real-time reasoning and Plan-and-Execute for complex task decomposition. Agents can delegate to one another for true multi-agent collaboration.
+description: HjjMate's multi-agent system runs in two modes — ReAct for real-time reasoning and Plan-and-Execute for complex task decomposition. Agents can delegate to one another for true multi-agent collaboration.
 head:
   - - meta
     - name: keywords
@@ -218,7 +218,7 @@ Backend endpoint: `POST /api/v1/agents/generate`, request body `{ "requirement":
 
 ## Deep thinking
 
-Not every question deserves deep reasoning, but some do. MateClaw lets you turn on deep thinking per agent, per conversation:
+Not every question deserves deep reasoning, but some do. HjjMate lets you turn on deep thinking per agent, per conversation:
 
 - **`thinkingLevel`**: `off` / `low` / `medium` / `high` / `max`
 - Supports Anthropic extended thinking, DashScope qwq reasoning, OpenAI o1 `reasoning_effort=high`

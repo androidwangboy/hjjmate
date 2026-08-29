@@ -1,17 +1,17 @@
 ---
-title: MateClaw 项目介绍 — 自部署多智能体 AI 操作系统
-description: MateClaw 是基于 Spring AI Alibaba 的开源多智能体 AI 操作系统。ReAct + Plan-and-Execute 双引擎、LLM Wiki 知识库、四层记忆系统、MCP 工具协议、8 渠道统一接入。一个 JAR 包自部署，数据与外发集成边界由你掌控。
+title: HjjMate 项目介绍 — 自部署多专家 AI 操作系统
+description: HjjMate 是基于 Spring AI Alibaba 的开源多专家 AI 操作系统。ReAct + Plan-and-Execute 双引擎、LLM Wiki 知识库、四层记忆系统、MCP 工具协议、8 渠道统一接入。一个 JAR 包自部署，数据与外发集成边界由你掌控。
 head:
   - - meta
     - name: keywords
-      content: MateClaw,多智能体,AI操作系统,自部署AI,Spring AI Alibaba,ReAct,Plan-and-Execute,MCP,LLM Wiki,记忆系统,Tool Guard,开源
+      content: HjjMate,多专家,AI操作系统,自部署AI,Spring AI Alibaba,ReAct,Plan-and-Execute,MCP,LLM Wiki,记忆系统,Tool Guard,开源
 ---
 
-# MateClaw — 自部署多智能体 AI 操作系统
+# HjjMate — 自部署多专家 AI 操作系统
 
-**你的多智能体 AI，跑在你自己的机器上，按你自己的规则。**
+**你的多专家 AI，跑在你自己的机器上，按你自己的规则。**
 
-MateClaw 是一整套可以自部署的 AI 操作系统。一个 JAR 包，一套登录，持久化数据和外发集成由你掌控。
+HjjMate 是一整套可以自部署的 AI 操作系统。一个 JAR 包，一套登录，持久化数据和外发集成由你掌控。
 
 **它和别的 AI 不一样的三件事——**
 
@@ -33,7 +33,7 @@ MateClaw 是一整套可以自部署的 AI 操作系统。一个 JAR 包，一�
 
 给你一个聊天框，但明天打开就又从零开始；给你一个工具执行器，但不给你按"暂停"的机会；给你一个知识库，只会检索碎片却说不清它到底知道什么；给你桌面端，却进不了团队在用的聊天软件。或者——所有东西都给了，但全都跑在别人家的云上，你的数据顺便给别人付房租。
 
-MateClaw 换了一个打法：**所有东西放在一个屋檐下，跑在你自己能摸到的硬件上。**
+HjjMate 换了一个打法：**所有东西放在一个屋檐下，跑在你自己能摸到的硬件上。**
 
 ---
 
@@ -43,23 +43,23 @@ MateClaw 换了一个打法：**所有东西放在一个屋檐下，跑在你自
 
 **它会记住。** 会话上下文、对话后的结构化提取、工作空间的记忆文件、定时整合，再加一轮"dreaming"——把昨天的线索串起来。记忆不是聊天功能上贴的一张贴纸，是系统越用越懂你的底层机制。
 
-**它会把知识嚼碎。** 扔一份 PDF。扔一整个文件夹。扔一千篇 Markdown 笔记。LLM Wiki 会把它们消化成结构化的、带双向链接和摘要的知识页面——不是一个向量库，是一本你能翻的书。Agent 自动注入页面摘要，需要细节时再去取整页。
+**它会把知识嚼碎。** 扔一份 PDF。扔一整个文件夹。扔一千篇 Markdown 笔记。LLM Wiki 会把它们消化成结构化的、带双向链接和摘要的知识页面——不是一个向量库，是一本你能翻的书。专家自动注入页面摘要，需要细节时再去取整页。
 
 **它手上有真工具。** 内置工具：搜索、文件读写、shell、时间、图像、音乐、视频、语音识别、语音合成。任何别的东西都能接 MCP 服务。你自己的技能包只要写个 `SKILL.md` 就能装进工作空间。所有工具都过一层 Tool Guard，必要时还能走人工审批——手能伸得远，但边界清清楚楚。
 
-**它会在每一个真实的工作面上出现。** Web 控制台、桌面端（内置 JRE 21，用户不需要装 Java），还有八个聊天渠道：钉钉、飞书、企业微信、微信、Telegram、Discord、QQ、Slack。Slack 里回复的 Agent 和浏览器里的 Agent 是同一个——同一份记忆、同一套技能、同一种性格。
+**它会在每一个真实的工作面上出现。** Web 控制台、桌面端（内置 JRE 21，用户不需要装 Java），还有八个聊天渠道：钉钉、飞书、企业微信、微信、Telegram、Discord、QQ、Slack。Slack 里回复的专家和浏览器里的专家是同一个——同一份记忆、同一套技能、同一种性格。
 
 ---
 
 ## 为什么"自部署"这件事很重要
 
-把 MateClaw 跑在你自己的机器上，不是合规打个勾那么简单。它改变的是这个产品**到底是什么**。
+把 HjjMate 跑在你自己的机器上，不是合规打个勾那么简单。它改变的是这个产品**到底是什么**。
 
 **你掌控数据与外发边界。** 对话、日志、文档和记忆持久化在自己的部署中；只有完成任务所需的内容会发送到你主动配置的云模型、IM 渠道、MCP 或其他工具服务。需要完全本地处理时，可以组合本地模型与本地工具，并关闭外部集成。
 
 **路线图是你的。** 记忆整合的规则你不喜欢？自己改。需要一个厂商不给你做的工具？自己加。Apache 2.0，不是 "source available"，不是 "open core"，不用等别人的季度产品评审。
 
-**账单是你自己算的。** 一开始上 DashScope，等本地 GPU 到了就切 Ollama，某个高价值 Agent 单独挂 OpenAI，其他的走便宜的。Agent 配置和工具图不关心底下的模型接口是什么。
+**账单是你自己算的。** 一开始上 DashScope，等本地 GPU 到了就切 Ollama，某个高价值专家单独挂 OpenAI，其他的走便宜的。专家配置和工具图不关心底下的模型接口是什么。
 
 **部署面是实打实的。** 一个 JAR 包。一个 Spring Boot 进程。运行服务不要求额外安装 Python 或 Node。桌面端自带 JRE，Docker Compose 一条命令启动 PostgreSQL、SearXNG 与服务端。
 
@@ -67,7 +67,7 @@ MateClaw 换了一个打法：**所有东西放在一个屋檐下，跑在你自
 
 ## 底下是什么
 
-- **后端**——Spring Boot 3.5 + Spring AI Alibaba 1.1。Agent 运行时是一张 StateGraph，reasoning、action、observation、plan generation、step execution 都是图上的节点。MyBatis Plus 持久化。流式走 SSE（WebFlux 被明确拒之门外）。
+- **后端**——Spring Boot 3.5 + Spring AI Alibaba 1.1。专家运行时是一张 StateGraph，reasoning、action、observation、plan generation、step execution 都是图上的节点。MyBatis Plus 持久化。流式走 SSE（WebFlux 被明确拒之门外）。
 - **前端**——Vue 3 + TypeScript。Pinia 管状态，Element Plus + Tailwind 做 UI，支持深色模式。前端 build 的产物直接进后端 JAR 的 `static/`，一个进程服务两端。
 - **桌面端**——Electron 包 JRE 21 + 后端 JAR。双击启动，用户完全不需要知道底下跑的是 Java。
 - **渠道**——每个渠道是一个 `ChannelAdapter` SPI 实现。Web 走 SSE，IM 各自走平台的长连接或 webhook。

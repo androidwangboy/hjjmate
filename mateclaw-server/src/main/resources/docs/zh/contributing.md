@@ -2,7 +2,7 @@
 
 **你在这里写的代码会跑在别人的机器上。**
 
-这是唯一一件需要记住的事。MateClaw 是 Apache 2.0、自部署、一个 JAR 包发布的产品。你加的每一行都会被某个你永远不会见到的人下载、解压、执行。**写那种六个月之后你在别人家的日志里凌晨两点看到也会开心的代码。**
+这是唯一一件需要记住的事。HjjMate 是 Apache 2.0、自部署、一个 JAR 包发布的产品。你加的每一行都会被某个你永远不会见到的人下载、解压、执行。**写那种六个月之后你在别人家的日志里凌晨两点看到也会开心的代码。**
 
 ---
 
@@ -130,7 +130,7 @@ chore(deps): upgrade Spring Boot to 3.5.1
 
 - **一个节点**（reasoning、action、observation、plan generation）——在 `vip.mate.agent.graph.node` 或 `vip.mate.agent.graph.plan.node`
 - **一条边**或 **dispatcher**——在 `vip.mate.agent.graph.edge` 或 `vip.mate.agent.graph.plan.edge`
-- **一个 state key**——在 `vip.mate.agent.graph.state.MateClawStateKeys`
+- **一个 state key**——在 `vip.mate.agent.graph.state.HjjMateStateKeys`
 
 把这些拼起来的 builder 是 `AgentGraphBuilder`。节点的流式事件通过 `GraphEventPublisher` 和 `NodeStreamingChatHelper` 发出去。
 
@@ -319,7 +319,7 @@ Before / After。
 
 ## 报告 bug
 
-- MateClaw 版本（或 commit hash）
+- HjjMate 版本（或 commit hash）
 - Java 版本和操作系统
 - **精确的**复现步骤
 - 预期 vs 实际行为

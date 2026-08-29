@@ -2,7 +2,7 @@
 
 **Pick a model. Just one. Add more later.**
 
-MateClaw doesn't care which LLM you use. It talks to every mainstream provider through five protocol adapters, supports 15+ cloud providers and 4 local runtimes, and lets you swap models at runtime without touching agent configuration. The only opinion MateClaw has is that you should **start with one and add more when you need them** — not configure everything on day one.
+HjjMate doesn't care which LLM you use. It talks to every mainstream provider through five protocol adapters, supports 15+ cloud providers and 4 local runtimes, and lets you swap models at runtime without touching agent configuration. The only opinion HjjMate has is that you should **start with one and add more when you need them** — not configure everything on day one.
 
 ---
 
@@ -79,10 +79,10 @@ Same `sk-` API key, **two endpoints** that ship different model families:
 ## Native Gemini
 
 ::: tip New in 1.4.0
-Gemini no longer rides on an OpenAI-compatibility shim — MateClaw talks to Google's **native `generateContent` API** directly.
+Gemini no longer rides on an OpenAI-compatibility shim — HjjMate talks to Google's **native `generateContent` API** directly.
 :::
 
-Plenty of products bolt Gemini on as "just another OpenAI-compatible endpoint" and then hit walls around system instructions, function calling, and inline images. MateClaw speaks Gemini's own protocol instead:
+Plenty of products bolt Gemini on as "just another OpenAI-compatible endpoint" and then hit walls around system instructions, function calling, and inline images. HjjMate speaks Gemini's own protocol instead:
 
 - **Native chat builder** — maps `systemInstruction`, `functionCall` / `functionResponse` (tool-call turns), and inline image parts (multimodal input) correctly
 - **Streaming SSE parsing** — parses Gemini's streaming response format chunk by chunk
@@ -95,7 +95,7 @@ Configure it under `Settings → Models → Add Provider`, pick the **Gemini** p
 
 ## Adding a provider
 
-**A fresh MateClaw install has an empty provider list. That's deliberate.**
+**A fresh HjjMate install has an empty provider list. That's deliberate.**
 
 You don't need to see 16 providers. You need **one that works.**
 
@@ -133,13 +133,13 @@ This separates "I have a key for this provider but I'm not using it today" from 
 
 ### ChatGPT OAuth — no API key needed
 
-Have a ChatGPT Plus or Pro account? MateClaw can talk to OpenAI's chat endpoint through **browser-based OAuth** — log in the way you normally would, your subscription is used directly. GPT-4o, o3, and o4-mini become available immediately.
+Have a ChatGPT Plus or Pro account? HjjMate can talk to OpenAI's chat endpoint through **browser-based OAuth** — log in the way you normally would, your subscription is used directly. GPT-4o, o3, and o4-mini become available immediately.
 
 `Settings → Models → Add Provider → OpenAI OAuth`. A browser window opens. Token exchange happens on the backend; **credentials never leave your machine**.
 
 ### Device authorization grant — for remote / headless deployments
 
-Browser-callback OAuth needs the IDP's redirect to land back on a `localhost` port that *your* browser can reach. That's fine when MateClaw runs on your laptop and breaks the moment you put it on a server, in a container, or on a host that doesn't expose a loopback socket to your client.
+Browser-callback OAuth needs the IDP's redirect to land back on a `localhost` port that *your* browser can reach. That's fine when HjjMate runs on your laptop and breaks the moment you put it on a server, in a container, or on a host that doesn't expose a loopback socket to your client.
 
 For those cases, OpenAI OAuth automatically switches to **Device Authorization Grant (RFC 8628)** — the same flow ChatGPT desktop and `gh auth login` use. No callback, no port mapping.
 
@@ -151,7 +151,7 @@ For those cases, OpenAI OAuth automatically switches to **Device Authorization G
 
 Enter the user code in your browser, authorize, and the dialog closes itself the moment the backend's poll loop sees `COMPLETED`.
 
-**How MateClaw decides which flow to use:**
+**How HjjMate decides which flow to use:**
 
 | `mateclaw.oauth.openai.deployment-mode` | Behaviour |
 |---|---|
@@ -180,7 +180,7 @@ Same pattern, same outcome: have a Claude Pro / Max / Team subscription? Sign in
 
 `Settings → Models → Add Provider → Anthropic Claude Code OAuth`. Two flows are supported:
 
-- **Browser callback** — local install, browser pops up, you click through, token lands in MateClaw
+- **Browser callback** — local install, browser pops up, you click through, token lands in HjjMate
 - **MANUAL_PASTE** — for remote-server deployments where the browser can't reach the backend, you complete the auth in your local browser and paste the token in
 
 Anti-abuse-gate compliant: Claude Code identity is injected into the system prompt, the request shape (UA / accept headers / `system` array form / `mcp_` tool-name prefixes) matches Claude Code's wire format exactly so the requests aren't rejected.
@@ -189,7 +189,7 @@ Anti-abuse-gate compliant: Claude Code identity is injected into the system prom
 
 ## Model discovery
 
-Providers that expose a model list (OpenAI, Ollama, LM Studio, OpenRouter, etc.) support **Model Discovery** — one click and MateClaw fetches every model the provider offers.
+Providers that expose a model list (OpenAI, Ollama, LM Studio, OpenRouter, etc.) support **Model Discovery** — one click and HjjMate fetches every model the provider offers.
 
 - `Settings → Models → [provider card] → Discover Models`
 - System queries the provider's `/v1/models` endpoint
@@ -247,7 +247,7 @@ ollama pull gemma3
 ollama pull qwen3
 ```
 
-Restart MateClaw. Auto-discovered, added, enabled.
+Restart HjjMate. Auto-discovered, added, enabled.
 
 ---
 
@@ -326,7 +326,7 @@ Became a real thing when agents could be bound to different models per task — 
 
 ## Active model switching at runtime
 
-MateClaw uses a single **active model** as the global default. Agents that don't specify their own use it.
+HjjMate uses a single **active model** as the global default. Agents that don't specify their own use it.
 
 - **UI:** `Settings → Models → [model card] → Set as Active`
 - **API:** `PUT /api/v1/models/active`
@@ -510,7 +510,7 @@ If you're on DashScope, here's the rough shape of the lineup:
 
 ## Per-model context windows (2.1.0+)
 
-MateClaw no longer treats every model as a global 128K window. Runtime resolution follows **operator override → live local-model probe or provider limit-error cache → built-in model catalog → the existing global fallback**. To avoid I/O, model-list rendering shows only override or catalog values; unknown models still use the caller's global default. The result budgets system prompts, memory, Wiki context, history, and tool schemas.
+HjjMate no longer treats every model as a global 128K window. Runtime resolution follows **operator override → live local-model probe or provider limit-error cache → built-in model catalog → the existing global fallback**. To avoid I/O, model-list rendering shows only override or catalog values; unknown models still use the caller's global default. The result budgets system prompts, memory, Wiki context, history, and tool schemas.
 
 - known models, including GLM-5V-Turbo and Kimi coding aliases, use catalogued windows;
 - custom/private models can declare an accurate maximum input-token count in model management;

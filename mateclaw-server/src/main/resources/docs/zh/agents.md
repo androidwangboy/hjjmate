@@ -1,6 +1,6 @@
 ---
 title: 多智能体引擎 — ReAct + Plan-and-Execute 双模式
-description: MateClaw 的多智能体系统支持 ReAct 推理循环和 Plan-and-Execute 任务拆解两种模式。Agent 之间可以互相委派，实现真正的多智能体协作。
+description: HjjMate 的多智能体系统支持 ReAct 推理循环和 Plan-and-Execute 任务拆解两种模式。Agent 之间可以互相委派，实现真正的多智能体协作。
 head:
   - - meta
     - name: keywords
@@ -218,7 +218,7 @@ REST：`GET /api/v1/plans?limit=N`（跨专家最近 N 条）、`GET /api/v1/pla
 
 ## 深度思考
 
-不是所有问题都值得深度推理，但有些问题需要。MateClaw 支持按 Agent、按对话打开深度思考模式：
+不是所有问题都值得深度推理，但有些问题需要。HjjMate 支持按 Agent、按对话打开深度思考模式：
 
 - **`thinkingLevel`**：`off` / `low` / `medium` / `high` / `max`
 - 支持 Anthropic extended thinking、DashScope qwq 推理、OpenAI o1 `reasoning_effort=high`
@@ -302,7 +302,7 @@ UI 入口：`专家 → 选专家 → 编辑 → 知识库`。
 #### 让某个专家彻底不碰知识库
 
 ::: tip 新增
-"知识库"标签页顶部有个开关：**此智能体不使用任何知识库**。它和"工具禁用""技能禁用"是对称的三个 opt-out 开关。
+"知识库"标签页顶部有个开关：**此专家不使用任何知识库**。它和"工具禁用""技能禁用"是对称的三个 opt-out 开关。
 :::
 
 这里要分清两种"空"：

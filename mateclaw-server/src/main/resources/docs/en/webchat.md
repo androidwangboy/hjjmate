@@ -1,6 +1,6 @@
 # Web / API Access (WebChat) Guide
 
-MateClaw's WebChat channel lets external websites reach the conversation engine over plain HTTP / SSE, with no JWT. Visitor identity is isolated under a shared API Key via `visitorId + visitorToken` (HMAC-signed).
+HjjMate's WebChat channel lets external websites reach the conversation engine over plain HTTP / SSE, with no JWT. Visitor identity is isolated under a shared API Key via `visitorId + visitorToken` (HMAC-signed).
 
 There are two integration paths:
 
@@ -16,7 +16,7 @@ The widget is a zero-dependency browser library shipped in both UMD (`<script>` 
 ```html
 <script src="https://<your-deployment>/mateclaw-webchat.umd.js"></script>
 <script>
-  MateClawWebChat.init({
+  HjjMateWebChat.init({
     apiKey: 'your-channel-api-key',   // from the channel edit page
     server: 'https://<your-deployment>',
     title: 'Support',
@@ -42,10 +42,10 @@ init({ apiKey: 'your-channel-api-key', server: 'https://<your-deployment>' })
 | Field | Required | Default | Notes |
 |---|---|---|---|
 | `apiKey` | yes | — | Channel API Key |
-| `server` | yes | — | MateClaw server URL (no trailing slash) |
+| `server` | yes | — | HjjMate server URL (no trailing slash) |
 | `position` | no | `bottom-right` | Bubble position: `bottom-right` / `bottom-left` |
 | `primaryColor` | no | `#D97757` | Primary color (any CSS color) |
-| `title` | no | `MateClaw` | Panel title |
+| `title` | no | `HjjMate` | Panel title |
 | `placeholder` | no | `Type a message...` | Input placeholder |
 
 **Behavior**
@@ -56,7 +56,7 @@ init({ apiKey: 'your-channel-api-key', server: 'https://<your-deployment>' })
 
 ## Custom integration: basics
 
-- **Base URL**: `https://<your-MateClaw-deployment>/api/v1/channels/webchat`
+- **Base URL**: `https://<your-HjjMate-deployment>/api/v1/channels/webchat`
 - **Auth**: every endpoint requires the header `X-MC-Key: <API Key>` (from the channel edit page).
 - **Session-management endpoints** additionally require `X-MC-Visitor-Token: <HMAC>` (issued by the server and returned on the first `/stream` call).
 - **Response envelope**: `R<T>` → `{"code": 200, "msg": "...", "data": T}`; anything other than 200 is an error.
@@ -83,7 +83,7 @@ init({ apiKey: 'your-channel-api-key', server: 'https://<your-deployment>' })
 | POST | `/upload` | + visitorToken | Upload an attachment (returns fileId) |
 | GET | `/files` | + visitorToken | Download a file (uploaded or agent-generated) |
 
-Admin-level (require a MateClaw JWT, outside the permitAll set above):
+Admin-level (require a HjjMate JWT, outside the permitAll set above):
 
 | Method | Path | Purpose |
 |---|---|---|
@@ -97,7 +97,7 @@ Admin-level (require a MateClaw JWT, outside the permitAll set above):
 ```text
 ┌──────────┐  POST /stream {visitorId:"v1", message:"hi"}
 │  Client  │ ─────────────────────────────────────────────► ┌──────────┐
-└──────────┘                                                  │ MateClaw │
+└──────────┘                                                  │ HjjMate │
    ▲                                                          └──────────┘
    │  SSE meta event: {sessionId, conversationId, visitorToken}
    │  SSE content_delta events: {text}

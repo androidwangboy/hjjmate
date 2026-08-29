@@ -1714,6 +1714,7 @@ html.dark .seg-count.warn {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 16px;
+  margin-top: 20px;
 }
 
 .agent-card {

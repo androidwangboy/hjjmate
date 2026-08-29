@@ -1,10 +1,10 @@
 ---
 title: 持久化目标 — 跨多轮锁定，让专家自己跟进
-description: MateClaw 的 Goal 系统让数字专家把跨多轮的任务锁成一个目标，自己评估进度、自己续命，直到完成或耗尽预算。
+description: HjjMate 的 Goal 系统让数字专家把跨多轮的任务锁成一个目标，自己评估进度、自己续命，直到完成或耗尽预算。
 head:
   - - meta
     - name: keywords
-      content: Goal,目标管理,Agent,多轮对话,自动评估,auto-followup,持久化,MateClaw
+      content: Goal,目标管理,Agent,多轮对话,自动评估,auto-followup,持久化,HjjMate
 ---
 
 # 持久化目标
