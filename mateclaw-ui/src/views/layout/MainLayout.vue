@@ -449,6 +449,13 @@ const navGroups = computed(() => [
         icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><path d="M16 14H8a4 4 0 0 0-4 4v2h16v-2a4 4 0 0 0-4-4z"/><line x1="12" y1="11" x2="12" y2="14"/></svg>`,
         requiredCapability: 'view:memory',
       },
+      {
+        // 调度中心：从设置提升到核心导航（顶层 /scheduler）
+        path: '/scheduler',
+        label: t('nav.scheduler'),
+        icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+        requiredCapability: 'manage:agents',
+      },
       // 企业场景功能暂未启用
       // {
       //   path: '/enterprise',
@@ -533,6 +540,10 @@ function toggleSidebar() {
 function isNavItemActive(item: { path: string; label: string }) {
   if (item.path.startsWith('/settings')) {
     return route.path.startsWith('/settings')
+  }
+  if (item.path === '/agents') {
+    // 子路由（如 /agents/:id/context）也算在“专家”工作区内
+    return route.path.startsWith('/agents')
   }
   if (item.path === '/security') {
     return route.path.startsWith('/security')

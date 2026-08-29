@@ -1578,7 +1578,7 @@ async function deleteAgent(agent: Agent) {
 }
 
 function goToAgentContextFor(agent: Agent) {
-  router.push({ path: '/settings/agent-context', query: { agentId: String(agent.id) } })
+  router.push({ path: `/agents/${agent.id}/context` })
 }
 
 /** Card primary action: open a chat with this agent. */

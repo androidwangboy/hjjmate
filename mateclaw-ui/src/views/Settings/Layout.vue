@@ -148,26 +148,15 @@ const sections = computed(() => [
     icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>',
   },
   {
-    id: 'agent-context',
-    path: '/settings/agent-context',
-    label: t('nav.agentContext', '智能体上下文'),
-    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>',
-  },
-  {
     id: 'members',
     path: '/settings/members',
     label: t('security.sections.members', 'Members'),
     icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
   },
   // RFC-090 Phase 4: Activity 子项移除，提升至顶层 /activity
+  // Scheduler 已提升至顶层 /scheduler，归入核心（Core）导航分组
   // Divider: Advanced
   { id: 'divider-advanced', path: '', label: t('settings.sections.advanced'), icon: '', isDivider: true },
-  {
-    id: 'scheduler',
-    path: '/settings/scheduler',
-    label: t('nav.scheduler', 'Scheduler'),
-    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
-  },
   {
     id: 'workflows',
     path: '/settings/workflows',

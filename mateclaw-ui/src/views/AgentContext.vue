@@ -4,7 +4,14 @@
       <div class="mc-page-inner agent-context-container">
     <!-- 顶部栏 -->
     <div class="workspace-header workspace-header--compact">
-      <h1 class="page-title page-title--compact">{{ t('agentContext.title') }}</h1>
+      <div class="workspace-header-left">
+        <button class="back-btn" @click="router.push('/agents')" :title="t('common.back')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+          </svg>
+        </button>
+        <h1 class="page-title page-title--compact">{{ t('agentContext.title') }}</h1>
+      </div>
       <div class="header-actions mc-surface-card">
         <AgentPickerDialog v-model="selectedAgentId" :agents="agents" />
       </div>
@@ -353,7 +360,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { mcToast } from '@/composables/useMcToast'
 import { mcConfirm } from '@/components/common/useConfirm'
@@ -468,13 +475,15 @@ function isSelectedPersonal(file: WorkspaceFile) {
 }
 
 const route = useRoute()
+const router = useRouter()
 
 onMounted(async () => {
   await loadAgents()
-  // Hydrate from query param (e.g. from Agents page "Context" tab link)
-  const qAgentId = route.query.agentId
-  if (qAgentId && agents.value.some(a => String(a.id) === String(qAgentId))) {
-    selectedAgentId.value = qAgentId as string
+  // 优先从路由参数 /agents/:id/context 取专家；
+  // 旧的 ?agentId= 查询参数（设置页深链）作为兼容回退。
+  const id = route.params.id ?? route.query.agentId
+  if (id && agents.value.some(a => String(a.id) === String(id))) {
+    selectedAgentId.value = String(id)
   }
 })
 
@@ -848,6 +857,9 @@ function formatTime(time?: string): string {
 
 .workspace-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding-bottom: 14px; flex-shrink: 0; border-bottom: 1px solid var(--mc-border-light); }
 .workspace-header--compact { align-items: center; padding-bottom: 10px; }
+.workspace-header-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.back-btn { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border: 1px solid var(--mc-border); background: var(--mc-bg-elevated); border-radius: 10px; color: var(--mc-text-secondary); cursor: pointer; transition: all 0.15s; flex-shrink: 0; }
+.back-btn:hover { background: var(--mc-bg-sunken); color: var(--mc-text-primary); }
 .workspace-header-copy { min-width: 0; }
 .page-title { font-size: clamp(28px, 3vw, 40px); font-weight: 800; color: var(--mc-text-primary); letter-spacing: -0.04em; margin: 0 0 8px; }
 .page-title--compact { font-size: clamp(24px, 2.5vw, 32px); font-weight: 800; letter-spacing: -0.03em; margin: 0; }

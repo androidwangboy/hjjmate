@@ -49,10 +49,28 @@ const router = createRouter({
           meta: { title: 'Create Agent', requiredCapability: 'manage:agents' },
         },
         {
+          // Agent Context 是围绕单个专家的提示文件工作台，属于专家（Agents）
+          // 工作区，而不是设置。挂为 /agents/:id/context 子路由，与花名册卡片
+          // 上的“上下文”操作一一对应。
+          path: 'agents/:id/context',
+          name: 'AgentContext',
+          component: () => import('@/views/AgentContext.vue'),
+          meta: { title: 'Agent Context', requiredCapability: 'manage:agents' },
+        },
+        {
           path: 'teams',
           name: 'Teams',
           component: () => import('@/views/Teams.vue'),
           meta: { title: 'Teams', requiredCapability: 'manage:agents' },
+        },
+        {
+          // Unified scheduler — scheduled jobs, event triggers and run
+          // history under one tabbed page (?tab= selects the tab).
+          // 从 Settings 提升为顶层路由，菜单归入核心（Core）分组。
+          path: 'scheduler',
+          name: 'Scheduler',
+          component: () => import('@/views/Scheduler/index.vue'),
+          meta: { title: 'Scheduler', requiredCapability: 'manage:agents' },
         },
         {
           // Live runtime view folded into the Agents page as a sub-view.
@@ -205,23 +223,19 @@ const router = createRouter({
               component: () => import('@/views/Security/Members/index.vue'),
               meta: { title: 'Settings - Members', requiredCapability: 'manage:settings' },
             },
-            // RFC-090 Phase 4: Activity 提升到顶层 /activity（下方 children-out
-            // 的 settings/activity redirect 兼容旧链接，此处不再注册子路由）
-            // Advanced (absorbed from top-level nav)
+            // Agent Context 已迁至 /agents/:id/context（作为专家详情工作台）。
+            // 旧的 settings/agent-context 保留为 redirect，兼容旧书签/深链；
+            // 无 agentId 时退回专家花名册。
             {
               path: 'agent-context',
               name: 'SettingsAgentContext',
-              component: () => import('@/views/AgentContext.vue'),
-              meta: { title: 'Settings - Agent Context', requiredCapability: 'manage:agents' },
+              redirect: (to) => {
+                const id = to.query.agentId
+                return id ? { path: `/agents/${String(id)}/context` } : { path: '/agents' }
+              },
+              meta: { requiredCapability: 'manage:agents' },
             },
-            {
-              // Unified scheduler — scheduled jobs, event triggers and run
-              // history under one tabbed page (?tab= selects the tab).
-              path: 'scheduler',
-              name: 'SettingsScheduler',
-              component: () => import('@/views/Scheduler/index.vue'),
-              meta: { title: 'Settings - Scheduler', requiredCapability: 'manage:agents' },
-            },
+            // Unified scheduler 已提升到顶层 /scheduler（下方 redirect 兼容旧链接）。
             {
               path: 'skill-curator',
               name: 'SettingsSkillCurator',
@@ -344,16 +358,17 @@ const router = createRouter({
           meta: { title: 'sessions.title' },
         },
         // ==================== Redirects (backward compatibility) ====================
-        { path: 'workspace', redirect: '/settings/agent-context' },
+        { path: 'workspace', redirect: '/agents' },
         { path: 'security/workspaces', redirect: '/settings/workspaces' },
         { path: 'security/members', redirect: '/settings/members' },
         // RFC-090 Phase 4: Activity 提升到顶层
         { path: 'security/activity', redirect: '/activity' },
         { path: 'settings/activity', redirect: '/activity' },
         // Scheduler absorbs the former Cron Jobs + Triggers pages.
-        { path: 'cron-jobs', redirect: '/settings/scheduler' },
-        { path: 'settings/cron-jobs', redirect: '/settings/scheduler' },
-        { path: 'settings/triggers', redirect: { path: '/settings/scheduler', query: { tab: 'triggers' } } },
+        { path: 'cron-jobs', redirect: '/scheduler' },
+        { path: 'settings/cron-jobs', redirect: '/scheduler' },
+        { path: 'settings/triggers', redirect: { path: '/scheduler', query: { tab: 'triggers' } } },
+        { path: 'settings/scheduler', redirect: (to) => ({ path: '/scheduler', query: to.query }) },
         { path: 'datasources', redirect: '/settings/datasources' },
         { path: 'mcp-servers', redirect: '/settings/mcp-servers' },
         { path: 'token-usage', redirect: '/settings/token-usage' },

@@ -7,7 +7,8 @@ import AgentContext from '../AgentContext.vue'
 import { agentApi, agentContextApi } from '@/api/index'
 
 vi.mock('vue-router', () => ({
-  useRoute: () => ({ query: {} }),
+  useRoute: () => ({ query: {}, params: {} }),
+  useRouter: () => ({ push: vi.fn() }),
 }))
 
 vi.mock('@/api/index', () => ({
