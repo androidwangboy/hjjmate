@@ -156,7 +156,7 @@
               <div class="user-role">{{ roleLabel }}</div>
             </div>
             <button class="change-password-btn" @click="showChangePassword = true" :title="t('auth.changePassword')">
-              <el-icon :size="16"><Lock /></el-icon>
+              <el-icon :size="16"><Key /></el-icon>
             </button>
             <button class="logout-btn" @click="logout" :title="t('nav.logout')">
               <el-icon :size="16"><SwitchButton /></el-icon>
@@ -234,7 +234,7 @@ import McTooltip from '@/components/common/McTooltip.vue'
 import { useNotificationCenter } from '@/composables/useNotificationCenter'
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore'
 import { applyLocale, currentLocale, type AppLocale } from '@/i18n'
-import { SwitchButton, Lock, Unlock } from '@element-plus/icons-vue'
+import { SwitchButton, Key, Unlock } from '@element-plus/icons-vue'
 import ChangePasswordDialog from '@/components/ChangePasswordDialog.vue'
 import RouteSkeleton from '@/components/common/RouteSkeleton.vue'
 import { useGlobalLoadingStore } from '@/stores/useGlobalLoadingStore'
