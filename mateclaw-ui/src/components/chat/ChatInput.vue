@@ -173,6 +173,18 @@
           <el-icon><Paperclip /></el-icon>
         </button>
 
+        <!-- 提示词优化：调后端用默认模型改写草稿并回填输入框 -->
+        <button
+          type="button"
+          class="action-btn optimize-btn"
+          :disabled="disabled || loading || optimizing || !inputValue.trim()"
+          :title="t('chat.promptOptimize')"
+          @click="emit('optimize')"
+        >
+          <el-icon v-if="optimizing" class="stop-spinner"><Loading /></el-icon>
+          <el-icon v-else><MagicStick /></el-icon>
+        </button>
+
         <!-- 深度思考开关 (RFC-049 PR-1-UI: 不支持 reasoning_effort 的模型灰态) -->
         <button
           type="button"
@@ -184,7 +196,7 @@
             ? t('chat.thinkingUnsupported')
             : (thinkingEnabled ? t('chat.thinkingOn') : t('chat.thinkingOff'))"
         >
-          <el-icon><MagicStick /></el-icon>
+          <el-icon><Lightning /></el-icon>
         </button>
 
         <!-- Talk Mode 按钮 -->
@@ -246,7 +258,7 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ArrowDown, CloseBold, Loading, MagicStick, Microphone, Paperclip, Promotion, Select, Timer, WarningFilled } from '@element-plus/icons-vue'
+import { ArrowDown, CloseBold, Lightning, Loading, MagicStick, Microphone, Paperclip, Promotion, Select, Timer, WarningFilled } from '@element-plus/icons-vue'
 import { useToolLabel } from '@/composables/useToolLabel'
 import SkillSlashMenu from '@/components/chat/SkillSlashMenu.vue'
 import type { ChatAttachment, PendingApprovalMeta, StreamPhase, QueuedMessage, Skill } from '@/types'
@@ -284,6 +296,8 @@ interface Props {
   enableTalkMode?: boolean
   /** 深度思考开关状态 */
   thinkingEnabled?: boolean
+  /** 提示词优化请求进行中（按钮转圈，防重复点击） */
+  optimizing?: boolean
   /**
    * RFC-049 PR-1-UI: 当前 runtime 模型是否支持 reasoning_effort。false 时按钮灰掉，
    * 不响应点击，tooltip 提示当前模型不支持深度思考。默认 true 以保持向后兼容。
@@ -314,6 +328,7 @@ const props = withDefaults(defineProps<Props>(), {
   enableTalkMode: false,
   thinkingEnabled: false,
   thinkingSupported: true,
+  optimizing: false,
   skillsEnabled: true,
 })
 
@@ -336,6 +351,8 @@ const emit = defineEmits<{
   'approve-always': [payload: { pendingId: string; scope: 'CONVERSATION' | 'AGENT' | 'USER' }]
   talk: []
   'toggle-thinking': []
+  /** 提示词优化：父组件调后端改写当前草稿并回填 modelValue */
+  optimize: []
 }>()
 
 const { t } = useI18n()

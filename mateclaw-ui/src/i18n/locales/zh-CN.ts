@@ -534,6 +534,8 @@ export default {
     thinkingOn: '深度思考已开启',
     thinkingOff: '点击开启深度思考',
     thinkingUnsupported: '当前模型不支持深度思考',
+    promptOptimize: '提示词优化',
+    promptOptimizeFailed: '提示词优化失败，请重试',
     slashMenuTitle: '技能',
     slashMenuHint: '↑↓ 选择 · Enter 确认 · Esc 关闭',
     slashMenuLoading: '加载技能中…',

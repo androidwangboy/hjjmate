@@ -13,6 +13,7 @@ import vip.mate.agent.AgentService;
 import vip.mate.agent.AgentState;
 import vip.mate.agent.model.AgentEntity;
 import vip.mate.agent.service.AgentGenerationService;
+import vip.mate.agent.service.PromptOptimizeService;
 import vip.mate.agent.vo.AgentCapabilitiesVO;
 import vip.mate.agent.vo.AgentDraftVO;
 import vip.mate.audit.service.AuditEventService;
@@ -58,6 +59,7 @@ public class AgentController {
     private final ModelCapabilityService modelCapabilityService;
     private final SystemSettingService systemSettingService;
     private final AgentGenerationService agentGenerationService;
+    private final PromptOptimizeService promptOptimizeService;
     private final ObjectMapper objectMapper;
     private final ExecutorService sseExecutor = Executors.newCachedThreadPool();
 
@@ -298,10 +300,38 @@ public class AgentController {
         return R.ok(agentService.getAgentState(id));
     }
 
+    @Operation(summary = "提示词优化：把输入框草稿改写为更清晰的提示词（注入当前专家人设，用系统默认模型）")
+    @PostMapping("/{id}/prompt/optimize")
+    @RequireWorkspaceRole("viewer")
+    public R<Map<String, Object>> optimizePrompt(
+            @PathVariable Long id,
+            @RequestBody PromptOptimizeRequest request,
+            @RequestHeader(value = "X-Workspace-Id", required = false) Long workspaceId) {
+        if (request == null || request.getText() == null || request.getText().isBlank()) {
+            throw new MateClawException("err.common.invalid_param", 400, "text is required");
+        }
+        AgentEntity agent = agentService.getAgent(id);
+        verifyResourceWorkspace(agent != null ? agent.getWorkspaceId() : null, workspaceId);
+        verifyAgentEnabled(agent);
+        try {
+            String optimized = promptOptimizeService.optimize(request.getText(), agent);
+            return R.ok(Map.of("optimized", optimized, "agentId", id));
+        } catch (IllegalStateException e) {
+            // No default model / provider failure — mirror the 503 contract
+            // of workflow /draft/generate so the UI can tell the two apart.
+            throw new MateClawException("err.prompt.optimize_unavailable", 503, e.getMessage());
+        }
+    }
+
     @lombok.Data
     public static class ChatRequest {
         private String message;
         private String conversationId = "default";
+    }
+
+    @lombok.Data
+    public static class PromptOptimizeRequest {
+        private String text;
     }
 
     @lombok.Data

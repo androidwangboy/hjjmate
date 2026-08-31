@@ -270,7 +270,9 @@
         :enable-talk-mode="!!selectedAgentId"
         :thinking-enabled="thinkingEnabled"
         :thinking-supported="currentModelSupportsThinking"
+        :optimizing="optimizingPrompt"
         @toggle-thinking="thinkingEnabled = !thinkingEnabled"
+        @optimize="handleOptimizePrompt"
         @talk="showTalkMode = true"
       />
     </div>
@@ -415,6 +417,9 @@ const conversations = ref<Conversation[]>([])
 const selectedAgentId = ref<string | number>('')
 const currentConversationId = ref<string>('')
 const inputText = ref('')
+/** True while the "提示词优化" request is in flight — spinner on the
+ *  ChatInput button and a guard against double submissions. */
+const optimizingPrompt = ref(false)
 const modelSaving = ref(false)
 // Monotonic counter for in-flight setModel PUTs. The finally handler
 // only clears modelSaving when its captured seq is still the latest, so a
@@ -2261,6 +2266,29 @@ function resetStreamingState() {
 }
 
 // ============ 附件处理 ============
+/**
+ * 提示词优化：把当前输入框草稿发给后端（系统默认模型 + 当前专家人设），
+ * 成功后直接回填输入框，用户可继续编辑再发送。失败保留原文并提示。
+ */
+async function handleOptimizePrompt() {
+  const draft = inputText.value.trim()
+  if (!draft || optimizingPrompt.value || !selectedAgentId.value) return
+  optimizingPrompt.value = true
+  try {
+    const res: any = await agentApi.optimizePrompt(selectedAgentId.value, draft)
+    const optimized = res?.data?.optimized
+    if (optimized && optimized.trim()) {
+      inputText.value = optimized
+    } else {
+      ElMessage.error(t('chat.promptOptimizeFailed'))
+    }
+  } catch (e: any) {
+    ElMessage.error(`${t('chat.promptOptimizeFailed')}${e?.message ? ': ' + e.message : ''}`)
+  } finally {
+    optimizingPrompt.value = false
+  }
+}
+
 async function handleFileSelect(files: File[]) {
   if (workerConversationReadOnly.value) return
   if (!currentConversationId.value) {

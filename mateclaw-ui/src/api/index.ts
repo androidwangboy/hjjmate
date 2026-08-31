@@ -143,6 +143,14 @@ export const agentApi = {
   delete: (id: string | number) => http.delete(`/agents/${id}`),
   chat: (id: string | number, data: any) => http.post(`/agents/${id}/chat`, data),
   execute: (id: string | number, data: any) => http.post(`/agents/${id}/execute`, data),
+  /**
+   * Prompt optimization ("提示词优化" in the chat input box): rewrites the
+   * user's draft with the system default model, targeting this agent's
+   * persona. Returns `{ optimized: string, agentId: number }`; the caller
+   * replaces the input box content with `optimized`.
+   */
+  optimizePrompt: (id: string | number, text: string) =>
+    http.post(`/agents/${id}/prompt/optimize`, { text }),
   getState: (id: string | number) => http.get(`/agents/${id}/state`),
   /** Lightweight capability snapshot used by the chat console attachment hint. */
   getCapabilities: (id: string | number) => http.get(`/agents/${id}/capabilities`),

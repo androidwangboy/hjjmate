@@ -534,6 +534,8 @@ export default {
     thinkingOn: 'Deep thinking enabled',
     thinkingOff: 'Click to enable deep thinking',
     thinkingUnsupported: 'Current model does not support deep thinking',
+    promptOptimize: 'Optimize prompt',
+    promptOptimizeFailed: 'Prompt optimization failed, please retry',
     slashMenuTitle: 'Skills',
     slashMenuHint: '↑↓ navigate · Enter select · Esc dismiss',
     slashMenuLoading: 'Loading skills…',

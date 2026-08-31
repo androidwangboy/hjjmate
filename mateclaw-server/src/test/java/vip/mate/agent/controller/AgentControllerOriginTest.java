@@ -9,6 +9,7 @@ import vip.mate.agent.AgentService;
 import vip.mate.agent.context.ChatOrigin;
 import vip.mate.agent.model.AgentEntity;
 import vip.mate.agent.service.AgentGenerationService;
+import vip.mate.agent.service.PromptOptimizeService;
 import vip.mate.audit.service.AuditEventService;
 import vip.mate.auth.service.AuthService;
 import vip.mate.llm.service.ModelCapabilityService;
@@ -47,6 +48,7 @@ class AgentControllerOriginTest {
                 mock(AuditEventService.class), mock(AuthService.class), mock(WorkspaceService.class),
                 mock(ModelConfigService.class), mock(ModelCapabilityService.class),
                 mock(SystemSettingService.class), mock(AgentGenerationService.class),
+                mock(PromptOptimizeService.class),
                 new ObjectMapper());
         AgentEntity agent = new AgentEntity();
         agent.setId(AGENT_ID);
