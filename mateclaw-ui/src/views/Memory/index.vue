@@ -244,7 +244,9 @@ function fmtTime(iso: string) {
 
 <style scoped>
 /* ========== Shell ========== */
-.memory-frame { max-width: 1200px; }
+/* No max-width on the frame: every other mc-page-frame page lets the
+   surface fill the shell width. The previous `max-width: 1200px` without
+   centering pinned the layout left and left a large void on wide screens. */
 .memory-layout {
   display: flex;
   min-height: calc(100vh - 120px);

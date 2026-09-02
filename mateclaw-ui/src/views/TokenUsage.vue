@@ -21,11 +21,8 @@
               size="default"
             />
           </div>
-          <button class="action-btn" :disabled="loading" @click="fetchData">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="23 4 23 10 17 10"/>
-              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-            </svg>
+          <button class="btn-secondary" :disabled="loading" @click="fetchData">
+            <el-icon :size="14" :class="{ spin: loading }"><Refresh /></el-icon>
             {{ t('tokenUsage.refresh') }}
           </button>
         </div>
@@ -40,7 +37,7 @@
         <div v-else-if="error" class="empty-state">
           <span class="empty-icon">⚠️</span>
           <p>{{ error }}</p>
-          <button class="action-btn" @click="fetchData">{{ t('tokenUsage.refresh') }}</button>
+          <button class="btn-secondary" @click="fetchData">{{ t('tokenUsage.refresh') }}</button>
         </div>
 
         <template v-else-if="data">
@@ -134,6 +131,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { Refresh } from '@element-plus/icons-vue'
 import { mcToast } from '@/composables/useMcToast'
 import { tokenUsageApi } from '@/api/index'
 import type { TokenUsageSummary } from '@/types/tokenUsage'
@@ -257,29 +255,31 @@ onMounted(fetchData)
   flex-wrap: wrap;
 }
 
-.action-btn {
+.btn-secondary {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 16px;
+  padding: 8px 16px;
   background: var(--mc-bg-elevated);
   border: 1px solid var(--mc-border);
-  border-radius: 10px;
+  border-radius: 6px;
   color: var(--mc-text-primary);
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13px;
   cursor: pointer;
   transition: all 0.15s;
-  white-space: nowrap;
 }
 
-.action-btn:hover {
-  background: var(--mc-bg-sunken);
+.btn-secondary:hover {
+  background: var(--mc-bg-hover);
 }
 
-.action-btn:disabled {
+.btn-secondary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.spin {
+  animation: spin 0.8s linear infinite;
 }
 
 .summary-cards {
@@ -460,7 +460,7 @@ onMounted(fetchData)
   .date-range :deep(.el-date-editor) {
     width: 100%;
   }
-  .action-btn {
+  .btn-secondary {
     width: 100%;
     justify-content: center;
   }

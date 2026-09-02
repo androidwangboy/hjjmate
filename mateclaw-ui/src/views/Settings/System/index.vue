@@ -165,7 +165,7 @@
           <!-- Plugin-provided entry: no form here, point to the plugin page instead -->
           <p v-if="!entry.builtin" class="setting-hint">
             {{ t('settings.searchPluginManaged', { plugin: entry.pluginName }) }}
-            <router-link to="/plugins">{{ t('settings.searchGoToPlugins') }}</router-link>
+            <router-link to="/settings/plugins">{{ t('settings.searchGoToPlugins') }}</router-link>
           </p>
 
           <!-- Built-in providers: same fields/logic as before, keyed by id -->

@@ -144,12 +144,8 @@ const router = createRouter({
           component: () => import('@/views/SkillTemplates.vue'),
           meta: { title: 'Skill Templates', requiredCapability: 'manage:skills' },
         },
-        {
-          path: 'plugins',
-          name: 'Plugins',
-          component: () => import('@/views/Plugins.vue'),
-          meta: { title: 'Plugins', requiredCapability: 'manage:settings' },
-        },
+        // 插件入口已降级到 Settings ▸ 插件 (对齐 RFC-090 对 Tools 的处理)，
+        // 旧路径 /plugins 由下方 redirect 兼容
         // ==================== Settings (absorbs advanced pages) ====================
         {
           path: 'settings',
@@ -267,6 +263,12 @@ const router = createRouter({
               meta: { title: 'Settings - Tools Catalog', requiredCapability: 'manage:settings' },
             },
             {
+              path: 'plugins',
+              name: 'SettingsPlugins',
+              component: () => import('@/views/Plugins.vue'),
+              meta: { title: 'Settings - Plugins', requiredCapability: 'manage:settings' },
+            },
+            {
               path: 'proxy',
               name: 'SettingsProxy',
               component: () => import('@/views/Settings/Proxy/index.vue'),
@@ -374,6 +376,8 @@ const router = createRouter({
         { path: 'token-usage', redirect: '/settings/token-usage' },
         // RFC-090 Phase 1: Tools 顶层降级到 Settings
         { path: 'tools', redirect: '/settings/tools' },
+        // 插件顶层降级到 Settings（对齐 Tools 先例，兼容旧书签/深链）
+        { path: 'plugins', redirect: '/settings/plugins' },
       ],
     },
     {
