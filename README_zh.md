@@ -1,48 +1,51 @@
 <div align="center">
 
 <p align="center">
-  <img src="mateclaw-ui/public/logo/mateclaw_logo_s.png" alt="MateClaw Logo" width="120">
+  <img src="mateclaw-ui/public/logo/hjjmate_logo.png" alt="HjjMate Logo" width="120">
 </p>
 
-# 太一（MateClaw）
+# HjjMate
 
 <p align="center"><b>你的超级大脑</b></p>
 
-<p align="center"><sub><b>Agent Harness · Spring Boot 内核 · 一个 JAR 交付</b></sub></p>
+<p align="center"><sub><b>可插拔 Agent Runtime · 原生 + DSH · Spring Boot 内核 · 一个 JAR 交付</b></sub></p>
 
-[![GitHub 仓库](https://img.shields.io/badge/GitHub-仓库-black.svg?logo=github)](https://github.com/mateaix/mateclaw)
+[![GitHub 仓库](https://img.shields.io/badge/GitHub-仓库-black.svg?logo=github)](https://github.com/androidwangboy/hjjmate)
 [![文档](https://img.shields.io/badge/文档-在线-green.svg?logo=readthedocs&label=Docs)](https://claw.mate.vip/docs)
 [![在线演示](https://img.shields.io/badge/演示-在线-orange.svg?logo=vercel&label=Demo)](https://claw-demo.mate.vip)
-[![官网](https://img.shields.io/badge/官网-claw.mate.vip-blue.svg?logo=googlechrome&label=Site)](https://claw.mate.vip)
 [![Java 版本](https://img.shields.io/badge/Java-21+-blue.svg?logo=openjdk&label=Java)](https://adoptium.net/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5-brightgreen.svg?logo=springboot)](https://spring.io/projects/spring-boot)
 [![Vue](https://img.shields.io/badge/Vue-3-4FC08D.svg?logo=vuedotjs)](https://vuejs.org/)
-[![最后提交](https://img.shields.io/github/last-commit/mateaix/mateclaw)](https://github.com/mateaix/mateclaw)
+[![最后提交](https://img.shields.io/github/last-commit/androidwangboy/hjjmate)](https://github.com/androidwangboy/hjjmate)
 [![许可证](https://img.shields.io/badge/license-Apache--2.0-red.svg?logo=opensourceinitiative&label=License)](LICENSE)
 
-[[官网](https://claw.mate.vip)] [[在线演示](https://claw-demo.mate.vip)] [[文档](https://claw.mate.vip/docs)] [[English](README.md)]
+[[文档](https://claw.mate.vip/docs)] [[在线演示](https://claw-demo.mate.vip)] [[English](README.md)]
 
 </div>
 
 <p align="center">
-  <img src="assets/images/preview.png" alt="MateClaw 预览" width="800">
+  <img src="assets/images/preview.png" alt="HjjMate 预览" width="800">
 </p>
 
 ---
 
-> **最新稳定版：v2.1.0 —— Team Run、Skill 自进化闭环与可回放执行。** 一次团队请求现在以一个持久化 `runId` 贯穿 Chat、Agents 与 Teams；技能可在显式开关和工作空间隔离下发现重复请求、晋升并从快照恢复；推理、工具调用、观察与回答可按执行顺序导出。详见 [v2.1.0 更新记录](https://claw.mate.vip/docs/zh/releases/2.1.0)。
+> **HjjMate 是开源项目 [MateClaw（太一）](https://github.com/mateaix/mateclaw) 的医院私有化发行版。** 面向医院内网自部署定制：品牌与登录界面按医院场景调整，开箱默认内置「医院规章制度专家」，业务数据源在 MySQL / PostgreSQL 之外新增 **Oracle（11g / 12c / 19c）** 支持，聊天输入框一键**提示词优化**。作为一个受治理的 Agent 平台，上游的全部核心能力原样保留。
 
 ---
 
-> **别的 AI 助手是给一个人用的。MateClaw 是公司允许部署的那一个。**
+> **最新稳定版：v2.2.0 —— 可插拔、可恢复的 Agent Runtime。** 数字专家现在可以选择 HjjMate 原生 StateGraph 引擎或受管理的 DeepSeek Harness（DSH）运行时，同时复用同一套会话、策略、工具、持久化与可观测面；Persistent Goal 可跨有界回合和后端重启继续，A2A 则让受治理的专家跨系统互联。详见 [v2.2.0 更新记录](https://claw.mate.vip/docs/zh/releases/2.2.0)。
+
+---
+
+> **别的 AI 助手是给一个人用的。HjjMate 是公司允许部署的那一个。**
 >
-> 多用户工作空间。敏感操作走审批。完整审计日志。Spring Boot Actuator 健康监控。单个渠道挂掉不影响其他渠道的错误隔离。一个 JAR 包跑在自己的环境里；持久化数据由你掌控，任务所需内容只会发送到你主动配置的模型、渠道或工具服务。
+> 多用户工作空间。敏感操作走审批。完整审计日志。Spring Boot Actuator 健康监控。单个渠道挂掉不影响其他渠道的错误隔离。一个 JAR 包跑在自己的环境里；持久化数据由你掌控，任务所需内容只会发送到你主动配置的模型、渠道或工具服务——这正是医院内网最需要的形态。
 >
-> **底下是个真 agent harness。** ReAct + Plan-and-Execute 跑在 StateGraph 运行时上——不是一次 RAG 调用披件外套。工具 · 技能 · MCP · ACP 收敛进同一个注册表，每位专家独立绑定。敏感工具调用走可审计的审批闸门。多厂商故障转移让循环在某家供应商挂掉时也不停。
+> **底下是一套真正的 Agent Runtime。** 专家不再焊死在一套推理循环上：可以用原生 StateGraph 运行 ReAct、Plan-and-Execute、Goal 与 Team Run，也可以通过认证 JSON-RPC 把 DeepSeek Harness 作为受管理的外部循环。两条路径最终进入同一套会话、工作空间边界、Tool Guard、事件投影与生命周期控制。
 
 大多数 AI 工具一到厂商抽风那天就两手一摊。关一次标签页就忘了你是谁。给你一个聊天框，就敢叫产品。
 
-**MateClaw 是完整的一整套。** 一次部署——推理、知识、记忆、工具、多渠道入口，从第一天就一起设计，不是事后拼接。主模型不可用时，系统会按优先级改由下一家健康供应商重新完成当前请求。
+**HjjMate 是完整的一整套。** 一次部署——推理、知识、记忆、工具、多渠道入口，从第一天就一起设计，不是事后拼接。主模型不可用时，系统会按优先级改由下一家健康供应商重新完成当前请求。
 
 ---
 
@@ -52,7 +55,7 @@
 
 Key 过期。厂商返回 401。网络抖动。配额耗尽。
 
-别的工具丢你一张红色错误卡。MateClaw 会按配置顺序尝试下一家健康供应商——DashScope、OpenAI、Anthropic、Gemini、DeepSeek、Kimi、Ollama、LM Studio、MLX 等内置或 OpenAI 兼容供应商——尽可能恢复当前请求；仅当可用链路全部失败时才返回错误。内置的 **Provider Health Tracker** 会把连续失败的供应商放进冷却窗口，避免每一轮对话都白白撞壁。
+别的工具丢你一张红色错误卡。HjjMate 会按配置顺序尝试下一家健康供应商——DashScope、OpenAI、Anthropic、Gemini、DeepSeek、Kimi、Ollama、LM Studio、MLX 等内置或 OpenAI 兼容供应商——尽可能恢复当前请求；仅当可用链路全部失败时才返回错误。内置的 **Provider Health Tracker** 会把连续失败的供应商放进冷却窗口，避免每一轮对话都白白撞壁。
 
 你不用写重试脚本。在 **设置 → 模型** 里把供应商拖成你想要的优先顺序，健康面板实时亮起一排绿点——请求绕着故障流过去。
 
@@ -60,7 +63,7 @@ Key 过期。厂商返回 401。网络抖动。配额耗尽。
 
 上传 PDF、一批 markdown、抓下来的网页——原始材料进去。
 
-MateClaw 的 **LLM Wiki** 把它消化成结构化页面，页面之间自己长出 `[[链接]]`，生成内容保留可追踪引用。点开引用抽屉，就能看到对应的原始 chunk；页面与回答中的引用可以回到来源核对。
+HjjMate 的 **LLM Wiki** 把它消化成结构化页面，页面之间自己长出 `[[链接]]`，生成内容保留可追踪引用。点开引用抽屉，就能看到对应的原始 chunk；页面与回答中的引用可以回到来源核对。在医院版里，这层知识正是内置制度专家回答问题的地基。
 
 这是**仓库**和**图书馆**的区别。
 
@@ -68,7 +71,7 @@ MateClaw 的 **LLM Wiki** 把它消化成结构化页面，页面之间自己长
 
 | 入口 | 它是什么 |
 |---|---|
-| **Web 控制台** | 完整的管理后台——数字专家、模型、技能、知识、安全、定时任务、**运行时控制台**（看见每位专家正在干什么、一键回收） |
+| **Web 控制台** | 完整的管理后台——数字专家、模型、技能、知识、安全、**调度中心**（定时任务 + 事件触发器 + 运行历史收进同一页）、**运行时控制台**（看见每位专家正在干什么、一键回收） |
 | **桌面端** | Electron + 内嵌 JRE 21，双击即用，无需装 Java |
 | **网页嵌入式聊天** | 一个 `<script>` 标签就能嵌进任何网站 |
 | **IM 渠道** | 钉钉 · 飞书 · 企业微信 · 微信 · Telegram · Discord · QQ · Slack |
@@ -83,10 +86,18 @@ MateClaw 的 **LLM Wiki** 把它消化成结构化页面，页面之间自己长
 ## 盒子里有什么
 
 ### 数字专家，不是聊天机器人
-你雇佣专家，不是开聊天框。每位有**角色**、**目标**、**背景故事**，像素艺术头像与专属配色——6 个内置模板（通用助手 · 产品助理 · 研究分析师 · 客服助理 · 数据分析师 · 代码审查员）开箱可用。**ReAct** 做迭代推理，**Plan-and-Execute** 做复杂多步任务，专家之间可以并行委派。动态上下文裁剪、智能截断、僵死流清理——让长对话真正能用的那些“不起眼”的基础设施。
+你雇佣专家，不是开聊天框。每位有**角色**、**目标**、**背景故事**、运行时、像素艺术头像与专属配色——开箱预置通用助手 · 任务规划师 · 推理分析师，外加医院规章制度专家、内容工作室这类场景专家。**ReAct** 做迭代推理，**Plan-and-Execute** 做复杂多步任务，专家之间可以并行委派。每位专家还有自己的**上下文工作台**（`/agents/:id/context`）——围绕 `AGENTS.md` / `SOUL.md` / `MEMORY.md` 等提示文件的单人编辑间。即使更换执行引擎，专家身份和治理边界仍保持不变。
+
+### Agent Runtime：原生或 DSH（2.2.0+）
+`AgentRuntimeProvider` contract 把专家与实际执行回合的引擎分开。**原生运行时**在 HjjMate 内运行 ReAct、Plan-and-Execute、Persistent Goal 与 Team Run；**DSH 运行时**把 `dsh-jsonrpc-agent` 作为认证子进程管理，并将思考、文本、工具调用、用量、完成与取消统一映射为 runtime event。DSH 掌管外部 Agent loop，HjjMate 继续掌管 session、workspace、凭证、工具、审批、消息和 UI 投影。启动前会校验 runtime 可用性与能力；控制台可完成 DSH 的安装、配置、校验、连接测试和启停。[配置 DeepSeek Harness →](https://claw.mate.vip/docs/zh/deepseek-harness)
 
 ### Team Run（2.1.0+）
 一次请求对应一个持久化的 **Team Run**。稳定的 `runId` 串起用户目标、任务 DAG、成员执行、最终汇总与交付物。Chat 是成果交付面，Agents Live 按运行聚合成员并展示实时状态，Teams 管理历史与治理；三处读取同一份服务端投影。成员子会话不再挤进普通会话列表，摘要和文件优先展示，任务、证据、审批与只读成员记录按需下钻。底层继续使用 2.0 的共享任务板，保留依赖编排、并行派发、前置结果传递、执行租约、取消中断和人工审批卡点。
+
+### 医院场景，开箱即用
+- **默认内置「医院规章制度专家」** — 全新安装由种子数据带入，存量数据库通过 `V190` 迁移（H2 / MySQL / Kingbase 各方言）自动注入。它基于院内制度 Wiki 知识库回答员工问题（"年假怎么请"、"院感报告走哪个流程"、"值班补贴标准"）：引用制度全名 + 条款编号 + 版本，检索覆盖不到就明说、绝不编造，同一制度多版本并存时提示确认；临床决策一律拒绝并指引 HIS / 临床路径系统，患者身份信息与薪酬奖惩评价不碰不评。
+- **Oracle 数据源（11g / 12c / 19c）** — ROWNUM 分页、`ALL_*` 数据字典元数据、Service Name 语义 + Owner/Schema 过滤，让 HIS 时代的 Oracle 库和 MySQL / MariaDB / PostgreSQL / ClickHouse 一起接入同一套 SQL 查询工具与技能包。
+- **对话框一键提示词优化** — 发送前由系统默认模型把草稿重写成更清晰、结构更好的提示词，并感知当前专家的人设；草稿不做服务端存储。
 
 ### 知识与记忆
 - **LLM Wiki** — 原始材料消化成有链接、带引用的结构化页面；**热点缓存**自动注入到专家的 system prompt。**加工器引擎**（1.3.0+）把 Wiki 从"搜索索引"升级为"处理流水线"
@@ -94,27 +105,27 @@ MateClaw 的 **LLM Wiki** 把它消化成结构化页面，页面之间自己长
 - **记忆生命周期** — 对话后自动提取 · 定时整理 · Dreaming 工作流。工作流也可以通过 `write_memory` step 直接写进专家的 `MEMORY.md`
 
 ### 技能 · MCP · ACP — 三种"接外部能力"的方式
-- **SKILL.md 技能包** — 一份 manifest + prompt + 工具列表 + **LESSONS.md**。2.1 可通过对话反思与跨会话重复请求挖掘形成可复用改进，并以候选晋升、受约束自动绑定、curator 治理、来源策略、快照和恢复点保证过程可观察、按工作空间隔离且可回滚；所有自动能力均由独立开关控制。另有 8 个起步模板、5 步创作向导和安装前 **Pre-flight 检查**
+- **SKILL.md 技能包** — 一份 manifest + prompt + 工具列表 + **LESSONS.md**。2.1 可通过对话反思与跨会话重复请求挖掘形成可复用改进，并以候选晋升、受约束自动绑定、curator 治理、来源策略、快照和恢复点保证过程可观察、按工作空间隔离且可回滚；所有自动能力均由独立开关控制。另有起步模板、5 步创作向导和安装前 **Pre-flight 检查**
 - **MCP** — stdio / SSE / Streamable HTTP 三种传输，接入任意外部工具服务器。**每位专家独立绑定**（1.3.0+）——一位专家装的工具不会渗到其他人的工具栏里
 - **ACP** — 把 Claude Code、Codex 这种顶级编码 Agent 以"专家"身份接入，桥接成技能卡 + 包装工具
 - **Tool Guard** — RBAC + 审批流 + 文件路径保护。能力必须有边界
 
 ### 业务流程编排（1.3.0+）
 - **工作流（Workflow）** — 把多位专家 + 系统动作（审批 / 渠道分发 / 写记忆）按线性 step DSL 编排成一条可发布、可触发、可重放的业务流程。7 种 step mode（`sequential` / `fan_out` / `collect` / `conditional` / `await_approval` / `dispatch_channel` / `write_memory`）。JSON-first 编辑（Monaco + JSON schema + Pebble 静态检查），或者用一句话生成草稿
-- **触发器（Trigger）** — 把"系统里发生的事"自动接到工作流或专家对话上。6 种 pattern type（`cron` / `webhook` / `channel_message` / `agent_lifecycle` / `content_match` / `workflow_completion`）。事件治理默认开：去重、per-trigger 限速、bot 自循环过滤、A→B→A 递归保护、未知 pattern fail-closed
+- **统一调度中心** — **调度中心**已提升为顶层导航，把定时任务、6 种 pattern 触发器（`cron` / `webhook` / `channel_message` / `agent_lifecycle` / `content_match` / `workflow_completion`）和运行历史收进同一个分页视图。事件治理默认开：去重、per-trigger 限速、bot 自循环过滤、A→B→A 递归保护、未知 pattern fail-closed
 - **Wiki 加工器** — Wiki 不再只是被动检索。用户自定义模板对原料或现有页面跑模板，跨原料 map-reduce 聚合，reverse-citation 绑定到源 chunk，JSON 输出 + 可选 JSON Schema，每个模板独立选模型
 
 ### 你看得见每位专家正在干什么
-**Admin 运行时控制台**（`后台 → 系统 → 运行时`）——谁在跑、跑到哪一步、占多少 token、卡住了一键回收。流式阶段如实区分思考 / 工具 / 回答；每轮推理保留真实发生顺序，界面显示实际耗时，线性 trajectory 导出则按顺序展开推理、调用、观察与回答。SSE 每事件 ID 支持安全重连，Team Run 将成专家作聚合到同一次运行下。
+**Admin 运行时控制台**（`后台 → 系统 → 运行时`）——谁在跑、当前回合由哪个 runtime provider 承载、跑到哪一步、占多少 token，卡住可一键回收。原生与 DSH 事件进入同一套思考 / 工具 / 回答投影，完成、失败、用量和取消保持一致的生命周期语义。SSE 每事件 ID 支持安全重连，Team Run 将成员工作聚合到同一次运行下。
 
 ### 多模态创作
 语音合成 · 语音识别 · 图片 · 音乐 · 视频 · 3D。一等公民，不是附加插件。**多模态旁路**（1.3.0+）让纯文本主模型遇到图片附件时自动调用配置好的视觉模型转描述，主对话保持便宜。**图像编辑**也到位：用 `msg:<id>:<idx>` 引用会话里更早的某张图，让模型改色、改风格。**4 个文档生成工具**（`DocxRenderTool` / `XlsxRenderTool` / `PptxRenderTool` / `PdfRenderTool`）在 JVM 内把 Markdown 直接渲染成 Office 文件——不 fork 子进程、不依赖 npm、不需要装 Office。
 
 ### 内容工作室（1.8.0+）
-一个招牌*场景*，不是工具——预置的「内容工作室」专家把一句话变成可发布成品：选题 → 搜集 → 成文 → 配图 → **去 AI 化** → 排版 → 交付。**微信公众号（公众号）**文章以内联样式 HTML 进入草稿箱，正文图自动上传到微信；**小红书**笔记打包成 ≥3 张竖版 3:4 卡片并在线预览。去 AI 化围绕一个**可度量的 AI 痕迹评分**运行；每次交付都经过合规扫描，并记入按选题指纹去重的**内容日历**。
+一个招牌*场景*，不是工具——预置的「内容工作室」专家把一句话变成可发布成品：选题 → 搜集 → 成文 → 配图 → **去 AI 化** → 排版 → 交付。**微信公众号（公众号）**文章以内联样式 HTML 进入草稿箱，正文图自动上传到微信；**小红书**笔记打包成 ≥3 张竖版 3:4 卡片并在线预览。去 AI 化围绕一个**可度量的 AI 痕迹评分**运行；每次交付都经过合规扫描。（企业场景与内容日历入口在当前版本暂未开放。）
 
 ### 企业就绪
-RBAC + JWT。**Personal Access Token** 给无人值守脚本和 CI 使用。**Webhook 出站 HMAC-SHA-256 签名**。**Cron 分布式锁**避免多实例重复执行。完整审计事件流。Flyway 管理数据库 schema。一个 JAR 交付。开发环境可用 H2；公开 Docker 栈默认使用 PostgreSQL 16，同时保留 MySQL profile，Kingbase 驱动为按需启用。
+RBAC + JWT。**Personal Access Token** 给无人值守脚本和 CI 使用。**Webhook 出站 HMAC-SHA-256 签名**。**Cron 分布式锁**避免多实例重复执行。完整审计事件流。Flyway 管理数据库 schema。一个 JAR 交付。开发环境可用 H2；公开 Docker 栈默认使用 PostgreSQL 16，同时保留 MySQL profile，Kingbase 驱动为按需启用。业务数据源接入：**MySQL · MariaDB · PostgreSQL · ClickHouse · Oracle（11g / 12c / 19c）**。
 
 ---
 
@@ -122,15 +133,15 @@ RBAC + JWT。**Personal Access Token** 给无人值守脚本和 CI 使用。**We
 
 模型供应商会限流，网络会抖动，Key 会过期，服务也可能临时不可用。把所有 AI 能力押在单一供应商上，会让上游故障直接变成自己的业务故障。
 
-当 AI 进入生产环境，稳定的一层不应绑定在一家供应商身上。MateClaw 通过供应商优先级、健康追踪、冷却与故障转移，把这种不确定性收进统一运行时。
+当 AI 进入生产环境，稳定的一层既不应绑定一家模型供应商，也不应绑定一套 Agent loop。HjjMate 用供应商优先级、健康追踪、冷却与故障转移吸收模型侧不确定性，再把原生与外部执行引擎收进同一份受治理的 Agent Runtime contract。
 
-**MateClaw 就是那一层——用 Spring Boot 方式盖的。**
+**HjjMate 就是那一层——用 Spring Boot 方式盖的。**
 
 ---
 
-## 为什么选 MateClaw
+## 为什么选 HjjMate
 
-| | MateClaw | [OpenClaw](https://github.com/openclaw/openclaw) | [Hermes Agent](https://github.com/NousResearch/hermes-agent) | [Claude Code](https://github.com/anthropics/claude-code) | [Cursor](https://cursor.com) |
+| | HjjMate | [OpenClaw](https://github.com/openclaw/openclaw) | [Hermes Agent](https://github.com/NousResearch/hermes-agent) | [Claude Code](https://github.com/anthropics/claude-code) | [Cursor](https://cursor.com) |
 |:---|:---:|:---:|:---:|:---:|:---:|
 | **多厂商失败转移** | **Chain + 健康追踪 + 冷却** | 切换供应商（改配置） | 内置编排重试 | 仅 Anthropic | 单模型 |
 | **知识消化式加工** | **Wiki + 页面级引用溯源** | Canvas + 记忆 | Skills Hub + 记忆 | — | 代码索引 |
@@ -140,9 +151,9 @@ RBAC + JWT。**Personal Access Token** 给无人值守脚本和 CI 使用。**We
 | **技术栈** | **Java（Spring Boot）** | TypeScript | Python | TypeScript | Electron/TS |
 | **许可 / 定价** | **Apache 2.0 · 免费** | MIT · 免费 | MIT · 免费 | 闭源 · $20–200/月 | 闭源 · $0–200/月 |
 
-**OpenClaw 和 Hermes Agent 是优秀的个人 AI 平台**——如果你是一个人、一台笔记本、习惯从 CLI 搭自己的 agent、所有东西都靠手工配置文件调优，选它们没问题。两家的社区规模今天都大于 MateClaw。
+**OpenClaw 和 Hermes Agent 是优秀的个人 AI 平台**——如果你是一个人、一台笔记本、习惯从 CLI 搭自己的 agent、所有东西都靠手工配置文件调优，选它们没问题。两家的社区规模今天都大于 HjjMate。
 
-**MateClaw 是那个给团队用的版本。** 数字专家、模型与工具都纳入权限和工作空间边界。危险动作可暂停等待审批，关键操作进入审计事件流。Admin 运行时控制台集中展示正在执行的专家与供应商状态，卡住时可回收。底座是 Spring Boot，适合并入已有 Java 服务体系。
+**HjjMate 是那个给机构——尤其是医院——用的版本。** 数字专家、模型与工具都纳入权限和工作空间边界。危险动作可暂停等待审批，关键操作进入审计事件流。Admin 运行时控制台集中展示正在执行的专家与供应商状态，卡住时可回收。底座是 Spring Boot，适合并入已有 Java 服务体系，也适合一个数据不能出院的网络。
 
 **同一套"完整一整套"哲学，不同的重心。**
 
@@ -171,7 +182,7 @@ docker compose up -d          # http://localhost:18080
 
 ### 桌面端
 
-从 [GitHub Releases](https://github.com/mateaix/mateclaw/releases) 下载安装包。内嵌 JRE 21，无需额外装 Java。
+从 [GitHub Releases](https://github.com/androidwangboy/hjjmate/releases) 下载安装包。内嵌 JRE 21，无需额外装 Java。
 
 ---
 
@@ -193,8 +204,8 @@ docker compose up -d          # http://localhost:18080
 ## 项目结构
 
 ```
-mateclaw/
-├── mateclaw-server/        Spring Boot 3.5 后端（Spring AI Alibaba · StateGraph 运行时）
+hjjmate/
+├── mateclaw-server/        Spring Boot 3.5 后端（Agent Runtime contract · 原生 StateGraph + DSH）
 ├── mateclaw-ui/            Vue 3 + TypeScript 管理 SPA（构建产物打进后端 JAR）
 ├── mateclaw-desktop/       Electron 桌面端（本地内嵌 / 远程集中双模式）
 ├── mateclaw-webchat/       网页嵌入式聊天组件（UMD / ES bundle）
@@ -206,17 +217,20 @@ mateclaw/
 └── .env.example
 ```
 
-桌面端安装包通过 [GitHub Releases](https://github.com/mateaix/mateclaw/releases) 分发，内嵌 JRE 21——无需安装 Java。
+模块目录沿用上游 `mateclaw-*` 命名；产品名、品牌与默认内容均为 **HjjMate**。
+
+桌面端安装包通过 [GitHub Releases](https://github.com/androidwangboy/hjjmate/releases) 分发，内嵌 JRE 21——无需安装 Java。
 
 ## 技术栈
 
 | 层次 | 技术 |
 |---|---|
 | 后端 | Spring Boot 3.5 · Spring AI Alibaba 1.1 · MyBatis Plus · Flyway |
-| 数字专家运行时 | StateGraph · ReAct + Plan-Execute · 角色 / 目标 / 背景故事 · Skill 自进化闭环 · Team Run + 共享任务板（2.1.0+）|
-| 业务编排 | 工作流（7 step mode · Pebble DSL）· 触发器（6 pattern type · 事件治理）· Wiki 加工器（1.3.0+）|
-| 能力扩展 | SKILL.md 包 · MCP（stdio / SSE / HTTP · per-agent 绑定）· ACP 桥接（Claude Code / Codex） |
-| 数据库 | H2（开发）· PostgreSQL 16（Docker 默认）· MySQL 8.0+（支持）· Kingbase（按需驱动）|
+| Agent 运行时 | `AgentRuntimeProvider` contract · 原生 StateGraph（ReAct + Plan-Execute）· 受管理 DSH JSON-RPC 运行时 · 统一事件 / 生命周期 / 用量 · Tool Guard |
+| 业务编排 | 工作流（7 step mode · Pebble DSL）· 统一调度中心（定时任务 + 6 种触发 pattern + 运行历史）· Wiki 加工器（1.3.0+） |
+| 能力扩展 | SKILL.md 包 · MCP（stdio / SSE / HTTP · 每专家绑定）· ACP 桥接（Claude Code / Codex） |
+| 应用数据库 | H2（开发）· PostgreSQL 16（Docker 默认）· MySQL 8.0+（支持）· Kingbase（按需驱动） |
+| 业务数据源 | MySQL · MariaDB · PostgreSQL · ClickHouse · **Oracle 11g / 12c / 19c**（ROWNUM 分页 · `ALL_*` 元数据） |
 | 认证 | Spring Security + JWT |
 | 前端 | Vue 3 · TypeScript · Vite · Element Plus · TailwindCSS 4 |
 | 桌面端 | Electron · electron-updater · 内嵌 JRE 21 |
@@ -226,9 +240,29 @@ mateclaw/
 
 ## 文档
 
-完整文档 **[claw.mate.vip/docs](https://claw.mate.vip/docs)**——安装、架构、各子系统、API 参考。
+完整帮助文档随服务端打包、在控制台内可读；在线文档见 **[claw.mate.vip/docs](https://claw.mate.vip/docs)**——安装、架构、各子系统、API 参考。
 
 ## 路线图
+
+**HjjMate 医院版（2026-08 ~ 2026-09 · 基于 v2.2.0）** —— 这个发行版在上游 MateClaw 之上改了什么：
+
+- **品牌化** — 产品名改为 HjjMate，logo、favicon、登录页与桌面端资源全部更换
+- **「员工」→「专家」** — 数字员工概念全局更名为数字专家，覆盖控制台、提示词、技能包与全部内置帮助文档（中英双语）
+- **默认注入医院规章制度专家** — 新装由种子数据带入，存量库经 `V190` 迁移在 H2 / MySQL / Kingbase 上自动注入
+- **Oracle 数据源** — 11g / 12c / 19c 端到端支持：连接管理、ROWNUM 分页、`ALL_*` 元数据、SQL 校验、前端与技能包
+- **对话提示词优化** — 发送前一键重写草稿为更优提示词，感知当前专家人设，不做服务端存储
+- **控制台重组** — 统一调度中心提升为顶层导航；专家上下文迁入专家工作台；插件降级进设置；企业场景与内容日历入口暂时关闭
+- **体验打磨** — 全局加载进度动效、技能管理页样式修正、登录页改版、移除 Ctrl+K / Ctrl+L 快捷键
+
+**v2.2.0（2026-08-29 发布）** —— 从一套内置推理循环走向**可插拔、可恢复的 Agent Runtime**：
+
+- **Runtime contract** —— provider registry、session factory、能力校验、统一事件流、生命周期、用量与 UI 投影，让专家身份与执行引擎解耦
+- **DeepSeek Harness runtime** —— 受管理的安装与配置、认证 JSON-RPC 进程桥、Cordis composition、可取消流、子进程环境隔离，以及由宿主治理的工具派发
+- **持久长任务** —— 有界 Goal segment、持久化 continuation / 输入队列、attempt、冷却、重试、租约、重启恢复和显式暂停 / 恢复语义
+- **Agent 互操作** —— A2A 入站与出站、Agent Card、JSON-RPC / SSE task、认证、幂等与受控网络边界
+- **Runtime 加固** —— 工作空间归属进一步收口，Team Run 恢复和交付门更可靠，长文本及审批、停止、恢复期间的输入处理更一致
+
+完整内容见 [v2.2.0 更新记录](https://claw.mate.vip/docs/zh/releases/2.2.0)。
 
 **v2.1.0（2026-08-15 发布）** —— 从“一块摆满任务的看板”到**一次可治理的团队运行**：
 
@@ -253,7 +287,7 @@ mateclaw/
 
 完整故事见 [v2.0.0 release notes](https://claw.mate.vip/docs/zh/releases/2.0.0)。
 
-**v1.8.0（2026-07-12 发布）** — 专家*转向对外、干完一整件活*:**内容工作室**——第一个完全用 MateClaw 自身原子能力端到端搭起来的招牌场景:
+**v1.8.0（2026-07-12 发布）** — 专家*转向对外、干完一整件活*：**内容工作室**——第一个完全用 HjjMate 自身原子能力端到端搭起来的招牌场景：
 
 - **内容工作室——一句话到可发布成品** — 预置「内容工作室」专家跑通 选题 → 搜集 → 成文 → 配图 → 去 AI 化 → 排版 → 交付。**微信公众号(公众号)** 图文文章(内联样式 HTML → 草稿箱)与 **小红书** 以图为主图文笔记(≥3 张竖版 3:4 卡片 + 在线预览)首批一等公民
 - **可度量的去 AI 化** — 启发式 AI 痕迹评分(无 LLM、确定性)驱动 检测 → 改写 → 复检 闭环,硬上限 3 轮
@@ -288,19 +322,19 @@ mateclaw/
 ## 参与贡献
 
 ```bash
-git clone https://github.com/mateaix/mateclaw.git
-cd mateclaw
+git clone https://github.com/androidwangboy/hjjmate.git
+cd hjjmate
 cd mateclaw-server && mvn clean compile
 cd ../mateclaw-ui && npm install && npm run dev
 ```
 
 ---
 
-## 为什么叫这个名字
+## 关于名字
 
-**Mate** 是陪伴。**Claw** 是能力。
+**Mate** 是陪伴，**Claw** 是能力——这是上游 **MateClaw（太一）** 名字的由来。
 
-一个陪在你身边的系统——也是一个真的能抓住工作、把它推向完成的系统。
+**HjjMate** 把同一套引擎带进医院：陪在员工身边，抓住工作、把它推向完成——在一个数据不出院的网络里。
 
 ## 许可证
 
