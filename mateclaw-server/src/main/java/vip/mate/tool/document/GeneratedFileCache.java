@@ -188,7 +188,12 @@ public class GeneratedFileCache {
      *
      * <p>Absolute links are what make a download survive leaving the web UI —
      * a model that echoes the URL as plain text, a user copying the link, or an
-     * IM channel without a dedicated attachment rewriter.
+     * IM channel without a dedicated attachment rewriter. When
+     * {@code mateclaw.server.public-base-url} is configured it MUST include the
+     * deployment context path ({@code server.servlet.context-path}, e.g. …/hjjmate);
+     * the request-derived bases already carry that segment. The relative-path
+     * fallback is resolved by the web UI against its own origin (which serves
+     * under /hjjmate).
      */
     public String downloadUrl(String id) {
         return downloadUrl(id, null);
@@ -205,7 +210,10 @@ public class GeneratedFileCache {
     /** Resolve the base URL prefix (no trailing slash), or "" for a relative link. */
     private String resolveBase(@Nullable ToolContext ctx) {
         // 1. Operator-configured public URL wins — it's the canonical external
-        //    host (correct behind a reverse proxy / for IM channels).
+        //    host (correct behind a reverse proxy / for IM channels). Under
+        //    server.servlet.context-path=/hjjmate the value must also carry the
+        //    /hjjmate segment (e.g. https://mateclaw.example.com/hjjmate), since
+        //    branches 2 and 3 below already include it.
         if (publicBaseUrl != null && !publicBaseUrl.isBlank()) {
             return stripTrailingSlash(publicBaseUrl.trim());
         }

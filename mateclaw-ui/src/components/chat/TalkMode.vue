@@ -144,7 +144,10 @@ onBeforeUnmount(() => {
 function connectWebSocket() {
   const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
   const token = localStorage.getItem('token')
-  const wsUrl = `${protocol}//${location.host}/api/v1/talk/ws${token ? '?token=' + token : ''}`
+  // STT WebSocket 挂载于后端 context-path 之下，需要显式带上 /hjjmate 前缀；
+  // 根路径部署（Vite base=/）时 ctxPath 为空，行为不变。
+  const ctxPath = import.meta.env.BASE_URL.length > 1 ? import.meta.env.BASE_URL.replace(/\/+$/, '') : ''
+  const wsUrl = `${protocol}//${location.host}${ctxPath}/api/v1/talk/ws${token ? '?token=' + token : ''}`
 
   state.value = 'connecting'
   ws = new WebSocket(wsUrl)

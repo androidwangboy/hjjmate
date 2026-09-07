@@ -25,10 +25,13 @@ import { fetchAuthenticatedBlob } from '@/api/index'
 import { mcToast } from '@/composables/useMcToast'
 import { previewKindOf } from '@/components/chat/preview/previewKind'
 import { openFilePreview } from '@/components/chat/preview/previewBus'
+import { stripCtx } from '@/utils/appPaths'
 
 // Matches every backend-served file path: in-memory generated files
 // (`/api/v1/files/generated/<id>`) and conversation-scoped media/attachments
-// (`/api/v1/files/...`, `/api/v1/chat/files/...`).
+// (`/api/v1/files/...`, `/api/v1/chat/files/...`). Since the SPA lives under
+// /hjjmate, the anchor pathname may carry that context prefix — strip it
+// before matching (the fetch below keeps the full prefixed path).
 const FILE_PATH_RE = /^\/api\/v1\/(files|chat\/files)\//
 
 function filenameFor(anchor: HTMLAnchorElement, pathname: string): string {
@@ -92,7 +95,7 @@ export function useGlobalFileDownloadClick() {
     } catch {
       return
     }
-    if (!FILE_PATH_RE.test(url.pathname)) return
+    if (!FILE_PATH_RE.test(stripCtx(url.pathname))) return
 
     // From here the link is ours: never let it become a full-page navigation.
     e.preventDefault()

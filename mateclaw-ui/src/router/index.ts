@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { withCtx } from '@/utils/appPaths'
 import { ElMessage } from 'element-plus'
 import type { Capability } from '@/composables/capabilities'
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore'
@@ -487,7 +488,7 @@ router.onError((error, to) => {
     return
   }
   sessionStorage.setItem(CHUNK_RELOAD_GUARD_KEY, String(Date.now()))
-  window.location.assign(to.fullPath)
+  window.location.assign(withCtx(to.fullPath))
 })
 
 /**

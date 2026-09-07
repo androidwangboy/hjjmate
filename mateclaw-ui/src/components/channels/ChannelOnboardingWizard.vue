@@ -306,6 +306,7 @@ import { mcToast } from '@/composables/useMcToast'
 import { CHANNEL_FIELD_DEFS } from '@/types'
 import type { Agent, Channel, ChannelFieldDef } from '@/types'
 import { channelApi } from '@/api'
+import { withCtx } from '@/utils/appPaths'
 import {
   buildConfigJson,
   defaultAccessControl,
@@ -386,7 +387,7 @@ interface VerifyResult {
 // ==================== Derived ====================
 
 const channelType = computed(() => props.channelType)
-const iconPath = computed(() => `/icons/channels/${channelType.value}.svg`)
+const iconPath = computed(() => withCtx(`/icons/channels/${channelType.value}.svg`))
 const serviceName = computed(() => translateServiceName(channelType.value))
 const subtitle = computed(() =>
   t('channels.wizard.configureSubtitle', { service: serviceName.value })

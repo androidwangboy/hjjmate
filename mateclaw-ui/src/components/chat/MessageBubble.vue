@@ -21,7 +21,7 @@
           :conversation-id="message.conversationId"
           :show-followup-mark="isFollowupTurn"
         >
-          <img src="/logo/hjjmate_logo.png" alt="" class="avatar-logo" />
+          <img :src="appLogo" alt="" class="avatar-logo" />
         </GoalAvatarRing>
         <span v-else>{{ avatarIcon }}</span>
       </slot>
@@ -564,6 +564,7 @@
 <script setup lang="ts">
 import { computed, ref, watch, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { appLogo } from '@/utils/appPaths'
 import { mcToast } from '@/composables/useMcToast'
 import {
   ArrowDown,

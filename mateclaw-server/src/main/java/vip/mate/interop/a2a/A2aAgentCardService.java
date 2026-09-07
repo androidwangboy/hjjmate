@@ -70,11 +70,19 @@ public class A2aAgentCardService {
         if (properties.getBaseUrl() != null && !properties.getBaseUrl().isBlank()) {
             return properties.getBaseUrl().trim();
         }
-        return ServletUriComponentsBuilder.fromRequestUri(request)
+        // Keep the deployment context path (server.servlet.context-path, e.g.
+        // /hjjmate): peers must call back into /hjjmate/api/a2a. Stripping the
+        // whole path (incl. the context segment) would mint /api/a2a and every
+        // A2A JSON-RPC call would 404 behind nginx.
+        String contextPath = request.getContextPath();
+        String origin = ServletUriComponentsBuilder.fromRequestUri(request)
                 .replacePath(null)
                 .replaceQuery(null)
                 .build()
                 .toUriString();
+        return contextPath == null || contextPath.isEmpty()
+                ? origin
+                : origin + contextPath;
     }
 
     private static List<String> tags(String tags) {

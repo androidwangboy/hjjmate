@@ -1,5 +1,6 @@
 import { isHigherSseEventId, RecentSseEventIds } from './sseEventIds'
 import { canonicalTeamEventKey } from './chat/teamEventOwnership'
+import { withCtx } from '@/utils/appPaths'
 
 /** One parsed SSE frame before JSON decoding. */
 export interface TeamSseFrame {
@@ -129,7 +130,7 @@ export function subscribeTeamEvents(
       if (workspaceId) headers['X-Workspace-Id'] = workspaceId
       if (lastEventId !== undefined) headers['Last-Event-ID'] = lastEventId
 
-      const response = await fetchImpl(`/api/v1/teams/${teamId}/events`, {
+      const response = await fetchImpl(withCtx(`/api/v1/teams/${teamId}/events`), {
         headers,
         signal: activeController.signal,
       })

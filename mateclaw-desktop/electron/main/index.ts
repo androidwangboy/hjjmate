@@ -12,6 +12,7 @@ import {
   saveConfig,
   normalizeServerUrl,
   recordServer,
+  BACKEND_CONTEXT_PATH,
   type ConnectionMode,
 } from './config'
 import {
@@ -193,8 +194,11 @@ async function startJavaBackend(): Promise<void> {
   }
 
   BACKEND_PORT = await getAvailablePort()
-  BACKEND_URL = `http://localhost:${BACKEND_PORT}`
-  console.log(`[MateClaw] Using dynamic port: ${BACKEND_PORT}`)
+  // The backend serves API/WS/UI under server.servlet.context-path (/hjjmate),
+  // so the full base URL carries that prefix. localBridge and the renderer both
+  // build their URLs on top of BACKEND_URL.
+  BACKEND_URL = `http://localhost:${BACKEND_PORT}${BACKEND_CONTEXT_PATH}`
+  console.log(`[MateClaw] Using dynamic port: ${BACKEND_PORT} (base ${BACKEND_URL})`)
 
   const javaExec = getJavaExecutable()
   const jarPath = getJarPath()

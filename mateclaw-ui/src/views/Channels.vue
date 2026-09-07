@@ -173,7 +173,9 @@ import { useI18n } from 'vue-i18n'
 import { mcToast } from '@/composables/useMcToast'
 import { mcConfirm } from '@/components/common/useConfirm'
 import { channelApi, agentApi } from '@/api'
+import { withCtx } from '@/utils/appPaths'
 import type { Channel, Agent } from '@/types'
+import { ctxPath } from '@/utils/appPaths'
 
 // Async-loaded modal: separate chunk, only fetched when the user first clicks
 // "create" or "edit". The /channels initial load is a list page only.
@@ -549,7 +551,7 @@ async function toggleChannel(channel: Channel) {
 const CHANNEL_ICON_TYPES = ['web', 'dingtalk', 'feishu', 'wecom', 'weixin', 'telegram', 'discord', 'qq', 'slack', 'webchat', 'webhook']
 function getChannelIconPath(type: string) {
   const name = CHANNEL_ICON_TYPES.includes(type) ? type : 'default'
-  return `/icons/channels/${name}.svg`
+  return `${ctxPath}/icons/channels/${name}.svg`
 }
 </script>
 

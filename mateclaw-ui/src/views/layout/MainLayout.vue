@@ -10,7 +10,7 @@
       <!-- Logo -->
       <div class="sidebar-logo">
         <div class="logo-icon">
-          <img src="/logo/hjjmate_logo.png" alt="HjjMate" class="logo-img" />
+          <img :src="appLogo" alt="HjjMate" class="logo-img" />
         </div>
         <transition name="fade">
           <div v-if="!effectiveCollapsed" class="logo-text">
@@ -225,6 +225,7 @@ import { useThemeStore } from '@/stores/useThemeStore'
 import { version as appVersion } from '../../../package.json'
 import type { ThemeMode } from '@/stores/useThemeStore'
 import { http, settingsApi, setupApi, approvalApi } from '@/api/index'
+import { appLogo } from '@/utils/appPaths'
 import type { ActiveGrantsSummary } from '@/types'
 import OnboardingWizard from '@/views/Onboarding/OnboardingWizard.vue'
 import DoctorDrawer from '@/views/Doctor/DoctorDrawer.vue'
@@ -312,6 +313,7 @@ watch(compactViewport, (compact) => {
 }, { immediate: true })
 
 onMounted(async () => {
+  console.log(appLogo)
   // Check onboarding status
   if (!localStorage.getItem('mc-onboarding-done')) {
     try {
@@ -557,7 +559,9 @@ function logout() {
   localStorage.removeItem('role')
   // 刷新页面而非 router.push：确保 keepAlive 缓存的 ChatConsole、
   // 模块级变量（cachedAgents 等）全部清空，杜绝跨用户数据泄漏。
-  window.location.href = '/login'
+  // 部署在 /hjjmate context-path 下，登录页 URL 需要带此前缀。
+  const ctxPath = import.meta.env.BASE_URL.length > 1 ? import.meta.env.BASE_URL.replace(/\/+$/, '') : ''
+  window.location.href = `${ctxPath}/login`
 }
 
 async function changeLocale(locale: AppLocale) {

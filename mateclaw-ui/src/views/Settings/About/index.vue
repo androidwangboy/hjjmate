@@ -2,7 +2,7 @@
   <div class="about-page">
     <!-- Hero: Logo + Identity -->
     <section class="hero">
-      <img src="/logo/hjjmate_logo.png" alt="HjjMate" class="hero-logo" />
+      <img :src="appLogo" alt="HjjMate" class="hero-logo" />
       <div class="hero-copy">
         <h1 class="hero-title">Hjj<span class="hero-accent">Mate</span></h1>
         <div class="hero-version">v{{ appVersion }}</div>
@@ -38,6 +38,7 @@ import { computed, markRaw } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Coffee, Cpu, Promotion, Monitor, Lightning, Coin } from '@element-plus/icons-vue'
 import { version as appVersion } from '../../../../package.json'
+import { appLogo } from '@/utils/appPaths'
 
 const { t } = useI18n()
 

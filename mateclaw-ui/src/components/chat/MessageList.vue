@@ -137,6 +137,7 @@
 import { computed, ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ArrowDown, ChatDotRound, DataLine, EditPen, Monitor, Right } from '@element-plus/icons-vue'
+import { appLogo } from '@/utils/appPaths'
 
 const { t } = useI18n()
 import MessageBubble from './MessageBubble.vue'

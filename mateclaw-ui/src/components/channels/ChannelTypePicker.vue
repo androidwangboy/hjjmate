@@ -26,7 +26,7 @@
               class="picker-card"
               @click="pick(type)"
             >
-              <img :src="`/icons/channels/${type}.svg`" :alt="type" class="picker-icon" />
+              <img :src="iconSrc(type)" :alt="type" class="picker-icon" />
               <div class="picker-text">
                 <span class="picker-name">{{ t(`channels.types.${type}`) }}</span>
                 <span class="picker-desc">{{ t(`channels.catalog.descriptions.${type}`) }}</span>
@@ -41,6 +41,9 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import { withCtx } from '@/utils/appPaths'
+
+const iconSrc = (type: string) => withCtx(`/icons/channels/${type}.svg`)
 
 defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{

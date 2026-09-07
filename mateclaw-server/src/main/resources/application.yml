@@ -1,7 +1,10 @@
 server:
   port: 18088
   servlet:
-    context-path: /
+    # 部署 context path。应用对外以 http://<host>:18088/hjjmate 暴露，前端 Vite
+    # base=/hjjmate/ 与此保持一致（根路径部署改为 / 并同步 VITE_BASE_URL=/）。
+    # nginx 保留 /hjjmate 前缀转发，不要 rewrite 去掉前缀。
+    context-path: /hjjmate
 
 spring:
   application:

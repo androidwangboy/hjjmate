@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { handleAuthFailure, updateTokenFromHeader } from '@/utils/auth'
 import { WIKI_UPLOAD_TIMEOUT_MS } from '@/utils/wikiUpload'
+import { withCtx } from '@/utils/appPaths'
 import type {
   ApprovalGrant,
   ApprovalGrantPage,
@@ -21,9 +22,11 @@ import type {
  */
 const encId = (id: string) => encodeURIComponent(id)
 
-// Axios 实例
+// Axios 实例。baseURL 需要带上 context path（server.servlet.context-path=/hjjmate），
+// 否则部署在 /hjjmate 前缀下时所有接口都会 404。withCtx 在根路径部署（Vite base=/）
+// 时原样返回 '/api/v1'，保持旧行为。
 export const http = axios.create({
-  baseURL: '/api/v1',
+  baseURL: withCtx('/api/v1'),
   timeout: 30000,
 })
 
@@ -98,7 +101,8 @@ export async function fetchAuthenticatedBlob(fileUrl: string): Promise<Blob> {
   if (token) headers.Authorization = `Bearer ${token}`
   const workspaceId = localStorage.getItem('mc-workspace-id')
   if (workspaceId) headers['X-Workspace-Id'] = workspaceId
-  const response = await fetch(fileUrl, { headers })
+  // 消息/附件里的同源下载链接可能是根相对路径（无 context 前缀），统一补前缀。
+  const response = await fetch(withCtx(fileUrl), { headers })
   if (!response.ok) throw new Error(`Fetch failed: ${response.status}`)
   return response.blob()
 }
@@ -184,7 +188,7 @@ export const chatApi = {
     if (token) {
       headers.Authorization = `Bearer ${token}`
     }
-    return fetch('/api/v1/chat/stream', {
+    return fetch(withCtx('/api/v1/chat/stream'), {
       method: 'POST',
       headers,
       body: JSON.stringify(data),
@@ -817,7 +821,7 @@ export const agentContextApi = {
     const headers: Record<string, string> = {}
     if (token) headers.Authorization = `Bearer ${token}`
     if (workspaceId) headers['X-Workspace-Id'] = workspaceId
-    const url = `/api/v1/agents/${agentId}/workspace/memory/export`
+    const url = withCtx(`/api/v1/agents/${agentId}/workspace/memory/export`)
     const response = await fetch(url, { headers })
     if (!response.ok) {
       // Try to parse the standard R<T> error envelope for a useful message.
@@ -1473,7 +1477,7 @@ export const operationalApi = {
   /** Download file — uses native fetch to avoid axios R<T> interceptor */
   download: async (taskId: string, token: string): Promise<void> => {
     const jwt = localStorage.getItem('token')
-    const resp = await fetch(`/api/v1/operational-data/download?taskId=${taskId}&token=${token}`, {
+    const resp = await fetch(withCtx(`/api/v1/operational-data/download?taskId=${taskId}&token=${token}`), {
       headers: { Authorization: jwt ? `Bearer ${jwt}` : '' },
     })
     if (!resp.ok) throw new Error(`Download failed: ${resp.status}`)

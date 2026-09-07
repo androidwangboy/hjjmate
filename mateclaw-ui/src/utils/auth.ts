@@ -3,6 +3,8 @@
  * 统一处理 token 失效跳转和自动续期
  */
 
+import { withCtx } from '@/utils/appPaths'
+
 let isRedirecting = false
 
 /**
@@ -14,12 +16,13 @@ export function handleAuthFailure() {
   localStorage.removeItem('username')
   localStorage.removeItem('role')
   // 已经在登录页则不再跳转，避免死循环
-  if (window.location.pathname === '/login') {
+  // （登录页位于 context-path 之下，路径是 /hjjmate/login，须做前缀比较）
+  if (window.location.pathname === withCtx('/login')) {
     return
   }
   if (!isRedirecting) {
     isRedirecting = true
-    window.location.href = '/login'
+    window.location.href = withCtx('/login')
   }
 }
 

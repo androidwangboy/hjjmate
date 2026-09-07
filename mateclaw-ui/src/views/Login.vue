@@ -2,7 +2,7 @@
   <div class="login-page">
     <div class="login-center">
       <div class="login-logo">
-        <img src="/logo/hjjmate_logo.png" alt="HjjMate" class="logo-image" />
+        <img :src="appLogo" alt="HjjMate" class="logo-image" />
         <h1 class="logo-title">Hjj<span class="logo-title-highlight">Mate</span></h1>
       </div>
 
@@ -96,6 +96,7 @@ import { useI18n } from 'vue-i18n'
 import { authApi, ssoApi } from '@/api/index'
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore'
 import { useSystemSettingsStore } from '@/stores/useSystemSettingsStore'
+import { appLogo } from '@/utils/appPaths'
 
 interface SsoProvider { id: string; displayName: string }
 

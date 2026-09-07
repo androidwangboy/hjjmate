@@ -352,6 +352,7 @@ import { useWorkspaceStore } from '@/stores/useWorkspaceStore'
 import { buildViewerModelProviders } from '@/utils/viewerModelProviders'
 import GoalSetInlinePrompt from '@/components/goal/GoalSetInlinePrompt.vue'
 import GoalSystemLine from '@/components/goal/GoalSystemLine.vue'
+import { ctxPath } from '@/utils/appPaths'
 
 // ============ Talk Mode ============
 const showTalkMode = ref(false)
@@ -793,7 +794,9 @@ const {
   reconnectStream: reconnectChatStream,
   resetForNewConversation,
 } = useChat({
-  baseUrl: '',
+  // 空字符串 → SSE/中断请求都会命中站点根路径；部署在 context-path
+  // (/hjjmate) 下必须带上前缀，否则 404。
+  baseUrl: ctxPath,
   thinkingLevel,
   onStreamEnd: async (meta) => {
     // Restore the input/attachments if the turn ended in an error and the

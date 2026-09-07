@@ -1,5 +1,6 @@
 import { onBeforeUnmount, onMounted } from 'vue'
 import { fetchAuthenticatedBlob } from '@/api/index'
+import { stripCtx } from '@/utils/appPaths'
 
 const GENERATED_IMAGE_RE = /^\/api\/v1\/files\/generated\//
 
@@ -10,7 +11,9 @@ export function useGlobalGeneratedImageBlob() {
   function relativeFilePath(src: string): string | null {
     try {
       const url = new URL(src, window.location.href)
-      if (!GENERATED_IMAGE_RE.test(url.pathname)) return null
+      // The src may already carry the deployment context path (/hjjmate/api/...)
+      // — strip it before matching, keep it in the returned fetch path.
+      if (!GENERATED_IMAGE_RE.test(stripCtx(url.pathname))) return null
       return url.pathname + url.search
     } catch {
       return null

@@ -58,19 +58,39 @@ export function saveConfig(patch: Partial<ConnectionConfig>): ConnectionConfig {
   return merged
 }
 
+// The backend serves its REST API, WebSocket tunnel and static admin UI under
+// this deployment prefix — keep in sync with the server's
+// `server.servlet.context-path` (and the web build's Vite `base`). The desktop
+// always targets the prefix, never the bare origin.
+export const BACKEND_CONTEXT_PATH = '/hjjmate'
+
 // Normalize a user-entered server URL: trim, default to https when no scheme is
-// given, and strip a trailing slash. Returns null when the input cannot form a
-// valid http(s) URL.
+// given (http for plain localhost/loopback entries), and attach the backend
+// context path to a bare origin so it matches the current server layout.
+// Returns null when the input cannot form a valid http(s) URL.
 export function normalizeServerUrl(input: string): string | null {
   const trimmed = (input || '').trim()
   if (!trimmed) return null
 
-  const withScheme = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+  const hasScheme = /^https?:\/\//i.test(trimmed)
+  const looksLocal = /^(localhost|127(?:\.\d{1,3}){3}|\[::1\])([:/]|$)/i.test(trimmed)
+  const withScheme = hasScheme ? trimmed : `${looksLocal ? 'http' : 'https'}://${trimmed}`
   try {
     const url = new URL(withScheme)
     if (url.protocol !== 'http:' && url.protocol !== 'https:') return null
-    // Drop a trailing slash on the path-less root so URLs compare cleanly.
-    return withScheme.replace(/\/+$/, '')
+    const origin = url.origin
+    const path = url.pathname.replace(/\/+$/, '')
+    if (path === '') {
+      // Bare origin (no path typed) → MateClaw lives under the context path.
+      return origin + BACKEND_CONTEXT_PATH
+    }
+    if (path.endsWith(BACKEND_CONTEXT_PATH)) {
+      // Already carries the context path, e.g. https://host/hjjmate.
+      return origin + path
+    }
+    // An explicit non-context path is honored as typed (operator-configured
+    // reverse-proxy layout that maps a custom prefix onto the backend).
+    return origin + path
   } catch {
     return null
   }

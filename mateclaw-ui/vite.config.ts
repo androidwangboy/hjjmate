@@ -74,7 +74,14 @@ function elementPlusSubpathIncludes(): string[] {
   }
 }
 
+// 判断是否是生产构建
+const isBuild = process.env.NODE_ENV === 'production'
+
 export default defineConfig({
+  // 部署 context path：与后端 server.servlet.context-path=/hjjmate 对齐，
+  // 让构建产物里所有资源 URL 都带 /hjjmate 前缀（nginx 保留前缀反代）。
+  // 根路径部署时设置环境变量 VITE_BASE_URL=/ 即可回到旧行为。
+  base: isBuild  ? process.env.VITE_BASE_URL || '/hjjmate/' : '/',
   plugins: [
     vue({
       template: {
@@ -138,6 +145,15 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
+      // 开发模式页面与请求都带 /hjjmate 前缀（Vite base），这里保留前缀原样
+      // 转发到后端——后端 context-path 也是 /hjjmate，路径无需重写。
+      // ws:true 让 WebSocket（TalkMode STT /api/v1/talk/ws）的 Upgrade 握手通过。
+      '/hjjmate': {
+        target: 'http://localhost:18088',
+        changeOrigin: true,
+        ws: true,
+      },
+      // 传统根路径部署（VITE_BASE_URL=/）时才命中的规则：
       '/api': {
         target: 'http://localhost:18088',
         changeOrigin: true,

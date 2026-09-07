@@ -72,8 +72,10 @@ async function sendMessage() {
     if (token) {
       headers.Authorization = `Bearer ${token}`
     }
+    // 部署于 /hjjmate context-path 下，所有同源请求都要带上此前缀。
+    const ctxPath = import.meta.env.BASE_URL.length > 1 ? import.meta.env.BASE_URL.replace(/\/+$/, '') : ''
 
-    const res = await fetch('/api/v1/chat/stream', {
+    const res = await fetch(`${ctxPath}/api/v1/chat/stream`, {
       method: 'POST',
       headers,
       body: JSON.stringify({

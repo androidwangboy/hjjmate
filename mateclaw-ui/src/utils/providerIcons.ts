@@ -46,8 +46,12 @@ const providerIconMap: Record<string, string> = {
   'anthropic-claude-code': '/icons/providers/anthropic.svg',
 }
 
+import { withCtx } from '@/utils/appPaths'
+
 export function getProviderIcon(providerId: string): string {
-  return providerIconMap[providerId] || '/icons/providers/default.svg'
+  // Icons live in public/icons/providers/, served under the deployment
+  // context path (/hjjmate/...), so prefix the root-relative path.
+  return withCtx(providerIconMap[providerId] || '/icons/providers/default.svg')
 }
 
 // Hide the <img> when the brand icon fails to load so the UI falls back cleanly.

@@ -9,8 +9,20 @@
  * which the server extracts from tool results during the same turn.
  */
 
-const GENERATED_URL_RE = /(\]\(|<)?(?:https?:\/\/[^\s)\]<>]+)?\/api\/v1\/files\/generated\/([a-zA-Z0-9-]+)/g
-const GENERATED_ID_RE = /\/api\/v1\/files\/generated\/([a-zA-Z0-9-]+)/
+import { ctxPath } from '@/utils/appPaths'
+
+// context path（如 /hjjmate）作为可选前缀参与匹配，兼容带 /hjjmate 前缀的
+// 相对链接与根路径部署（ctxPath=''）两种形态；绝对 URL 的前缀会被
+// `https?:...` 那段吞掉，无需额外处理。
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+const CTX_OPT = ctxPath ? `(?:${escapeRegExp(ctxPath)})?` : ''
+const GENERATED_URL_RE = new RegExp(
+  `(\\]\\(|<)?(?:https?:\\/\\/[^\\s)\\]<>]+)?${CTX_OPT}\\/api\\/v1\\/files\\/generated\\/([a-zA-Z0-9-]+)`,
+  'g',
+)
+const GENERATED_ID_RE = new RegExp(
+  `${CTX_OPT}\\/api\\/v1\\/files\\/generated\\/([a-zA-Z0-9-]+)`,
+)
 
 export interface GeneratedFileRef {
   name?: string

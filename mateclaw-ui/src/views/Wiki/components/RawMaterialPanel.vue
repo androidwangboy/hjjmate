@@ -574,8 +574,10 @@ function applyProgressEvent(payload: any) {
 function openSse(kbId: number) {
   closeSse()
   activeKbId = kbId
-  // Vite proxies /api to the backend, so EventSource can use a relative URL.
-  const es = new EventSource(`/api/v1/wiki/knowledge-bases/${kbId}/progress`)
+  // EventSource 无法携带 Authorization 头，URL 必须以 context path 开头
+  // （server.servlet.context-path=/hjjmate）；Vite / nginx 保留前缀转发即可。
+  const ctxPath = import.meta.env.BASE_URL.length > 1 ? import.meta.env.BASE_URL.replace(/\/+$/, '') : ''
+  const es = new EventSource(`${ctxPath}/api/v1/wiki/knowledge-bases/${kbId}/progress`)
   sse = es
 
   es.addEventListener('raw.started', (ev: MessageEvent) => {

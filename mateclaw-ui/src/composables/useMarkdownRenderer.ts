@@ -2,6 +2,7 @@ import { Marked } from 'marked'
 import type { Tokens } from 'marked'
 import hljs from 'highlight.js'
 import DOMPurify from 'dompurify'
+import { withCtx, stripCtx } from '@/utils/appPaths'
 
 // ---------------------------------------------------------------------------
 // Language metadata
@@ -425,7 +426,21 @@ const customRenderer = {
     // download. Strip any prepended scheme://host so the link works regardless
     // of what the model wrote.
     const hostStripped = /^https?:\/\/[^/]+(\/api\/v1\/files\/generated\/.+)$/i.exec(href)
-    const safeHref = hostStripped ? hostStripped[1] : href
+    let safeHref = hostStripped ? hostStripped[1] : href
+    // Tool-generated file paths are always same-origin AND live under the
+    // deployment context path (server.servlet.context-path=/hjjmate). A model
+    // may also echo an absolute URL *with* the context segment (e.g. minted
+    // against a public base); normalize both forms to the canonical
+    // context-free root path, then withCtx re-applies the correct prefix:
+    //   - absolute http://host/hjjmate/api/...  → strip host+ctx → withCtx → /hjjmate/api/...
+    //   - absolute http://host/api/...         → strip host      → withCtx → /hjjmate/api/...
+    //   - root-relative /api/...               →                  → withCtx → /hjjmate/api/...
+    // Root-path deployments (withCtx no-op) keep the historic behavior.
+    const absoluteMatch = /^https?:\/\/[^/]+(\/.*)$/i.exec(safeHref)
+    if (absoluteMatch && /^\/api\/v1\/files\/generated\//.test(stripCtx(absoluteMatch[1]))) {
+      safeHref = stripCtx(absoluteMatch[1])
+    }
+    safeHref = withCtx(safeHref)
 
     let extra = ''
     try {
@@ -447,7 +462,7 @@ const customRenderer = {
     // Detection is by the link label's extension (the URL itself carries only
     // a UUID). Clicking the image opens it full-size in a new tab.
     const labelText = innerHtml.replace(/<[^>]*>/g, '').trim()
-    const isFileApi = /^\/api\/v1\/(files|chat\/files)\//.test(safeHref)
+    const isFileApi = /^\/api\/v1\/(files|chat\/files)\//.test(stripCtx(safeHref))
     if (isFileApi && /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(labelText)) {
       const alt = escapeHtml(labelText)
       return `<img src="${escapeHtml(safeHref)}" alt="${alt}"`
