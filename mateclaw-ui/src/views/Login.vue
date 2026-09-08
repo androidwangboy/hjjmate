@@ -268,7 +268,7 @@ function cancelBind() {
   min-height: 100svh;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   padding: clamp(16px, 4vh, 48px) clamp(20px, 6vw, 112px);
   overflow: hidden;
   background-color: #071f24;
@@ -300,6 +300,48 @@ function cancelBind() {
     transparent 72%,
     rgba(1, 14, 18, 0.24) 100%
   );
+}
+
+/* Left brand panel */
+.login-brand {
+  position: relative;
+  z-index: 1;
+  max-width: 460px;
+  color: #fff;
+}
+
+.brand-title {
+  font-family: 'Source Han Sans SC', 'MiSans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: clamp(28px, 3vw, 32px);
+  font-weight: 800;
+  line-height: 1.4;
+  letter-spacing: 2px;
+  text-shadow: 0 0 15px rgba(0, 255, 200, 0.4);
+  margin: 0;
+}
+
+.brand-subtitle {
+  margin: 14px 0 0;
+  font-size: 14px;
+  letter-spacing: 4px;
+  color: rgba(178, 235, 220, 0.7);
+}
+
+.brand-tags {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.brand-tag {
+  text-align: center;
+  font-size: 12px;
+  padding: 7px 0;
+  border-radius: 999px;
+  color: rgba(210, 245, 235, 0.9);
+  border: 1px solid rgba(0, 255, 200, 0.25);
+  background: rgba(0, 255, 200, 0.06);
 }
 
 .login-center {
@@ -616,10 +658,15 @@ function cancelBind() {
   }
 }
 
-/* Tablet: keep the right-side composition while reducing the edge inset. */
+/* Tablet and below: hide the brand panel and center the card. */
 @media (max-width: 900px) {
   .login-page {
+    justify-content: center;
     padding-right: clamp(20px, 4vw, 48px);
+  }
+
+  .login-brand {
+    display: none;
   }
 }
 
