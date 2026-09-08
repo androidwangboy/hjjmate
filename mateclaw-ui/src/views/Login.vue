@@ -317,7 +317,10 @@ function cancelBind() {
   font-weight: 800;
   line-height: 1.35;
   letter-spacing: 3px;
-  text-shadow: 0 0 15px rgba(0, 255, 200, 0.4);
+  color: #f2c66d;
+  text-shadow:
+    0 0 10px rgba(255, 200, 100, 0.5),
+    0 0 28px rgba(255, 180, 70, 0.28);
   margin: 0;
 }
 
