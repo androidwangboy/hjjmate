@@ -1,5 +1,12 @@
 <template>
   <div class="login-page">
+      <div class="login-brand">
+        <h1 class="brand-title">{{ t('login.brand.titleLine1') }}<br>{{ t('login.brand.titleLine2') }}</h1>
+        <p class="brand-subtitle">{{ t('login.brand.subtitle') }}</p>
+        <div class="brand-tags">
+          <span v-for="tag in brandTags" :key="tag" class="brand-tag">{{ t(tag) }}</span>
+        </div>
+      </div>
     <div class="login-center">
       <div class="login-logo">
         <img src="/logo/hjjmate_logo.png" alt="HjjMate" class="logo-image" />
@@ -123,6 +130,16 @@ const bindDialog = reactive({
   password: '',
   error: '',
 })
+
+// Left brand panel tags (i18n keys, rendered in order).
+const brandTags = [
+  'login.brand.tags.medical',
+  'login.brand.tags.nursePatient',
+  'login.brand.tags.nurseManage',
+  'login.brand.tags.nurseRehab',
+  'login.brand.tags.performance',
+  'login.brand.tags.quality',
+] as const
 
 // Load enabled SSO providers on mount so the button only shows when configured.
 onMounted(async () => {
