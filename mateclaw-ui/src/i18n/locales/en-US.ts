@@ -3562,6 +3562,19 @@ export default {
     signIn: 'Sign In',
     hint: 'Default: {username} / {password}',
     failed: 'Login failed. Please check your credentials.',
+    brand: {
+      titleLine1: 'AI-Powered Synergy',
+      titleLine2: 'Agent Platform',
+      subtitle: 'Less burden for caregivers, more care for families',
+      tags: {
+        medical: 'Care-Team Synergy',
+        nursePatient: 'Nurse-Patient Synergy',
+        nurseManage: 'Nurse-Management Synergy',
+        nurseRehab: 'Nurse-Rehab Synergy',
+        performance: 'Performance Synergy',
+        quality: 'Quality-Control Synergy',
+      },
+    },
   },
   enterprise: {
     eyebrow: 'Enterprise',

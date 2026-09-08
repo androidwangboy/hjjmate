@@ -3574,6 +3574,19 @@ export default {
     signIn: '登录',
     hint: '默认账号: {username} / {password}',
     failed: '登录失败，请检查账号密码',
+    brand: {
+      titleLine1: 'AI数智协同',
+      titleLine2: '智能体平台',
+      subtitle: '为医护减负增效，为家庭加护增康',
+      tags: {
+        medical: '医护协同',
+        nursePatient: '护患协同',
+        nurseManage: '护管协同',
+        nurseRehab: '护康协同',
+        performance: '业考协同',
+        quality: '质控协同',
+      },
+    },
   },
   enterprise: {
     eyebrow: '企业场景',
