@@ -21,13 +21,14 @@
 - 主标题：`AI数智协同` / `智能体平台` 分两行；
   白色 `#fff`、800 加粗、无衬线栈
   `'Source Han Sans SC','MiSans','PingFang SC','Microsoft YaHei',sans-serif`；
-  `clamp(28px, 3vw, 32px)`；`letter-spacing: 2px`；
+  `clamp(36px, 3.4vw, 44px)`；`letter-spacing: 3px`；
   `text-shadow: 0 0 15px rgba(0, 255, 200, 0.4)`。
 - 副标题：`为医护减负增效，为家庭加护增康`；
-  淡青色 `rgba(178, 235, 220, 0.7)`；14px；`letter-spacing: 4px`。
+  淡青色 `rgba(178, 235, 220, 0.7)`；15px；`letter-spacing: 6px`。
+- 分割线：副标题下方 64px 渐变细线，过渡到 Tag 区。
 - 协同 Tag（医护协同、护患协同、护管协同、护康协同、业考协同、质控协同）：
   3 列网格、描边胶囊（`1px solid rgba(0, 255, 200, 0.25)`，
-  背景 `rgba(0, 255, 200, 0.06)`，文字 `rgba(210, 245, 235, 0.9)`），12px。
+  背景 `rgba(0, 255, 200, 0.06)`，文字 `rgba(210, 245, 235, 0.9)`），13px。
 - 品牌区只用静态样式，不加动画；`prefers-reduced-motion` 下无影响。
 
 ## 文案与国际化
