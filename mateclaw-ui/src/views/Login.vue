@@ -309,6 +309,9 @@ function cancelBind() {
   z-index: 1;
   max-width: 520px;
   color: #fff;
+  /* Push the block toward the login card so the nebula artwork on the
+     left stays visible; scales with viewport width. */
+  margin-left: clamp(24px, 8vw, 180px);
 }
 
 .brand-title {
