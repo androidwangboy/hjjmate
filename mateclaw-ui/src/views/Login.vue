@@ -269,7 +269,7 @@ function cancelBind() {
   min-height: 100svh;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   padding: clamp(16px, 4vh, 48px) clamp(20px, 6vw, 112px);
   overflow: hidden;
   background-color: #071f24;
@@ -309,10 +309,11 @@ function cancelBind() {
   z-index: 1;
   max-width: 520px;
   color: #fff;
-  /* Sit just to the left of the login card with a fixed ~50px gap —
-     flex space-between pins the card to the right edge, so this margin
-     directly controls the brand↔card distance. */
-  margin-left: clamp(24px, 4vw, 80px);
+  /* Hug the login card: margin-left:auto pushes this block all the way
+     right, so the gap to .login-center is exactly margin-right (50px).
+     space-between was wrong here — it dumps ALL leftover space into the
+     middle, making the margin meaningless. */
+  margin-left: auto;
   margin-right: 50px;
 }
 
