@@ -309,11 +309,11 @@ function cancelBind() {
   z-index: 1;
   max-width: 520px;
   color: #fff;
-  /* Sit just to the left of the login card with a comfortable gap —
-     flex space-between already pins the card to the right edge, so the
-     brand block absorbs the remaining width minus this right margin. */
+  /* Sit just to the left of the login card with a fixed ~50px gap —
+     flex space-between pins the card to the right edge, so this margin
+     directly controls the brand↔card distance. */
   margin-left: clamp(24px, 4vw, 80px);
-  margin-right: clamp(24px, 3vw, 72px);
+  margin-right: 50px;
 }
 
 .brand-title {
