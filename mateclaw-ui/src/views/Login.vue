@@ -3,6 +3,7 @@
       <div class="login-brand">
         <h1 class="brand-title">{{ t('login.brand.titleLine1') }}<br>{{ t('login.brand.titleLine2') }}</h1>
         <p class="brand-subtitle">{{ t('login.brand.subtitle') }}</p>
+        <div class="brand-divider"></div>
         <div class="brand-tags">
           <span v-for="tag in brandTags" :key="tag" class="brand-tag">{{ t(tag) }}</span>
         </div>
@@ -306,38 +307,46 @@ function cancelBind() {
 .login-brand {
   position: relative;
   z-index: 1;
-  max-width: 460px;
+  max-width: 520px;
   color: #fff;
 }
 
 .brand-title {
   font-family: 'Source Han Sans SC', 'MiSans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  font-size: clamp(28px, 3vw, 32px);
+  font-size: clamp(36px, 3.4vw, 44px);
   font-weight: 800;
-  line-height: 1.4;
-  letter-spacing: 2px;
+  line-height: 1.35;
+  letter-spacing: 3px;
   text-shadow: 0 0 15px rgba(0, 255, 200, 0.4);
   margin: 0;
 }
 
 .brand-subtitle {
-  margin: 14px 0 0;
-  font-size: 14px;
-  letter-spacing: 4px;
+  margin: 18px 0 0;
+  font-size: 15px;
+  letter-spacing: 6px;
   color: rgba(178, 235, 220, 0.7);
+}
+
+.brand-divider {
+  margin-top: 22px;
+  width: 64px;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(0, 255, 200, 0.85), rgba(0, 255, 200, 0));
 }
 
 .brand-tags {
   margin-top: 22px;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 12px;
 }
 
 .brand-tag {
   text-align: center;
-  font-size: 12px;
-  padding: 7px 0;
+  font-size: 13px;
+  padding: 9px 0;
   border-radius: 999px;
   color: rgba(210, 245, 235, 0.9);
   border: 1px solid rgba(0, 255, 200, 0.25);
