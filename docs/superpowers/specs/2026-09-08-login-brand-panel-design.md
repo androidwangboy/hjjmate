@@ -14,9 +14,9 @@
 - 在 `.login-page` 内、`login-center` 之前新增 `.login-brand` 区块。
 - 桌面端：`.login-page` 改为左右分布（`justify-content: space-between`），品牌区居左垂直居中，
   登录卡片保持右侧，最大宽度 420px 不变。
-- 品牌区右移：`margin-left: clamp(24px, 4vw, 80px)`、
-  `margin-right: 50px`，与登录卡片保持固定约 50px 间距，
-  让出左侧星云图形区域。
+- 品牌区右移：`.login-page` 用 `justify-content: flex-end`，
+  `.login-brand` 用 `margin-left: auto; margin-right: 50px`，
+  与登录卡片保持固定 50px 间距，让出左侧星云图形区域。
 - 平板 / 移动端（`max-width: 900px`）：隐藏品牌区，登录卡片居中（复用现有移动端逻辑）。
 
 ## 视觉规范
