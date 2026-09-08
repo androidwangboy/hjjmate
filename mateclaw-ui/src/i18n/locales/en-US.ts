@@ -3563,7 +3563,7 @@ export default {
     hint: 'Default: {username} / {password}',
     failed: 'Login failed. Please check your credentials.',
     brand: {
-      titleLine1: 'AI-Powered Synergy',
+      titleRest1: '-Powered Synergy',
       titleLine2: 'Agent Platform',
       subtitle: 'Less burden for caregivers, more care for families',
       tags: {

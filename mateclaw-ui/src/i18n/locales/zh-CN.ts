@@ -3575,7 +3575,7 @@ export default {
     hint: '默认账号: {username} / {password}',
     failed: '登录失败，请检查账号密码',
     brand: {
-      titleLine1: 'AI数智协同',
+      titleRest1: '数智协同',
       titleLine2: '智能体平台',
       subtitle: '为医护减负增效，为家庭加护增康',
       tags: {
