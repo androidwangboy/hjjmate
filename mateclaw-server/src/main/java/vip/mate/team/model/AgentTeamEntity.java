@@ -26,6 +26,9 @@ public class AgentTeamEntity {
     /** Owning workspace. Team data is never shared across workspaces. */
     private Long workspaceId;
 
+    /** Portability: import batch id that created this row (null when not imported). */
+    private String importBatch;
+
     /** Agent that orchestrates this team; exactly one per team. */
     private Long leadAgentId;
 

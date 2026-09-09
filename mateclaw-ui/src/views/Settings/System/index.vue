@@ -8,6 +8,24 @@
     <div class="settings-card">
       <div class="setting-item">
         <div class="setting-info">
+          <div class="setting-label">{{ t('settings.fields.theme') }}</div>
+          <div class="setting-hint">{{ t('settings.hints.theme') }}</div>
+        </div>
+        <div class="setting-control">
+          <select
+            :value="themeStore.mode"
+            class="form-input"
+            @change="themeStore.setMode(($event.target as HTMLSelectElement).value as ThemeMode)"
+          >
+            <option value="light">{{ t('nav.themeLight') }}</option>
+            <option value="dark">{{ t('nav.themeDark') }}</option>
+            <option value="system">{{ t('nav.themeSystem') }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="setting-item">
+        <div class="setting-info">
           <div class="setting-label">{{ t('settings.fields.language') }}</div>
           <div class="setting-hint">{{ t('settings.hints.language') }}</div>
         </div>
@@ -322,11 +340,13 @@ import { settingsApi } from '@/api'
 import { applyLocale } from '@/i18n'
 import { mcToast } from '@/composables/useMcToast'
 import { useSystemSettingsStore } from '@/stores/useSystemSettingsStore'
+import { useThemeStore, type ThemeMode } from '@/stores/useThemeStore'
 import { buildProviderOptions, builtinFallbackCatalog, resolveDefaultExpandedId, resolveSourceLabelKey } from '@/composables/useSearchProviderCatalog'
 import type { SystemSettings, SearchProviderCatalog } from '@/types'
 
 const { t } = useI18n()
 const systemSettingsStore = useSystemSettingsStore()
+const themeStore = useThemeStore()
 const savedTip = ref('')
 
 // API Key 独立管理，不回显明文

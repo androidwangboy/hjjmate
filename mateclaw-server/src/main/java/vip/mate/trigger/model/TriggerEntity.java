@@ -24,6 +24,9 @@ public class TriggerEntity {
 
     private Long workspaceId;
 
+    /** Portability: import batch id that created this row (null when not imported). */
+    private String importBatch;
+
     @TableField(value = "name", updateStrategy = FieldStrategy.ALWAYS)
     private String name;
 

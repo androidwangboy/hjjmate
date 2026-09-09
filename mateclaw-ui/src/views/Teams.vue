@@ -124,6 +124,15 @@
                 <span class="detail-action-label">{{ t('common.refresh') }}</span>
               </button>
               <button
+                class="btn-secondary detail-action"
+                :aria-label="t('common.edit')"
+                :title="t('common.edit')"
+                @click="openEditDialog"
+              >
+                <EditIcon class="detail-action-icon" />
+                <span class="detail-action-label">{{ t('common.edit') }}</span>
+              </button>
+              <button
                 class="btn-danger detail-action"
                 :aria-label="t('common.delete')"
                 :title="t('common.delete')"
@@ -309,6 +318,70 @@
             <button class="btn-secondary" @click="createDialogVisible = false">{{ t('common.cancel') }}</button>
             <button class="btn-primary" :disabled="creating" @click="submitCreate">
               {{ creating ? t('common.processing') : t('common.confirm') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- ==================== Edit team dialog =================== -->
+    <Teleport to="body">
+      <div v-if="editDialogVisible" class="modal-overlay" @click.self="editDialogVisible = false">
+        <div class="modal modal--wide">
+          <div class="modal-header">
+            <h3>{{ t('teams.edit') }}</h3>
+            <button class="modal-close" @click="editDialogVisible = false">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label>{{ t('teams.name') }} <i>*</i></label>
+              <input v-model.trim="editForm.name" class="form-input" maxlength="128" />
+            </div>
+            <div class="form-group">
+              <label>{{ t('teams.description') }}</label>
+              <textarea v-model="editForm.description" class="form-input form-textarea" rows="2"></textarea>
+            </div>
+            <div class="form-group">
+              <label>{{ t('teams.lead') }} <i>*</i></label>
+              <div class="agent-picker">
+                <button
+                  v-for="agent in agentStore.agents"
+                  :key="String(agent.id)"
+                  class="agent-pill"
+                  :class="{ 'is-selected is-lead': editForm.leadAgentId === String(agent.id) }"
+                  @click="selectEditLead(String(agent.id))"
+                >
+                  <span class="agent-pill__icon" :style="{ color: agentIconColor(agent.icon) }">
+                    <SkillIcon :value="agent.icon || 'pi:user'" :size="14" />
+                  </span>
+                  {{ agent.name }}
+                </button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>{{ t('teams.membersField') }} <i>*</i></label>
+              <div class="agent-picker">
+                <button
+                  v-for="agent in editMemberCandidates"
+                  :key="String(agent.id)"
+                  class="agent-pill"
+                  :class="{ 'is-selected': editForm.memberAgentIds.includes(String(agent.id)) }"
+                  @click="toggleEditMember(String(agent.id))"
+                >
+                  <span v-if="editForm.memberAgentIds.includes(String(agent.id))" class="agent-pill__check">✓</span>
+                  <span class="agent-pill__icon" :style="{ color: agentIconColor(agent.icon) }">
+                    <SkillIcon :value="agent.icon || 'pi:user'" :size="14" />
+                  </span>
+                  {{ agent.name }}
+                </button>
+              </div>
+              <p class="form-hint">{{ t('teams.pickHint') }}</p>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-secondary" @click="editDialogVisible = false">{{ t('common.cancel') }}</button>
+            <button class="btn-primary" :disabled="editing" @click="submitEdit">
+              {{ editing ? t('common.processing') : t('common.confirm') }}
             </button>
           </div>
         </div>
@@ -581,7 +654,7 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Delete as DeleteIcon, Refresh as RefreshIcon } from '@element-plus/icons-vue'
+import { Delete as DeleteIcon, Edit as EditIcon, Refresh as RefreshIcon } from '@element-plus/icons-vue'
 import { teamApi, teamRunApi } from '@/api/index'
 import type { TeamMemberVO, TeamRun, TeamRunTask, TeamTaskComment, TeamTaskDeliverable, TeamTaskEvent, TeamTaskVO } from '@/api/index'
 import { subscribeTeamEvents } from '@/composables/useTeamEvents'
@@ -1066,6 +1139,67 @@ async function submitCreate() {
   }
 }
 
+// ==================== edit team ====================
+
+const editDialogVisible = ref(false)
+const editing = ref(false)
+const editForm = reactive({
+  name: '',
+  description: '',
+  leadAgentId: '',
+  memberAgentIds: [] as string[],
+})
+
+const editMemberCandidates = computed(() =>
+  agentStore.agents.filter((a) => String(a.id) !== editForm.leadAgentId),
+)
+
+function openEditDialog() {
+  if (!store.currentTeam) return
+  const team = store.currentTeam.team
+  editForm.name = team.name
+  editForm.description = team.description || ''
+  // Lead + members come from the store's loaded member list.
+  const lead = store.members.find((m) => m.role === 'lead')
+  editForm.leadAgentId = lead ? lead.agentId : String(team.leadAgentId)
+  editForm.memberAgentIds = store.members
+    .filter((m) => m.role !== 'lead')
+    .map((m) => m.agentId)
+  editDialogVisible.value = true
+}
+
+function selectEditLead(agentId: string) {
+  editForm.leadAgentId = editForm.leadAgentId === agentId ? '' : agentId
+  editForm.memberAgentIds = editForm.memberAgentIds.filter((id) => id !== agentId)
+}
+
+function toggleEditMember(agentId: string) {
+  const idx = editForm.memberAgentIds.indexOf(agentId)
+  if (idx >= 0) {
+    editForm.memberAgentIds.splice(idx, 1)
+  } else {
+    editForm.memberAgentIds.push(agentId)
+  }
+}
+
+async function submitEdit() {
+  if (!store.currentTeam) return
+  if (!editForm.name || !editForm.leadAgentId || editForm.memberAgentIds.length === 0) {
+    ElMessage.warning(t('teams.createIncomplete'))
+    return
+  }
+  editing.value = true
+  try {
+    await store.updateTeam(String(store.currentTeam.team.id), { ...editForm })
+    editDialogVisible.value = false
+    ElMessage.success(t('common.success'))
+  } catch (e: any) {
+    ElMessage.error(e?.message || 'failed')
+  } finally {
+    editing.value = false
+  }
+}
+
 // ==================== create task ====================
 
 const TERMINAL_TASK_STATUSES = ['completed', 'failed', 'cancelled']
@@ -1410,6 +1544,7 @@ async function cancelTask() {
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
+  white-space: nowrap;
   transition: filter 0.15s;
 }
 .btn-primary:hover {
@@ -1425,6 +1560,7 @@ async function cancelTask() {
   font-size: 14px;
   font-family: inherit;
   cursor: pointer;
+  white-space: nowrap;
   transition: background 0.15s;
 }
 .btn-secondary:hover {
@@ -1440,6 +1576,7 @@ async function cancelTask() {
   font-size: 14px;
   font-family: inherit;
   cursor: pointer;
+  white-space: nowrap;
   transition: all 0.15s;
 }
 .btn-danger:hover {
@@ -1587,6 +1724,7 @@ async function cancelTask() {
   align-items: center;
   justify-content: space-between;
   gap: 14px;
+  row-gap: 12px;
   flex-wrap: wrap;
   margin-bottom: 22px;
 }
@@ -1595,6 +1733,7 @@ async function cancelTask() {
   align-items: center;
   gap: 12px;
   min-width: 0;
+  flex: 1 1 320px;
 }
 .detail-header__title {
   margin: 0;
@@ -1610,6 +1749,9 @@ async function cancelTask() {
   display: flex;
   align-items: center;
   gap: 10px;
+  row-gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 .detail-action {
   display: inline-flex;
@@ -1627,6 +1769,7 @@ async function cancelTask() {
 /* Segmented switch — same pattern as the experts page view switch. */
 .view-switch {
   display: inline-flex;
+  flex: none;
   background: var(--mc-bg-sunken);
   border: 1px solid var(--mc-border-light);
   border-radius: 999px;
@@ -1637,7 +1780,7 @@ async function cancelTask() {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 18px;
+  padding: 6px 14px;
   border-radius: 999px;
   border: none;
   background: transparent;
@@ -1646,6 +1789,7 @@ async function cancelTask() {
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
+  white-space: nowrap;
   transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 .view-seg:hover {
@@ -1658,8 +1802,22 @@ async function cancelTask() {
 }
 .board-run-filter {
   width: auto;
+  min-width: 160px;
   max-width: 220px;
-  flex: none;
+  flex: 1 1 160px;
+}
+
+/* Mid widths: the right cluster can't fit one row — drop it onto its own
+   row below the title instead of squeezing the tabs into vertical text. */
+@media (max-width: 1400px) {
+  .detail-header__right {
+    flex: 1 1 100%;
+    justify-content: flex-start;
+  }
+  .board-run-filter {
+    flex: 1 1 200px;
+    max-width: none;
+  }
 }
 
 /* ==================== kanban board ==================== */

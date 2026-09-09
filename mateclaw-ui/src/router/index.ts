@@ -303,6 +303,12 @@ const router = createRouter({
               meta: { title: 'Settings - Feature Flags', requiredCapability: 'manage:settings' },
             },
             {
+              path: 'migration',
+              name: 'SettingsMigration',
+              component: () => import('@/views/Settings/Migration/index.vue'),
+              meta: { title: 'Settings - Migration', requiredCapability: 'manage:settings' },
+            },
+            {
               path: 'about',
               name: 'SettingsAbout',
               component: () => import('@/views/Settings/About/index.vue'),

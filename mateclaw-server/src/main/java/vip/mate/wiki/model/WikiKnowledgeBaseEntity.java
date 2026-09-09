@@ -52,6 +52,9 @@ public class WikiKnowledgeBaseEntity {
     /** 所属工作区 ID（默认 1 = default） */
     private Long workspaceId;
 
+    /** Portability: import batch id that created this row (null when not imported). */
+    private String importBatch;
+
     /**
      * 绑定的 Embedding 模型 ID（mate_model_config.id，model_type='embedding'）。
      * <p>

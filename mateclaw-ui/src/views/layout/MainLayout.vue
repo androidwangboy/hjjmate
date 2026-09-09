@@ -15,7 +15,7 @@
         <transition name="fade">
           <div v-if="!effectiveCollapsed" class="logo-text">
             <span class="logo-name">Hjj<span class="logo-name-highlight">Mate</span></span>
-            <span class="logo-version">v{{ appVersion }}</span>
+            <span class="logo-tagline">AI数智协同</span>
           </div>
         </transition>
         <button
@@ -116,39 +116,6 @@
             </button>
           </div>
 
-          <div class="sidebar-utility-card">
-            <div class="compact-utility-row">
-              <span class="compact-utility-title">{{ t('nav.themeLabel') }}</span>
-              <div class="theme-toggle-row theme-toggle-row--compact">
-                <button
-                  v-for="opt in themeOptions"
-                  :key="opt.value"
-                  class="theme-btn theme-btn--compact"
-                  :class="{ active: themeStore.mode === opt.value }"
-                  :title="opt.label"
-                  @click="themeStore.setMode(opt.value)"
-                >
-                  <span v-html="opt.icon"></span>
-                </button>
-              </div>
-            </div>
-
-            <div class="compact-utility-row">
-              <span class="compact-utility-title">{{ t('nav.languageLabel') }}</span>
-              <div class="language-toggle-row language-toggle-row--compact">
-                <button
-                  v-for="opt in localeOptions"
-                  :key="opt.value"
-                  class="language-btn language-btn--compact"
-                  :class="{ active: currentLocaleValue === opt.value }"
-                  @click="changeLocale(opt.value)"
-                >
-                  <span class="language-abbr">{{ opt.short }}</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
           <div class="user-info">
             <div class="user-avatar">{{ userInitial }}</div>
             <div class="user-detail">
@@ -221,10 +188,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { warmRouteChunks } from '@/router'
 import { useIsMobile, useMediaQuery } from '@/composables/useBreakpoint'
 import { useI18n } from 'vue-i18n'
-import { useThemeStore } from '@/stores/useThemeStore'
-import { version as appVersion } from '../../../package.json'
-import type { ThemeMode } from '@/stores/useThemeStore'
-import { http, settingsApi, setupApi, approvalApi } from '@/api/index'
+import { http, setupApi, approvalApi } from '@/api/index'
 import type { ActiveGrantsSummary } from '@/types'
 import OnboardingWizard from '@/views/Onboarding/OnboardingWizard.vue'
 import DoctorDrawer from '@/views/Doctor/DoctorDrawer.vue'
@@ -233,7 +197,6 @@ import NavBadge from '@/components/common/NavBadge.vue'
 import McTooltip from '@/components/common/McTooltip.vue'
 import { useNotificationCenter } from '@/composables/useNotificationCenter'
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore'
-import { applyLocale, currentLocale, type AppLocale } from '@/i18n'
 import { SwitchButton, Key, Unlock } from '@element-plus/icons-vue'
 import ChangePasswordDialog from '@/components/ChangePasswordDialog.vue'
 import RouteSkeleton from '@/components/common/RouteSkeleton.vue'
@@ -242,7 +205,6 @@ import { useGlobalLoadingStore } from '@/stores/useGlobalLoadingStore'
 const router = useRouter()
 const route = useRoute()
 const { t } = useI18n()
-const themeStore = useThemeStore()
 const workspaceStore = useWorkspaceStore()
 const globalLoading = useGlobalLoadingStore()
 const sidebarCollapsed = ref(localStorage.getItem('mc-sidebar-collapsed') === 'true')
@@ -349,30 +311,6 @@ const userInitial = computed(() => username.value.charAt(0).toUpperCase())
 const roleLabel = computed(() => role.value === 'admin' ? t('nav.roleAdmin') : t('nav.roleUser'))
 const effectiveCollapsed = computed(() => sidebarCollapsed.value && !isMobile.value)
 const sidebarToggleLabel = computed(() => sidebarCollapsed.value ? t('common.expandSidebar') : t('common.collapseSidebar'))
-const currentLocaleValue = computed(() => currentLocale.value)
-
-const themeOptions = computed<{ value: ThemeMode; label: string; icon: string }[]>(() => [
-  {
-    value: 'light',
-    label: t('nav.themeLight'),
-    icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>',
-  },
-  {
-    value: 'dark',
-    label: t('nav.themeDark'),
-    icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>',
-  },
-  {
-    value: 'system',
-    label: t('nav.themeSystem'),
-    icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
-  },
-])
-
-const localeOptions = computed<{ value: AppLocale; label: string; short: string }[]>(() => [
-  { value: 'zh-CN', label: t('settings.languageOptions.zhCN'), short: '中' },
-  { value: 'en-US', label: t('settings.languageOptions.enUS'), short: 'EN' },
-])
 
 // Capability-gated nav. Each item declares a capability or globalAdmin flag;
 // useWorkspaceStore.can() decides visibility from the backend access set so
@@ -560,16 +498,6 @@ function logout() {
   window.location.href = '/login'
 }
 
-async function changeLocale(locale: AppLocale) {
-  await applyLocale(locale)
-  footerPanelOpen.value = false
-  try {
-    await settingsApi.update({ language: locale })
-  } catch {
-    // keep local preference even if backend persistence fails
-  }
-}
-
 watch(() => route.fullPath, () => {
   footerPanelOpen.value = false
   if (isMobile.value) mobileMenuOpen.value = false
@@ -694,12 +622,12 @@ watch(() => workspaceStore.currentWorkspaceId, () => {
   color: var(--mc-primary);
 }
 
-.logo-version {
+.logo-tagline {
   display: block;
   font-size: 10px;
   color: var(--mc-text-tertiary);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
 }
 
 .collapse-btn {
@@ -903,166 +831,6 @@ watch(() => workspaceStore.currentWorkspaceId, () => {
 .health-indicator.error .health-dot { background: var(--mc-danger); }
 .health-indicator.unknown .health-dot { background: var(--mc-text-tertiary); }
 
-.sidebar-utility-card {
-  margin-bottom: 8px;
-  padding: 8px 10px;
-  border-radius: 16px;
-  border: 1px solid var(--mc-border-light);
-  background: color-mix(in srgb, var(--mc-sidebar-footer-bg) 74%, transparent);
-}
-
-.compact-utility-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.compact-utility-row + .compact-utility-row {
-  margin-top: 6px;
-}
-
-.compact-utility-title {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--mc-text-secondary);
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-}
-
-.utility-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--mc-text-tertiary); margin: 0 0 8px; padding-left: 2px; }
-
-/* 主题切换 */
-.theme-toggle-row {
-  display: flex;
-  gap: 2px;
-  background: var(--mc-bg-muted);
-  border-radius: 14px;
-  padding: 4px;
-  margin-bottom: 12px;
-  border: 1px solid var(--mc-border-light);
-}
-
-.theme-toggle-row--compact {
-  margin-bottom: 0;
-  padding: 2px;
-  gap: 3px;
-  border-radius: 999px;
-}
-
-.language-toggle-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-}
-
-.language-toggle-row--compact {
-  display: flex;
-  gap: 6px;
-}
-
-.theme-btn {
-  flex: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 5px 4px;
-  border: none;
-  background: transparent;
-  color: var(--mc-text-tertiary);
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 11px;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
-
-.theme-btn--compact {
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border-radius: 999px;
-  flex: 0 0 auto;
-}
-
-.theme-btn:hover {
-  color: var(--mc-text-secondary);
-}
-
-.theme-btn.active {
-  background: var(--mc-bg-elevated);
-  color: var(--mc-text-primary);
-  box-shadow: var(--mc-shadow-soft);
-}
-
-.theme-btn-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.language-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  justify-content: flex-start;
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 14px;
-  border: 1px solid var(--mc-border-light);
-  background: var(--mc-bg-muted);
-  color: var(--mc-text-secondary);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.language-btn:hover {
-  background: var(--mc-bg-sunken);
-  color: var(--mc-text-primary);
-}
-
-.language-btn.active {
-  border-color: rgba(217, 109, 70, 0.18);
-  background: var(--mc-primary-bg);
-  color: var(--mc-primary);
-}
-
-.language-abbr {
-  width: 24px;
-  height: 24px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  background: var(--mc-panel-raised);
-  color: inherit;
-  font-size: 11px;
-  font-weight: 800;
-  flex-shrink: 0;
-}
-
-.language-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.language-btn--compact {
-  width: 34px;
-  min-width: 34px;
-  justify-content: center;
-  padding: 4px 0;
-  border-radius: 999px;
-}
-
-.language-btn--compact .language-abbr {
-  width: 20px;
-  height: 20px;
-  font-size: 10px;
-}
-
 .user-info {
   display: flex;
   align-items: center;
@@ -1161,88 +929,6 @@ watch(() => workspaceStore.currentWorkspaceId, () => {
   color: var(--mc-primary);
   background: var(--mc-primary-bg);
   border-color: rgba(217, 109, 70, 0.18);
-}
-
-.sidebar-utility-panel {
-  position: absolute;
-  left: calc(100% + 14px);
-  bottom: 16px;
-  width: 236px;
-  padding: 14px;
-  border-radius: 22px;
-  background: var(--mc-sidebar-floating-bg);
-  border: 1px solid var(--mc-border);
-  box-shadow: var(--mc-shadow-medium);
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  backdrop-filter: blur(18px);
-}
-
-.panel-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.panel-option-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.panel-option-btn {
-  width: 100%;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  border: 1px solid var(--mc-border-light);
-  background: var(--mc-bg-muted);
-  color: var(--mc-text-secondary);
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  transition: all 0.15s ease;
-}
-
-.panel-option-btn:hover {
-  background: var(--mc-bg-sunken);
-  color: var(--mc-text-primary);
-}
-
-.panel-option-btn.active {
-  background: var(--mc-primary-bg);
-  color: var(--mc-primary);
-  border-color: rgba(217, 109, 70, 0.18);
-}
-
-.panel-option-icon {
-  width: 18px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.panel-user {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px;
-  border-radius: 16px;
-  background: var(--mc-bg-muted);
-  border: 1px solid var(--mc-border-light);
-}
-
-.panel-user-meta {
-  min-width: 0;
-  flex: 1;
-}
-
-.logout-btn--panel {
-  flex-shrink: 0;
 }
 
 /* ===== 主内容区 ===== */
@@ -1345,31 +1031,6 @@ watch(() => workspaceStore.currentWorkspaceId, () => {
 
   .mobile-menu-btn:hover {
     background: var(--mc-bg-sunken);
-  }
-
-  .sidebar-utility-panel {
-    display: none;
-  }
-
-  .sidebar-utility-card {
-    padding: 10px;
-  }
-
-  .compact-utility-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .theme-toggle-row--compact,
-  .language-toggle-row--compact {
-    width: 100%;
-    justify-content: stretch;
-  }
-
-  .theme-btn--compact,
-  .language-btn--compact {
-    flex: 1;
-    width: auto;
   }
 
   .sidebar-footer {

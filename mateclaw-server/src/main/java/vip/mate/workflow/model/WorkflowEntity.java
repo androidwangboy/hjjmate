@@ -24,6 +24,9 @@ public class WorkflowEntity {
 
     private Long workspaceId;
 
+    /** Portability: import batch id that created this row (null when not imported). */
+    private String importBatch;
+
     private String name;
 
     private String description;
