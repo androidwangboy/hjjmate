@@ -139,3 +139,7 @@ MEMORY.md
 # Design scratch / prototypes
 _temp/
 .pi-web/
+
+# Brainstorm visual-companion session cache
+.superpowers/
+rfcs/

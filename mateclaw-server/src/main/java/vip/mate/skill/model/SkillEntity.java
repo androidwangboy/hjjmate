@@ -107,6 +107,9 @@ public class SkillEntity {
      */
     private Long workspaceId;
 
+    /** Portability: import batch id that created this row (null when not imported). */
+    private String importBatch;
+
     /** 来源对话 ID（Agent 自治合成时记录） */
     private String sourceConversationId;
 

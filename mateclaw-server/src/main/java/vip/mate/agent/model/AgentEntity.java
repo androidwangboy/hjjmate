@@ -80,6 +80,13 @@ public class AgentEntity {
     /** 所属工作区 ID（默认 1 = default） */
     private Long workspaceId;
 
+    /**
+     * Portability: id of the `.mcbundle` import batch that created this row.
+     * Null for anything not created by an import. Used by revert() so an
+     * import can be undone without ever touching pre-existing rows.
+     */
+    private String importBatch;
+
     /** Creator user ID — backfilled on create; lets members delete their own Agents without admin role */
     private Long creatorUserId;
 

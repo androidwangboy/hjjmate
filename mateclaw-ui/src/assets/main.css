@@ -390,9 +390,11 @@ html.dark body::before {
   mix-blend-mode: normal;
 }
 
+/* Selection uses the deep brand tint: --mc-primary-bg is a badge wash and
+   invisible against input surfaces; inverse text keeps the highlight legible. */
 ::selection {
-  background: var(--mc-primary-bg);
-  color: var(--mc-text-primary);
+  background: var(--mc-primary-hover);
+  color: var(--mc-text-inverse);
 }
 
 /* ================================================================

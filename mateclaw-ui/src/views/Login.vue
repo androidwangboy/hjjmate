@@ -1,5 +1,13 @@
 <template>
   <div class="login-page">
+      <div class="login-brand">
+        <h1 class="brand-title"><span class="brand-ai">AI</span>{{ t('login.brand.titleRest1') }}<br>{{ t('login.brand.titleLine2') }}</h1>
+        <p class="brand-subtitle">{{ t('login.brand.subtitle') }}</p>
+        <div class="brand-rule"><span class="brand-rule__core"></span></div>
+        <div class="brand-tags">
+          <span v-for="tag in brandTags" :key="tag" class="brand-tag">{{ t(tag) }}</span>
+        </div>
+      </div>
     <div class="login-center">
       <div class="login-logo">
         <img :src="appLogo" alt="HjjMate" class="logo-image" />
@@ -124,6 +132,16 @@ const bindDialog = reactive({
   password: '',
   error: '',
 })
+
+// Left brand panel tags (i18n keys, rendered in order).
+const brandTags = [
+  'login.brand.tags.medical',
+  'login.brand.tags.nursePatient',
+  'login.brand.tags.nurseManage',
+  'login.brand.tags.nurseRehab',
+  'login.brand.tags.performance',
+  'login.brand.tags.quality',
+] as const
 
 // Load enabled SSO providers on mount so the button only shows when configured.
 onMounted(async () => {
@@ -284,6 +302,101 @@ function cancelBind() {
     transparent 72%,
     rgba(1, 14, 18, 0.24) 100%
   );
+}
+
+/* Left brand panel */
+.login-brand {
+  position: relative;
+  z-index: 1;
+  max-width: 520px;
+  color: #fff;
+  /* Hug the login card: margin-left:auto pushes this block all the way
+     right, so the gap to .login-center is exactly margin-right (50px).
+     space-between was wrong here — it dumps ALL leftover space into the
+     middle, making the margin meaningless. */
+  margin-left: auto;
+  margin-right: 50px;
+}
+
+.brand-title {
+  font-family: 'Source Han Sans SC', 'MiSans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: clamp(38px, 3.6vw, 46px);
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: 3px;
+  margin: 0;
+  background: linear-gradient(180deg, #ffffff 20%, #d9faf3 55%, #9fd8e8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter:
+    drop-shadow(0 0 12px rgba(140, 240, 225, 0.45))
+    drop-shadow(0 0 32px rgba(80, 200, 220, 0.25));
+}
+
+/* Metallic italic "AI" prefix, glowing stronger than the rest. */
+.brand-ai {
+  font-style: italic;
+  margin-right: 0.12em;
+  background: linear-gradient(180deg, #ffffff 10%, #eafcff 45%, #8fd0e8 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter:
+    drop-shadow(0 0 14px rgba(180, 250, 255, 0.65))
+    drop-shadow(0 0 36px rgba(120, 220, 255, 0.35));
+}
+
+.brand-subtitle {
+  margin: 18px 0 0;
+  font-size: 15px;
+  letter-spacing: 6px;
+  color: rgba(178, 235, 220, 0.7);
+}
+
+/* Tech underline: thin light-beam with a bright core flare. */
+.brand-rule {
+  position: relative;
+  margin-top: 20px;
+  height: 20px;
+}
+
+.brand-rule::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 9px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(150, 240, 230, 0.7), rgba(150, 240, 230, 0.15) 60%, transparent);
+  box-shadow: 0 0 8px rgba(120, 230, 220, 0.6);
+}
+
+.brand-rule__core {
+  position: absolute;
+  left: 34%;
+  top: 0;
+  width: 72px;
+  height: 20px;
+  background: radial-gradient(ellipse at center, rgba(210, 255, 252, 0.9), transparent 70%);
+  filter: blur(1px);
+}
+
+.brand-tags {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.brand-tag {
+  text-align: center;
+  font-size: 13px;
+  padding: 9px 0;
+  border-radius: 999px;
+  color: rgba(210, 245, 235, 0.9);
+  border: 1px solid rgba(0, 255, 200, 0.25);
+  background: rgba(0, 255, 200, 0.06);
 }
 
 .login-center {
@@ -600,10 +713,15 @@ function cancelBind() {
   }
 }
 
-/* Tablet: keep the right-side composition while reducing the edge inset. */
+/* Tablet and below: hide the brand panel and center the card. */
 @media (max-width: 900px) {
   .login-page {
+    justify-content: center;
     padding-right: clamp(20px, 4vw, 48px);
+  }
+
+  .login-brand {
+    display: none;
   }
 }
 

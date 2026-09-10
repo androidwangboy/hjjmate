@@ -195,6 +195,51 @@ export const useTeamStore = defineStore('team', () => {
     await fetchTeams()
   }
 
+  /**
+   * Edit a team: rename, change description, swap lead, and sync members.
+   * Member sync is diff-based — only the deltas hit the API, so a no-op
+   * edit (e.g. just renaming) does not churn membership endpoints.
+   */
+  async function updateTeam(
+    teamId: string,
+    data: { name: string; description?: string; leadAgentId: string; memberAgentIds: string[] },
+  ) {
+    const current = currentTeam.value
+    const prevMembers = new Set(members.value.filter((m) => m.role !== 'lead').map((m) => m.agentId))
+    const prevLeadEntry = members.value.find((m) => m.role === 'lead')
+    const prevLead = prevLeadEntry ? prevLeadEntry.agentId : ''
+
+    // 1. Rename / description.
+    await teamApi.update(teamId, { name: data.name, description: data.description ?? '' })
+
+    // 2. Lead swap (only if changed).
+    if (data.leadAgentId && data.leadAgentId !== prevLead) {
+      // Demote old lead to member first (a team needs exactly one lead),
+      // then promote the new lead.
+      if (prevLead) {
+        try { await teamApi.addMember(teamId, prevLead, 'member') } catch { /* already a member */ }
+      }
+      await teamApi.addMember(teamId, data.leadAgentId, 'lead')
+    }
+
+    // 3. Member diff.
+    const nextMembers = new Set(data.memberAgentIds)
+    for (const m of prevMembers) {
+      if (!nextMembers.has(m)) {
+        await teamApi.removeMember(teamId, m)
+      }
+    }
+    for (const m of nextMembers) {
+      if (!prevMembers.has(m)) {
+        await teamApi.addMember(teamId, m, 'member')
+      }
+    }
+
+    // 4. Refresh local state.
+    await openTeam(teamId)
+    await fetchTeams()
+  }
+
   return {
     teams,
     loading,
@@ -217,6 +262,7 @@ export const useTeamStore = defineStore('team', () => {
     loadMoreClosed,
     setTaskRunId,
     createTeam,
+    updateTeam,
     deleteTeam,
   }
 })

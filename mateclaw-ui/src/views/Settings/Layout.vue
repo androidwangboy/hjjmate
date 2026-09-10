@@ -156,6 +156,12 @@ const sections = computed(() => [
   // RFC-090 Phase 4: Activity 子项移除，提升至顶层 /activity
   // Scheduler 已提升至顶层 /scheduler，归入核心（Core）导航分组
   // Divider: Advanced
+  {
+    id: 'migration',
+    path: '/settings/migration',
+    label: t('settings.sections.migration', 'Data Migration'),
+    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
+  },
   { id: 'divider-advanced', path: '', label: t('settings.sections.advanced'), icon: '', isDivider: true },
   {
     id: 'workflows',
