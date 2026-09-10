@@ -167,7 +167,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { agentApi } from '@/api'
 import { mcToast } from '@/composables/useMcToast'
-
+const ctxPath = import.meta.env.BASE_URL.length > 1 ? import.meta.env.BASE_URL.replace(/\/+$/, '') : ''
 const { t } = useI18n()
 
 const agents = ref<any[]>([])
@@ -228,7 +228,7 @@ async function doExport() {
     params.set('includeKnowledgeBase', String(includeKb.value))
     params.set('includePages', String(includePages.value))
     params.set('includeMemory', String(includeMemory.value))
-    const res = await fetch(`/api/v1/portability/export?${params.toString()}`, { headers: authHeaders() })
+    const res = await fetch(`${ctxPath}/api/v1/portability/export?${params.toString()}`, { headers: authHeaders() })
     if (!res.ok) {
       const body = await res.json().catch(() => ({}))
       throw new Error(body?.msg || `HTTP ${res.status}`)
@@ -271,7 +271,7 @@ async function doPreview() {
     fd.append('file', file.value)
     const params = new URLSearchParams()
     if (selectedModules.value.length) params.set('modules', selectedModules.value.join(','))
-    const res = await fetch(`/api/v1/portability/import/preview?${params.toString()}`, {
+    const res = await fetch(`${ctxPath}/api/v1/portability/import/preview?${params.toString()}`, {
       method: 'POST',
       headers: authHeaders(),
       body: fd,
@@ -294,7 +294,7 @@ async function doApply() {
     fd.append('file', file.value)
     const params = new URLSearchParams({ onConflict: onConflict.value })
     if (selectedModules.value.length) params.set('modules', selectedModules.value.join(','))
-    const res = await fetch(`/api/v1/portability/import?${params.toString()}`, {
+    const res = await fetch(`${ctxPath}/api/v1/portability/import?${params.toString()}`, {
       method: 'POST',
       headers: authHeaders(),
       body: fd,
@@ -316,7 +316,7 @@ async function doRevert(batchId: string) {
   if (!window.confirm(t('settings.migration.revertConfirm', { batch: batchId }))) return
   reverting.value = true
   try {
-    const res = await fetch(`/api/v1/portability/import/${encodeURIComponent(batchId)}`, {
+    const res = await fetch(`${ctxPath}/api/v1/portability/import/${encodeURIComponent(batchId)}`, {
       method: 'DELETE',
       headers: authHeaders(),
     })

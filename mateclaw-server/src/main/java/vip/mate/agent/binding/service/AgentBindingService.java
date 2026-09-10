@@ -164,7 +164,7 @@ public class AgentBindingService implements AgentBindingResolver {
         }
         List<AgentSkillBinding> bindings = listSkillBindings(agentId);
         if (bindings.isEmpty()) {
-            return null; // no rows → inherit global default
+            return Set.of(); // no rows → inherit global default
         }
         return bindings.stream()
                 .filter(b -> Boolean.TRUE.equals(b.getEnabled()))

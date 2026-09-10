@@ -50,7 +50,9 @@ public class TeamService {
         if (memberAgentIds != null) {
             for (Long memberId : memberAgentIds) {
                 if (memberId.equals(leadAgentId)) {
-                    throw new IllegalArgumentException("lead agent cannot also be listed as a member");
+                    //throw new IllegalArgumentException("lead agent cannot also be listed as a member");
+                    log.warn("lead agent cannot also be listed as a member, memberId|leadAgentId:{}", leadAgentId);
+                    continue;
                 }
                 requireAgentInWorkspace(memberId, workspaceId, "member");
                 requireNotInAnyTeam(memberId);
