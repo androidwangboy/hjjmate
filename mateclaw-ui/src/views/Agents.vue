@@ -145,6 +145,9 @@
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
                   </svg>
                 </button>
+                <button class="action-btn" :title="t('agents.api.open', 'API 管理')" @click="goToAgentApiFor(agent)">
+                  <span style="font-size:12px;font-weight:700;">API</span>
+                </button>
                 <button class="action-btn" :title="t('agents.actions.edit')" @click="openEditModal(agent)">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -271,6 +274,10 @@
               {{ t('agents.tabs.wiki', 'Wiki') }}
               <span v-if="form.wikiDisabled" class="tab-badge tab-badge--off">{{ t('agents.binding.disableAllWikiBadge') }}</span>
               <span v-else-if="selectedKbIds.length" class="tab-badge">{{ selectedKbIds.length }}</span>
+            </button>
+            <button v-if="editingAgent" class="modal-tab" :class="{ active: modalTab === 'api' }" @click="modalTab = 'api'">
+              {{ t('agents.tabs.api', 'API 调用') }}
+              <span v-if="apiPublication?.enabled" class="tab-badge tab-badge--on">{{ t('agents.api.published', '已发布') }}</span>
             </button>
           </div>
 
@@ -728,6 +735,31 @@
               </div>
             </template>
           </div>
+
+          <!-- API tab is intentionally a summary. Keys, logs and testing live in
+               the dedicated API console so this editor remains focused on the expert. -->
+          <div v-if="modalTab === 'api'" class="binding-tab api-summary-tab">
+            <div class="binding-intro">
+              <span class="binding-intro__kicker">{{ t('agents.api.kicker', '对外调用') }}</span>
+              <p class="binding-intro__tagline">{{ t('agents.api.summary', '把这位专家发布给 CRM、门户或其他业务系统。') }}</p>
+            </div>
+            <div class="api-summary-status mc-surface-card">
+              <div>
+                <strong>{{ apiPublication?.enabled ? t('agents.api.published', 'API 已发布') : t('agents.api.unpublished', 'API 未发布') }}</strong>
+                <p>{{ apiPublication ? `${apiPublication.keyCount || 0} ${t('agents.api.keys', '个 Key')} · ${apiPublication.todayCalls || 0} ${t('agents.api.callsToday', '次今日调用')}` : t('agents.api.loading', '正在读取 API 状态…') }}</p>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" :checked="apiPublication?.enabled === true" :disabled="!apiPublication" @change="toggleApiPublication" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="api-summary-endpoint">
+              <span class="method-label">POST</span>
+              <code>/api/v1/open/agent/chat</code>
+              <button class="btn-sm" @click="editingAgent && goToAgentApiFor(editingAgent)">{{ t('agents.api.openConsole', '打开 API 控制台') }}</button>
+            </div>
+            <p class="binding-hint">{{ t('agents.api.hint', '控制台可管理 Key、限流、文档、调用日志、统计和在线测试。') }}</p>
+          </div>
         </div>
         <div class="modal-footer">
           <button class="btn-secondary" @click="closeModal">{{ t('common.cancel') }}</button>
@@ -746,7 +778,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { mcToast } from '@/composables/useMcToast'
 import { mcConfirm } from '@/components/common/useConfirm'
-import { agentApi, agentBindingApi, modelApi, skillApi, toolApi, templateApi, liveApi, wikiApi } from '@/api/index'
+import { agentApi, agentApiManagement, agentBindingApi, modelApi, skillApi, toolApi, templateApi, liveApi, wikiApi } from '@/api/index'
 import type { Agent } from '@/types/index'
 import { parseAgentsLiveRoute, type AgentsView } from '@/composables/agentsLiveRouteState'
 import {
@@ -780,7 +812,8 @@ const activeFilter = ref('all')
 const activeTags = ref<string[]>([])
 const showModal = ref(false)
 const editingAgent = ref<Agent | null>(null)
-const modalTab = ref<'basic' | 'skills' | 'tools' | 'providers' | 'wiki'>('basic')
+const modalTab = ref<'basic' | 'skills' | 'tools' | 'providers' | 'wiki' | 'api'>('basic')
+const apiPublication = ref<any | null>(null)
 /** RFC-090 §9.2 调整 B — Tool picker is an Advanced bypass; collapsed by
  *  default but stays open as soon as the agent has any direct tool
  *  bindings, so existing users don't lose visibility on their picks. */
@@ -1330,6 +1363,7 @@ function openBlankCreateModal() {
   availableKBs.value = []
   selectedKBId.value = null
   selectedKbIds.value = []
+  apiPublication.value = null
   showModal.value = true
 }
 
@@ -1441,6 +1475,7 @@ async function openEditModal(agent: Agent) {
   skillBindingSearch.value = ''
   toolBindingSearch.value = ''
   showModal.value = true
+  void loadAgentApiSummary(agent.id)
 
   // Load available skills/tools/providers and current bindings in parallel
   try {
@@ -1510,6 +1545,7 @@ async function openEditModal(agent: Agent) {
 function closeModal() {
   showModal.value = false
   editingAgent.value = null
+  apiPublication.value = null
   skillBindingSearch.value = ''
   toolBindingSearch.value = ''
   availableKBs.value = []
@@ -1618,6 +1654,37 @@ async function deleteAgent(agent: Agent) {
 
 function goToAgentContextFor(agent: Agent) {
   router.push({ path: `/agents/${agent.id}/context` })
+}
+
+function goToAgentApiFor(agent: Agent) {
+  router.push({ path: `/agents/${agent.id}/api` })
+}
+
+async function loadAgentApiSummary(agentId: string | number) {
+  try {
+    const res: any = await agentApiManagement.getPublication(agentId)
+    apiPublication.value = res.data || null
+  } catch {
+    // API management is an optional tab; do not block the rest of the editor.
+    apiPublication.value = null
+  }
+}
+
+async function toggleApiPublication() {
+  if (!editingAgent.value || !apiPublication.value) return
+  const nextEnabled = !apiPublication.value.enabled
+  try {
+    const res: any = await agentApiManagement.updatePublication(editingAgent.value.id, {
+      enabled: nextEnabled,
+      modelAlias: 'expert',
+    })
+    apiPublication.value = res.data
+    mcToast.success(nextEnabled
+      ? t('agents.api.publishSuccess', 'API 已发布')
+      : t('agents.api.unpublishSuccess', 'API 已取消发布'))
+  } catch (e: any) {
+    mcToast.error(e?.message || t('agents.api.updateFailed', 'API 状态更新失败'))
+  }
 }
 
 /** Card primary action: open a chat with this agent. */
@@ -2312,4 +2379,12 @@ html.dark .seg-count.warn {
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+.tab-badge--on { background: var(--mc-success-bg, #dcfce7); color: var(--mc-success, #166534); }
+.api-summary-tab { display: flex; flex-direction: column; gap: 14px; }
+.api-summary-status { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:16px; }
+.api-summary-status strong { color: var(--mc-text-primary); font-size:14px; }
+.api-summary-status p { margin:5px 0 0; color:var(--mc-text-tertiary); font-size:12px; }
+.api-summary-endpoint { display:flex; align-items:center; gap:9px; padding:12px 14px; border:1px solid var(--mc-border); border-radius:9px; background:var(--mc-bg-sunken); }
+.api-summary-endpoint code { flex:1; font-size:12px; color:var(--mc-text-secondary); }
+.api-summary-endpoint .method-label { color:#15803d; font-size:10px; font-weight:800; }
 </style>

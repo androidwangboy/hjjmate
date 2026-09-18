@@ -305,7 +305,9 @@ hjjmate/
 - **审批三条链路彻底闭环** — 工作流 `await_approval` 真的推到渠道并 resolve→恢复执行、WebChat（API-Key）渠道能批准/拒绝并重放、飞书/企微点卡片直接 resolve 工作流审批
 - **长任务看得见** — 常驻「运行总览」侧栏 + 本轮 Token 明细（缓存命中/未命中/写入 + 推理拆分）+ 子 Agent 成本向上滚加 + 生成文件一键下载
 - **装得下真实模型窗口** — 本地模型上下文窗口探测、prefix 注入统一 Token 预算、小上下文降级、工具 schema 预算门——不再被"猜个 32K"坑到预检拒绝或悄悄截断
-- **开放出去** — 知识库 / Deep Research 开放 API（API-Key + 限流 + SSE）、插件化搜索 Provider SPI、MCP 身份透传（把认证用户身份带给 STDIO MCP）
+- **开放出去** — 知识库 / Deep Research 开放 API（API-Key + 限流 + SSE）、专家 REST / OpenAI 兼容 API（专家级 Key + 会话记忆隔离 + 异步任务）、插件化搜索 Provider SPI、MCP 身份透传（把认证用户身份带给 STDIO MCP）
+
+专家 API 调用示例见 [`docs/agent-api.md`](docs/agent-api.md)。
 - **够得着更远** — 桌面端本地内嵌 / 远程集中部署双模式（`mateclaw-desktop` 源码开放）+ 局域网部署模式放开受控内网访问
 - **运营数据一键导出** — Dashboard 9 表 Excel + CLI 命令行离线导出
 

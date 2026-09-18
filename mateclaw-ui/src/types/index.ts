@@ -76,6 +76,79 @@ export interface Agent {
 export type AgentEntity = Agent
 export type AgentState = 'IDLE' | 'RUNNING' | 'PAUSED' | 'ERROR' | 'COMPLETED'
 
+export interface AgentApiPublication {
+  id?: string | number
+  agentId: string | number
+  workspaceId: string | number
+  enabled: boolean
+  modelAlias: string
+  requestsPerMinute: number
+  concurrentLimit: number
+  dailyQuota: number
+  timeoutSeconds: number
+  webhookEnabled: boolean
+  keyCount: number
+  todayCalls: number
+  successRate: number
+  averageLatencyMs: number
+}
+
+export interface AgentApiKey {
+  id: string | number
+  publicationId: string | number
+  agentId: string | number
+  name: string
+  keyPrefix: string
+  enabled: boolean
+  requestsPerMinuteOverride?: number | null
+  concurrentLimitOverride?: number | null
+  dailyQuotaOverride?: number | null
+  lastUsedAt?: string | null
+  revokedAt?: string | null
+  createTime?: string | null
+}
+
+export interface CreatedAgentApiKey {
+  key: AgentApiKey
+  plaintext: string
+}
+
+export interface AgentApiLog {
+  requestId: string
+  taskId?: string | null
+  protocol: string
+  mode: string
+  conversationId: string
+  endUserId: string
+  status: string
+  httpStatus?: number | null
+  errorCode?: string | null
+  latencyMs?: number | null
+  inputTokens?: number | null
+  outputTokens?: number | null
+  createTime?: string | null
+}
+
+export interface AgentApiStats {
+  totalCalls: number
+  successfulCalls: number
+  failedCalls: number
+  successRate: number
+  averageLatencyMs: number
+  inputTokens: number
+  outputTokens: number
+}
+
+export interface AgentApiTask {
+  taskId: string
+  status: string
+  result?: string | null
+  error?: string | null
+  createTime?: string | null
+  startedAt?: string | null
+  completedAt?: string | null
+}
+
 // ==================== 会话与消息 ====================
 export interface Conversation {
   id?: string | number
