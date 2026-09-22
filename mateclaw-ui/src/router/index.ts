@@ -59,6 +59,12 @@ const router = createRouter({
           meta: { title: 'Agent Context', requiredCapability: 'manage:agents' },
         },
         {
+          path: 'agents/:id/api',
+          name: 'AgentApiConsole',
+          component: () => import('@/views/AgentApiConsole.vue'),
+          meta: { title: 'Agent API', requiredCapability: 'manage:agents' },
+        },
+        {
           path: 'teams',
           name: 'Teams',
           component: () => import('@/views/Teams.vue'),

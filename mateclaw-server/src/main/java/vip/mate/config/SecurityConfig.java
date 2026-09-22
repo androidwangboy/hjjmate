@@ -100,6 +100,9 @@ public class SecurityConfig {
                     // KB Open API: authenticated by KbOpenApiAuthFilter (API key),
                     // not JWT — must be permitAll so the filter is the sole gatekeeper (R1).
                     "/api/v1/open/kb/**",
+                    // Expert public API authenticates its own mak_* key in the controller.
+                    "/api/v1/open/agent/**",
+                    "/v1/chat/completions",
                     "/api/a2a/card",
                     "/.well-known/agent-card.json",
                     "/api/v1/talk/ws",

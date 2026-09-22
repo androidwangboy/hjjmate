@@ -160,6 +160,20 @@ export const agentApi = {
   getCapabilities: (id: string | number) => http.get(`/agents/${id}/capabilities`),
 }
 
+// ==================== Expert public API management ====================
+export const agentApiManagement = {
+  getPublication: (id: string | number) => http.get(`/agents/${id}/api`),
+  updatePublication: (id: string | number, data: any) => http.put(`/agents/${id}/api`, data),
+  listKeys: (id: string | number) => http.get(`/agents/${id}/api/keys`),
+  createKey: (id: string | number, data: any) => http.post(`/agents/${id}/api/keys`, data),
+  revokeKey: (id: string | number, keyId: string | number) =>
+    http.delete(`/agents/${id}/api/keys/${keyId}`),
+  listLogs: (id: string | number, params?: { page?: number; size?: number; status?: string; protocol?: string }) =>
+    http.get(`/agents/${id}/api/logs`, { params }),
+  stats: (id: string | number) => http.get(`/agents/${id}/api/stats`),
+  test: (id: string | number, data: any) => http.post(`/agents/${id}/api/test`, data),
+}
+
 // ==================== Templates ====================
 export const templateApi = {
   list: () => http.get('/templates'),
