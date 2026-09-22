@@ -136,10 +136,6 @@
                 {{ t('agents.actions.chat') }}
               </button>
               <div class="agent-card__overflow">
-                <label class="toggle-switch toggle-switch--sm" :title="t('agents.fields.enabled')">
-                  <input type="checkbox" :checked="agent.enabled" @change="toggleAgent(agent)" />
-                  <span class="toggle-slider"></span>
-                </label>
                 <button class="action-btn" :title="t('agents.tabs.context')" @click="goToAgentContextFor(agent)">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
@@ -1691,16 +1687,6 @@ async function toggleApiPublication() {
 function goToChat(agent: Agent) {
   router.push({ path: '/chat', query: { agentId: String(agent.id) } })
 }
-
-async function toggleAgent(agent: Agent) {
-  try {
-    await agentApi.update(agent.id, { ...agent, enabled: !agent.enabled })
-    mcToast.success(t('agents.messages.toggleSuccess'))
-    await loadAgents()
-  } catch {
-    mcToast.error(t('agents.messages.toggleFailed'))
-  }
-}
 </script>
 
 <style scoped>
@@ -1929,6 +1915,7 @@ html.dark .seg-count.warn {
 .agent-card__tag.active { background: var(--mc-primary-bg); color: var(--mc-primary); font-weight: 600; }
 
 .agent-card__action-row {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1936,6 +1923,9 @@ html.dark .seg-count.warn {
   margin-top: auto;
   padding-top: 12px;
   border-top: 1px solid var(--mc-border-light);
+  /* Reserve a stable row height so hover-revealed actions never
+     reflow the card or change the chat button's height. */
+  min-height: 46px;
 }
 
 .agent-card__primary {
@@ -1949,6 +1939,9 @@ html.dark .seg-count.warn {
   border-radius: 999px;
   font-size: 13px;
   font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  flex-shrink: 0;
   cursor: pointer;
   transition: all 0.15s;
 }
@@ -1959,15 +1952,19 @@ html.dark .seg-count.warn {
 }
 
 .agent-card__overflow {
+  /* Inline flex item on the same line as the chat button. Hidden until
+     hover, but it keeps occupying space so the row never reflows. */
   display: flex;
   align-items: center;
   gap: 4px;
   opacity: 0;
+  pointer-events: none;
   transition: opacity 0.18s;
 }
 .agent-card:hover .agent-card__overflow,
 .agent-card:focus-within .agent-card__overflow {
   opacity: 1;
+  pointer-events: auto;
 }
 
 .toggle-switch--sm { width: 32px; height: 18px; }
@@ -1986,7 +1983,7 @@ html.dark .seg-count.warn {
 .toggle-switch input:checked + .toggle-slider::before { transform: translateX(16px); }
 
 .action-btns { display: flex; gap: 4px; }
-.action-btn { width: 30px; height: 30px; border: 1px solid var(--mc-border); background: var(--mc-bg-elevated); border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--mc-text-secondary); transition: all 0.15s; }
+.action-btn { width: 28px; height: 28px; border: 1px solid var(--mc-border); background: var(--mc-bg-elevated); border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--mc-text-secondary); transition: all 0.15s; flex-shrink: 0; }
 .action-btn:hover { background: var(--mc-bg-sunken); color: var(--mc-text-primary); }
 .action-btn.danger:hover { background: var(--mc-danger-bg); border-color: var(--mc-danger); color: var(--mc-danger); }
 
