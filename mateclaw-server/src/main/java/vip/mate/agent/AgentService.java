@@ -1,11 +1,15 @@
 package vip.mate.agent;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
@@ -23,17 +27,18 @@ import vip.mate.memory.lifecycle.MemoryLifecycleMediator;
 import vip.mate.memory.lifecycle.TurnContext;
 import vip.mate.memory.service.MemoryRecallTracker;
 import vip.mate.team.event.TeamChangedEvent;
+import vip.mate.tool.mcp.runtime.McpClientManager;
+import vip.mate.tool.mcp.service.McpServerService;
 import vip.mate.workspace.conversation.model.ConversationEntity;
 import vip.mate.workspace.conversation.repository.ConversationMapper;
 
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.time.Duration;
-import java.util.Map;
 import java.nio.file.Path;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * Agent 业务服务
@@ -109,7 +114,7 @@ public class AgentService {
      * 按工作区列出 Agent
      */
     public List<AgentEntity> listAgentsByWorkspace(Long workspaceId) {
-        return listAgentsByWorkspace(workspaceId, null);
+        return listAgentsByWorkspace(workspaceId, null, null);
     }
 
     /**
@@ -122,13 +127,38 @@ public class AgentService {
      *                management page passes {@code null} to keep
      *                disabled rows visible for re-enabling.
      */
-    public List<AgentEntity> listAgentsByWorkspace(Long workspaceId, Boolean enabled) {
+    public List<AgentEntity> listAgentsByWorkspace(Long workspaceId, Boolean enabled, Authentication auth) {
         LambdaQueryWrapper<AgentEntity> q = new LambdaQueryWrapper<AgentEntity>()
                 .eq(AgentEntity::getWorkspaceId, workspaceId);
         if (enabled != null) {
             q.eq(AgentEntity::getEnabled, enabled);
         }
-        return agentMapper.selectList(q.orderByDesc(AgentEntity::getCreateTime));
+        List<AgentEntity> agentEntities = agentMapper.selectList(q.orderByDesc(AgentEntity::getCreateTime));
+        if (CollUtil.isEmpty(agentEntities)){
+            return List.of();
+        }
+        for (AgentEntity agent : agentEntities){
+            Long agentId = agent.getId();
+            LambdaQueryWrapper<ConversationEntity> queryWrapper = new LambdaQueryWrapper<ConversationEntity>().eq(ConversationEntity::getAgentId, agentId)
+                    .eq(ConversationEntity::getDeleted, 0).eq(ConversationEntity::getWorkspaceId, workspaceId)
+                    .orderByDesc(ConversationEntity::getCreateTime);
+            if (auth != null && StrUtil.isNotEmpty(auth.getName())){
+                queryWrapper.eq(ConversationEntity::getUsername, auth.getName());
+            }
+            Page<ConversationEntity> conversationEntityPage = conversationMapper.selectPage(new Page<>(1, 4)
+                    , new LambdaQueryWrapper<ConversationEntity>().eq(ConversationEntity::getAgentId, agentId)
+                            .eq(ConversationEntity::getDeleted, 0).eq(ConversationEntity::getWorkspaceId, workspaceId)
+                            .orderByDesc(ConversationEntity::getCreateTime));
+            List<ConversationEntity> records = conversationEntityPage.getRecords();
+            if (CollUtil.isNotEmpty(records)){
+                String suggestions = records.stream()
+                        .map(ConversationEntity::getTitle)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.joining("\n"));
+                agent.setSuggestions(suggestions);
+            }
+        }
+        return agentEntities;
     }
 
     public AgentEntity getAgent(Long id) {

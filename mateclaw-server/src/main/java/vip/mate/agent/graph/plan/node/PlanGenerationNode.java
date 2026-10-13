@@ -414,7 +414,7 @@ public class PlanGenerationNode implements NodeAction {
             return List.of();
         }
         try {
-            return agentService.listAgentsByWorkspace(workspaceId, true).stream()
+            return agentService.listAgentsByWorkspace(workspaceId, true, null).stream()
                     .filter(a -> a.getId() != null && !String.valueOf(a.getId()).equals(parentAgentId))
                     .collect(Collectors.toList());
         } catch (Exception e) {

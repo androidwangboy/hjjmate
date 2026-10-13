@@ -30,7 +30,7 @@ public class A2aAgentCardService {
         long wsId = workspaceId == null ? 1L : workspaceId;
         Map<String, Object> card = baseCard(request);
         List<Map<String, Object>> skills = new ArrayList<>();
-        for (AgentEntity agent : agentService.listAgentsByWorkspace(wsId, true)) {
+        for (AgentEntity agent : agentService.listAgentsByWorkspace(wsId, true, null)) {
             Map<String, Object> skill = new LinkedHashMap<>();
             skill.put("id", String.valueOf(agent.getId()));
             skill.put("name", agent.getName());

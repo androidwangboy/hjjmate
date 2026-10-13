@@ -169,4 +169,7 @@ public class AgentEntity {
     private LocalDateTime updateTime;
 
     private Integer deleted;
+
+    @TableField(exist = false)
+    private String suggestions;
 }

@@ -68,12 +68,13 @@ public class AgentController {
     @RequireWorkspaceRole("viewer")
     public R<List<AgentEntity>> list(
             @RequestHeader(value = "X-Workspace-Id", required = false) Long workspaceId,
-            @RequestParam(value = "enabled", required = false) Boolean enabled) {
+            @RequestParam(value = "enabled", required = false) Boolean enabled,
+            Authentication auth) {
         // 无 header 时强制使用默认 workspace，不返回全局数据
         long wsId = workspaceId != null ? workspaceId : 1L;
         // enabled=true: chat selectors hide disabled agents.
         // enabled=null: admin management page sees enabled + disabled.
-        return R.ok(agentService.listAgentsByWorkspace(wsId, enabled));
+        return R.ok(agentService.listAgentsByWorkspace(wsId, enabled, auth));
     }
 
     @Operation(summary = "获取Agent详情")
