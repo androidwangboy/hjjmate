@@ -387,6 +387,7 @@ const suggestions = computed(() => {
   const agent = currentAgent.value
   // If agent has custom suggestions (stored as newline-separated string in description etc.)
   const agentSuggestions = (agent as any)?.suggestions as string | undefined
+  
   if (agentSuggestions) {
     const parsed = agentSuggestions.split('\n').filter(Boolean).slice(0, 4)
     if (parsed.length) return parsed
@@ -394,17 +395,17 @@ const suggestions = computed(() => {
   // Agent-type-aware defaults
   if (agent?.agentType === 'plan_execute') {
     return [
-      t('chat.suggestionPlan1', '帮我制定一个完整的项目计划'),
+      /**t('chat.suggestionPlan1', '帮我制定一个完整的项目计划'),
       t('chat.suggestionPlan2', '分步骤帮我完成一个复杂任务'),
       t('chat.suggestionIntro'),
-      t('chat.suggestionWeather'),
+      t('chat.suggestionWeather'),**/
     ]
   }
   return [
-    t('chat.suggestionIntro'),
+    /**t('chat.suggestionIntro'),
     t('chat.suggestionPoem'),
     t('chat.suggestionCode'),
-    t('chat.suggestionWeather'),
+    t('chat.suggestionWeather'),**/
   ]
 })
 
