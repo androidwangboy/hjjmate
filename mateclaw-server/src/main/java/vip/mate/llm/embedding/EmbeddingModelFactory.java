@@ -16,8 +16,13 @@ import org.springframework.ai.openai.OpenAiEmbeddingOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.ai.retry.RetryUtils;
 import org.springframework.retry.support.RetryTemplate;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestClient;
+
+import java.net.http.HttpClient;
+import java.time.Duration;
 import vip.mate.exception.MateClawException;
 import vip.mate.llm.model.EmbeddingProtocol;
 import vip.mate.llm.model.ModelConfigEntity;
@@ -201,11 +206,26 @@ public class EmbeddingModelFactory {
         ApiKey apiKeyImpl = providerService.hasUsableApiKey(apiKey)
                 ? new SimpleApiKey(apiKey.trim())
                 : new NoopApiKey();
+
+        // Pin HTTP/1.1: Uvicorn-based OpenAI-compatible servers (vLLM, llama.cpp,
+        // ollama, lmstudio) only speak HTTP/1.1 over cleartext and slam the socket
+        // on the JDK client's default H2C upgrade probe, surfacing as
+        // "header parser received no bytes". Mirror OpenAiCompatibleChatModelBuilder.
+        HttpClient httpClient = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
+                .connectTimeout(Duration.ofSeconds(30))
+                .build();
+        JdkClientHttpRequestFactory requestFactory = new JdkClientHttpRequestFactory(httpClient);
+        requestFactory.setReadTimeout(Duration.ofSeconds(60));
+
+        RestClient.Builder restClientBuilder = RestClient.builder().requestFactory(requestFactory);
+
         // 最简构造：不做 chat-specific 的 header 重写、reasoning patch 等
         OpenAiApi api = OpenAiApi.builder()
                 .baseUrl(baseUrl)
                 .apiKey(apiKeyImpl)
                 .embeddingsPath(resolveEmbeddingsPath(baseUrl))
+                .restClientBuilder(restClientBuilder)
                 .build();
 
         OpenAiEmbeddingOptions options = OpenAiEmbeddingOptions.builder()
