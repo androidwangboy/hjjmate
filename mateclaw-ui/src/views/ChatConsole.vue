@@ -328,7 +328,18 @@ import {
   resolveConversationAgentSelection,
   resolveRouteHydrationQuery,
 } from '@/utils/chatRouteHydration'
-import type { Conversation, Agent, ModelConfig, ProviderInfo, ActiveModelsInfo, ChatAttachment, MessageContentPart, Message, ToolCallMeta } from '@/types'
+import type {
+  Conversation,
+  Agent,
+  ModelConfig,
+  ProviderInfo,
+  ActiveModelsInfo,
+  ChatAttachment,
+  MessageContentPart,
+  Message,
+  ToolCallMeta,
+  AgentCapabilities
+} from '@/types'
 
 // 导入组件化组件
 import MessageList from '@/components/chat/MessageList.vue'
@@ -2302,6 +2313,14 @@ async function handleFileSelect(files: File[]) {
   uploadingAttachment.value = true
   try {
     for (const file of files) {
+      if (file.type.startsWith('image/') && !agentCapabilities.value.modalities.includes('VISION') && agentCapabilities.value.defaultVisionModelId == null){
+        mcToast.error(t('chat.uploadFailed')+':'+agentCapabilities.value.modelName+'模型不支持图片类型')
+        return
+      }
+      if (file.type.startsWith('video/') && !agentCapabilities.value.modalities.includes('VIDEO') && agentCapabilities.value.defaultVideoModelId == null){
+        mcToast.error(t('chat.uploadFailed')+':'+agentCapabilities.value.modelName+'模型不支持视频类型')
+        return
+      }
       const res: any = await chatApi.uploadFile(currentConversationId.value, file)
       const data = res.data || {}
       // 图片/视频使用本地 ObjectURL 预览（避免 /api/v1/chat/files/ 需要 JWT 认证导致加载失败）
@@ -2319,7 +2338,7 @@ async function handleFileSelect(files: File[]) {
       })
     }
   } catch (e) {
-    mcToast.error(t('chat.uploadFailed'))
+    mcToast.error(t('chat.uploadFailed')+':'+e)
   } finally {
     uploadingAttachment.value = false
   }
