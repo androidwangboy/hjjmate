@@ -2,8 +2,10 @@ package vip.mate.workspace.core.model;
 
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
+import vip.mate.agent.model.AgentEntity;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 工作区成员实体
@@ -44,4 +46,7 @@ public class WorkspaceMemberEntity {
     private LocalDateTime updateTime;
 
     private Integer deleted;
+
+    @TableField(exist = false)
+    private List<AgentEntity> agents;
 }

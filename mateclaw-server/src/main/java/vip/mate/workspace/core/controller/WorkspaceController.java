@@ -1,11 +1,15 @@
 package vip.mate.workspace.core.controller;
 
+import cn.hutool.core.collection.CollUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import vip.mate.agent.AgentService;
+import vip.mate.agent.model.AgentEntity;
 import vip.mate.auth.model.UserEntity;
+import vip.mate.auth.model.UserPrimissionEntity;
 import vip.mate.auth.service.AuthService;
 import vip.mate.common.result.R;
 import vip.mate.exception.MateClawException;
@@ -16,6 +20,7 @@ import vip.mate.workspace.core.model.WorkspaceMemberEntity;
 import vip.mate.workspace.core.model.WorkspaceWithRoleVO;
 import vip.mate.workspace.core.service.WorkspaceService;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -32,6 +37,7 @@ public class WorkspaceController {
 
     private final WorkspaceService workspaceService;
     private final AuthService authService;
+    private final AgentService agentService;
 
     // ==================== 工作区 CRUD ====================
 
@@ -99,6 +105,16 @@ public class WorkspaceController {
             if (user != null) {
                 m.setUsername(user.getUsername());
                 m.setNickname(user.getNickname());
+
+                List<UserPrimissionEntity> userPrimissionEntities = authService.findPermission(m.getUserId());
+                if (CollUtil.isNotEmpty(userPrimissionEntities)){
+                    List<Long> agentIds = userPrimissionEntities.stream().filter(s -> s != null && s.getAgentId() != null).map(s -> s.getAgentId()).distinct().toList();
+                    List<AgentEntity> agentEntities = agentService.listAgentsByWorkspace(id, true, auth);
+                    if (CollUtil.isNotEmpty(agentEntities)){
+                        agentEntities = agentEntities.stream().filter(s-> s != null && agentIds.contains(s.getId())).toList();
+                    }
+                    m.setAgents(agentEntities);
+                }
             }
         }
         return R.ok(members);
@@ -139,6 +155,12 @@ public class WorkspaceController {
         } else {
             targetUserId = Long.valueOf(body.get("userId").toString());
         }
+        //更新用户所能使用专家权限
+        if (body.containsKey("agents")){
+            List<String> agentList = (ArrayList<String>)body.get("agents");
+            authService.updatePrimission(targetUserId, agentList);
+        }
+
         String role = body.containsKey("role") ? body.get("role").toString() : "member";
         return R.ok(workspaceService.addMember(id, targetUserId, role));
     }
@@ -147,13 +169,18 @@ public class WorkspaceController {
     @PutMapping("/{id}/members/{targetUserId}")
     public R<WorkspaceMemberEntity> updateMemberRole(@PathVariable Long id,
                                                       @PathVariable Long targetUserId,
-                                                      @RequestBody Map<String, String> body,
+                                                      @RequestBody Map<String, Object> body,
                                                       Authentication auth) {
         Long userId = resolveUserId(auth);
         workspaceService.requirePermission(id, userId, "admin");
+        //更新用户所能使用专家权限
+        if (body.containsKey("agents")){
+            List<String> agentList = (ArrayList<String>)body.get("agents");
+            authService.updatePrimission(targetUserId, agentList);
+        }
         // Path variable is the member's USER id (not the membership row id):
         // WorkspaceService resolves membership by (workspaceId, userId).
-        return R.ok(workspaceService.updateMemberRole(id, targetUserId, body.get("role")));
+        return R.ok(workspaceService.updateMemberRole(id, targetUserId, (String)body.get("role")));
     }
 
     @Operation(summary = "移除工作区成员")

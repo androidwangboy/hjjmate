@@ -19,6 +19,10 @@ import vip.mate.agent.event.AgentLifecycleEvent;
 import vip.mate.agent.model.AgentEntity;
 import vip.mate.agent.progress.ProgressLedgerService;
 import vip.mate.agent.repository.AgentMapper;
+import vip.mate.auth.model.UserEntity;
+import vip.mate.auth.model.UserPrimissionEntity;
+import vip.mate.auth.repository.UserMapper;
+import vip.mate.auth.repository.UserPrimissionMapper;
 import vip.mate.exception.MateClawException;
 import vip.mate.llm.chatmodel.ThinkingLevelHolder;
 import vip.mate.llm.event.ModelConfigChangedEvent;
@@ -62,6 +66,7 @@ public class AgentService {
     /** Read-only lookup of a conversation's pinned model. Mapper (not service)
      *  to keep this a leaf dependency with no risk of a bean cycle. */
     private final ConversationMapper conversationMapper;
+    private final UserPrimissionMapper userPrimissionMapper;
 
     /** Field-injected publisher for agent_lifecycle trigger events; the
      *  trigger module's bridge listens and forwards into ingest. */
@@ -102,6 +107,8 @@ public class AgentService {
      * The model key is {@code ""} for the Agent / global-default model.
      */
     private final Map<Long, Map<String, BaseAgent>> agentInstances = new ConcurrentHashMap<>();
+    @Autowired
+    private UserMapper userMapper;
 
     // ==================== CRUD ====================
 
@@ -137,6 +144,24 @@ public class AgentService {
         if (CollUtil.isEmpty(agentEntities)){
             return List.of();
         }
+        //查询账户维护的agents
+        if (auth != null && !"admin".equals(auth.getName())){
+            UserEntity userEntity = userMapper.selectOne(new LambdaQueryWrapper<UserEntity>().eq(UserEntity::getUsername, auth.getName()));
+            if (userEntity == null){
+                log.warn("---------------查询专家列表，当前账户不存在");
+                return List.of();
+            }
+            List<UserPrimissionEntity> userPrimissionEntities = userPrimissionMapper.selectList(new LambdaQueryWrapper<UserPrimissionEntity>().eq(UserPrimissionEntity::getUserId, userEntity.getId())
+                    .eq(UserPrimissionEntity::getDeleted, 0));
+            if (CollUtil.isNotEmpty(userPrimissionEntities)){
+                List<Long> agentIds = userPrimissionEntities.stream().filter(s -> s != null && s.getAgentId() != null).map(s -> s.getAgentId()).distinct().toList();
+                agentEntities = agentEntities.stream().filter(s->s != null && agentIds.contains(s.getId())).toList();
+            }else{
+                //成员管理未选择agents
+                return List.of();
+            }
+        }
+
         for (AgentEntity agent : agentEntities){
             Long agentId = agent.getId();
             LambdaQueryWrapper<ConversationEntity> queryWrapper = new LambdaQueryWrapper<ConversationEntity>().eq(ConversationEntity::getAgentId, agentId)

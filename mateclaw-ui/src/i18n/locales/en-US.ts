@@ -1973,6 +1973,7 @@ export default {
       columns: {
         user: 'User',
         role: 'Role',
+        agents: 'Agent Experts',
         joined: 'Joined',
         actions: 'Actions',
       },
@@ -1997,11 +1998,17 @@ export default {
         nickname: 'Nickname',
         nicknamePlaceholder: 'Optional display name',
         role: 'Role',
+        agents: 'Agent Experts',
+        agentsPlaceholder: 'Select agent experts (multiple)',
+        agentsHint: 'Assign manageable agent experts to this member',
+        noAgents: 'No available agent experts',
+        agentsAll: 'All',
       },
       actions: {
         remove: 'Remove',
         cancel: 'Cancel',
         confirm: 'Confirm',
+        save: 'Save',
       },
       messages: {
         addSuccess: 'Member added successfully',
@@ -2011,6 +2018,7 @@ export default {
         removeConfirm: 'Are you sure you want to remove this member?',
         removeSuccess: 'Member removed',
         removeFailed: 'Failed to remove member',
+        agentSaveSuccess: 'Agent expert assignment saved',
       },
     },
     workspaces: {

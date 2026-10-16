@@ -1817,6 +1817,7 @@ export default {
       columns: {
         user: '用户',
         role: '角色',
+        agents: '智能体专家',
         joined: '加入时间',
         actions: '操作',
       },
@@ -1841,11 +1842,17 @@ export default {
         nickname: '昵称',
         nicknamePlaceholder: '可选，用户显示名称',
         role: '角色',
+        agents: '智能体专家',
+        agentsPlaceholder: '选择智能体专家（可多选）',
+        agentsHint: '为该成员分配可管理的智能体专家',
+        noAgents: '暂无可用智能体专家',
+        agentsAll: '全部',
       },
       actions: {
         remove: '移除',
         cancel: '取消',
         confirm: '确认',
+        save: '保存',
       },
       messages: {
         addSuccess: '成员添加成功',
@@ -1855,6 +1862,7 @@ export default {
         removeConfirm: '确定要移除该成员吗？',
         removeSuccess: '成员已移除',
         removeFailed: '移除成员失败',
+        agentSaveSuccess: '智能体专家分配已保存',
       },
     },
     workspaces: {

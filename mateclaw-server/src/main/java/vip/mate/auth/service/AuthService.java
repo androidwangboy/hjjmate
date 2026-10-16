@@ -1,6 +1,7 @@
 package vip.mate.auth.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -12,11 +13,14 @@ import org.springframework.stereotype.Service;
 import vip.mate.auth.model.LoginRequest;
 import vip.mate.auth.model.LoginResponse;
 import vip.mate.auth.model.UserEntity;
+import vip.mate.auth.model.UserPrimissionEntity;
 import vip.mate.auth.repository.UserMapper;
+import vip.mate.auth.repository.UserPrimissionMapper;
 import vip.mate.exception.MateClawException;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -31,6 +35,7 @@ import java.util.List;
 public class AuthService {
 
     private final UserMapper userMapper;
+    private final UserPrimissionMapper userPrimissionMapper;
     private final BCryptPasswordEncoder passwordEncoder;
 
     @Value("${mateclaw.jwt.secret:MateClaw-Secret-Key-2024-Very-Long-String}")
@@ -236,5 +241,28 @@ public class AuthService {
             keyBytes = padded;
         }
         return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    public void updatePrimission(Long targetUserId, List<String> agentList) {
+        userPrimissionMapper.delete(new LambdaUpdateWrapper<UserPrimissionEntity>()
+                .eq(UserPrimissionEntity::getUserId, targetUserId));
+        if (agentList != null && !agentList.isEmpty()) {
+            List<UserPrimissionEntity> primiessionEntities = new ArrayList<>();
+            for (String agent : agentList) {
+                UserPrimissionEntity userPrimiession = new UserPrimissionEntity();
+                userPrimiession.setUserId(targetUserId);
+                userPrimiession.setAgentId(Long.valueOf(agent));
+                userPrimiession.setDeleted(0);
+                primiessionEntities.add(userPrimiession);
+            }
+            userPrimissionMapper.insert(primiessionEntities);
+        }
+
+
+    }
+
+    public List<UserPrimissionEntity> findPermission(Long userId) {
+        return userPrimissionMapper.selectList(new LambdaQueryWrapper<UserPrimissionEntity>().eq(UserPrimissionEntity::getUserId, userId)
+                .eq(UserPrimissionEntity::getDeleted, 0));
     }
 }
