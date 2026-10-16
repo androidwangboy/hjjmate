@@ -66,7 +66,8 @@ public class AgentService {
     /** Read-only lookup of a conversation's pinned model. Mapper (not service)
      *  to keep this a leaf dependency with no risk of a bean cycle. */
     private final ConversationMapper conversationMapper;
-    private final UserPrimissionMapper userPrimissionMapper;
+    @Autowired(required = false)
+    private UserPrimissionMapper userPrimissionMapper;
 
     /** Field-injected publisher for agent_lifecycle trigger events; the
      *  trigger module's bridge listens and forwards into ingest. */

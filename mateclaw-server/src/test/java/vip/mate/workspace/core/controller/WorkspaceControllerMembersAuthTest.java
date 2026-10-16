@@ -3,6 +3,7 @@ package vip.mate.workspace.core.controller;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import vip.mate.agent.AgentService;
 import vip.mate.auth.model.UserEntity;
 import vip.mate.auth.service.AuthService;
 import vip.mate.workspace.core.service.WorkspaceService;
@@ -19,7 +20,8 @@ class WorkspaceControllerMembersAuthTest {
     void listMembersRequiresViewerPermissionForNonGlobalAdmin() throws Exception {
         WorkspaceService workspaceService = mock(WorkspaceService.class);
         AuthService authService = mock(AuthService.class);
-        WorkspaceController controller = new WorkspaceController(workspaceService, authService);
+        AgentService agentService = mock(AgentService.class);
+        WorkspaceController controller = new WorkspaceController(workspaceService, authService, agentService);
         UserEntity user = new UserEntity();
         user.setId(42L);
         user.setUsername("alice");
@@ -37,7 +39,8 @@ class WorkspaceControllerMembersAuthTest {
     void listMembersLetsGlobalAdminBypassWorkspaceMembership() throws Exception {
         WorkspaceService workspaceService = mock(WorkspaceService.class);
         AuthService authService = mock(AuthService.class);
-        WorkspaceController controller = new WorkspaceController(workspaceService, authService);
+        AgentService agentService = mock(AgentService.class);
+        WorkspaceController controller = new WorkspaceController(workspaceService, authService, agentService);
         UserEntity user = new UserEntity();
         user.setId(1L);
         user.setUsername("admin");
