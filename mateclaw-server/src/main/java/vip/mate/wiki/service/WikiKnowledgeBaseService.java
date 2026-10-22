@@ -148,7 +148,7 @@ public class WikiKnowledgeBaseService {
                 : listByWorkspace(agent.getWorkspaceId());
         Set<Long> scope = scopedKbIds(agentId);
         if (scope == null) {
-            return workspaceKbs; // unrestricted
+            return List.of(); // unrestricted
         }
         return workspaceKbs.stream()
                 .filter(kb -> scope.contains(kb.getId()))
@@ -164,14 +164,14 @@ public class WikiKnowledgeBaseService {
      */
     private Set<Long> scopedKbIds(Long agentId) {
         if (agentId == null || kbBindingMapper == null) {
-            return null;
+            return Set.of();
         }
         List<AgentWikiKbBinding> rows = kbBindingMapper.selectList(
                 new LambdaQueryWrapper<AgentWikiKbBinding>()
                         .eq(AgentWikiKbBinding::getAgentId, agentId)
                         .eq(AgentWikiKbBinding::getEnabled, true));
         if (rows.isEmpty()) {
-            return null;
+            return Set.of();
         }
         return rows.stream()
                 .map(AgentWikiKbBinding::getKbId)
