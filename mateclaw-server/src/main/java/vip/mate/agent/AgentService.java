@@ -34,7 +34,9 @@ import vip.mate.team.event.TeamChangedEvent;
 import vip.mate.tool.mcp.runtime.McpClientManager;
 import vip.mate.tool.mcp.service.McpServerService;
 import vip.mate.workspace.conversation.model.ConversationEntity;
+import vip.mate.workspace.conversation.model.MessageEntity;
 import vip.mate.workspace.conversation.repository.ConversationMapper;
+import vip.mate.workspace.conversation.repository.MessageMapper;
 
 import java.util.*;
 import java.time.Duration;
@@ -110,6 +112,8 @@ public class AgentService {
     private final Map<Long, Map<String, BaseAgent>> agentInstances = new ConcurrentHashMap<>();
     @Autowired
     private UserMapper userMapper;
+    @Autowired
+    private MessageMapper messageMapper;
 
     // ==================== CRUD ====================
 
@@ -171,17 +175,28 @@ public class AgentService {
             if (auth != null && StrUtil.isNotEmpty(auth.getName())){
                 queryWrapper.eq(ConversationEntity::getUsername, auth.getName());
             }
-            Page<ConversationEntity> conversationEntityPage = conversationMapper.selectPage(new Page<>(1, 4)
+            Page<ConversationEntity> conversationEntityPage = conversationMapper.selectPage(new Page<>(1, 10)
                     , new LambdaQueryWrapper<ConversationEntity>().eq(ConversationEntity::getAgentId, agentId)
                             .eq(ConversationEntity::getDeleted, 0).eq(ConversationEntity::getWorkspaceId, workspaceId)
                             .orderByDesc(ConversationEntity::getCreateTime));
             List<ConversationEntity> records = conversationEntityPage.getRecords();
             if (CollUtil.isNotEmpty(records)){
-                String suggestions = records.stream()
-                        .map(ConversationEntity::getTitle)
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.joining("\n"));
-                agent.setSuggestions(suggestions);
+                Set<String> convIds = records.stream().filter(s -> s != null && StrUtil.isNotEmpty(s.getConversationId())).map(ConversationEntity::getConversationId).collect(Collectors.toSet());
+                if (CollUtil.isNotEmpty(convIds)){
+                    Page<MessageEntity> messageEntityPage = messageMapper.selectPage(new Page<>(1, 10)
+                            , new LambdaQueryWrapper<MessageEntity>()
+                                    .eq(MessageEntity::getRole, "user")
+                                    .in(MessageEntity::getConversationId, convIds)
+                                    .orderByDesc(MessageEntity::getCreateTime));
+                    List<MessageEntity> records1 = messageEntityPage.getRecords();
+                    if (CollUtil.isNotEmpty(records1)){
+                        String suggestions = records1.stream()
+                                .map(MessageEntity::getContent)
+                                .filter(Objects::nonNull).distinct().limit(4)
+                                .collect(Collectors.joining("\n"));
+                        agent.setSuggestions(suggestions);
+                    }
+                }
             }
         }
         return agentEntities;
