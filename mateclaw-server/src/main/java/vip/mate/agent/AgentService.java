@@ -175,10 +175,10 @@ public class AgentService {
             if (auth != null && StrUtil.isNotEmpty(auth.getName())){
                 queryWrapper.eq(ConversationEntity::getUsername, auth.getName());
             }
-            Page<ConversationEntity> conversationEntityPage = conversationMapper.selectPage(new Page<>(1, 10)
-                    , new LambdaQueryWrapper<ConversationEntity>().eq(ConversationEntity::getAgentId, agentId)
-                            .eq(ConversationEntity::getDeleted, 0).eq(ConversationEntity::getWorkspaceId, workspaceId)
-                            .orderByDesc(ConversationEntity::getCreateTime));
+            if (auth != null && StrUtil.isNotEmpty(auth.getName())){
+                queryWrapper.eq(ConversationEntity::getUsername, auth.getName());
+            }
+            Page<ConversationEntity> conversationEntityPage = conversationMapper.selectPage(new Page<>(1, 10), queryWrapper);
             List<ConversationEntity> records = conversationEntityPage.getRecords();
             if (CollUtil.isNotEmpty(records)){
                 Set<String> convIds = records.stream().filter(s -> s != null && StrUtil.isNotEmpty(s.getConversationId())).map(ConversationEntity::getConversationId).collect(Collectors.toSet());
@@ -186,6 +186,7 @@ public class AgentService {
                     Page<MessageEntity> messageEntityPage = messageMapper.selectPage(new Page<>(1, 10)
                             , new LambdaQueryWrapper<MessageEntity>()
                                     .eq(MessageEntity::getRole, "user")
+                                    .eq(MessageEntity::getDeleted, 0)
                                     .in(MessageEntity::getConversationId, convIds)
                                     .orderByDesc(MessageEntity::getCreateTime));
                     List<MessageEntity> records1 = messageEntityPage.getRecords();
