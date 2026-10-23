@@ -1,5 +1,7 @@
 package vip.mate.agent.binding.service;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,14 +36,7 @@ import vip.mate.wiki.repository.WikiKnowledgeBaseMapper;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -591,6 +586,17 @@ public class AgentBindingService implements AgentBindingResolver {
         // enabled, use the tool-guard deny path in AgentGraphBuilder.
         if (!toolsDisabled) {
             Set<String> enabledMcpTools = getEnabledMcpToolNames();
+            if (CollUtil.isNotEmpty(enabledMcpTools)){
+                //查询当前agent已绑定的mcp tools，未绑定不使用，防止使用所有mcp tools description额外消耗token
+                List<AgentToolBinding> agentToolBindings = toolBindingMapper.selectList(new LambdaQueryWrapper<AgentToolBinding>().eq(AgentToolBinding::getAgentId, agentId)
+                        .eq(AgentToolBinding::getEnabled, true).eq(AgentToolBinding::getDeleted, 0));
+                if (CollUtil.isNotEmpty(agentToolBindings)){
+                    List<String> toolNames = agentToolBindings.stream().filter(s -> s != null && StrUtil.isNotEmpty(s.getToolName())).map(s -> s.getToolName()).distinct().toList();
+                    enabledMcpTools = enabledMcpTools.stream().filter(toolNames::contains).collect(Collectors.toSet());
+                }else{
+                    enabledMcpTools = new HashSet<>();
+                }
+            }
             boolean agentScopedMcpExplicitly = directTools != null && !directTools.isEmpty()
                     && !Collections.disjoint(directTools, enabledMcpTools);
             if (!agentScopedMcpExplicitly) {
