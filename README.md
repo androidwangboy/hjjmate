@@ -1,10 +1,10 @@
 <div align="center">
 
 <p align="center">
-  <img src="mateclaw-ui/public/logo/hjjmate_logo.png" alt="HjjMate Logo" width="120">
+  <img src="mateclaw-ui/public/logo/hujiamate_logo.png" alt="HUJIA Mate Logo" width="120">
 </p>
 
-# HjjMate
+# HUJIA Mate
 
 <p align="center"><b>Your second brain</b></p>
 
@@ -24,20 +24,20 @@
 </div>
 
 <p align="center">
-  <img src="assets/images/preview.png" alt="HjjMate Preview" width="800">
+  <img src="assets/images/preview.png" alt="HUJIA Mate Preview" width="800">
 </p>
 
 ---
 
-> **HjjMate is the hospital on-prem edition of [MateClaw](https://github.com/mateaix/mateclaw).** Built for deployment inside the hospital's own network: the branding and login experience are adapted for hospitals, a **Hospital Policy Advisor** expert ships pre-seeded by default, business data sources now include **Oracle (11g / 12c / 19c)** alongside MySQL and PostgreSQL, and one-click **prompt optimization** lands in the chat input box. Everything that makes MateClaw a governed agent platform carries over unchanged.
+> **HUJIA Mate is the hospital on-prem edition of [MateClaw](https://github.com/mateaix/mateclaw).** Built for deployment inside the hospital's own network: the branding and login experience are adapted for hospitals, a **Hospital Policy Advisor** expert ships pre-seeded by default, business data sources now include **Oracle (11g / 12c / 19c)** alongside MySQL and PostgreSQL, and one-click **prompt optimization** lands in the chat input box. Everything that makes MateClaw a governed agent platform carries over unchanged.
 
 ---
 
-> **Latest stable: v2.2.0 — a pluggable, recoverable Agent Runtime.** Digital experts can now run on HjjMate's native StateGraph engine or the managed DeepSeek Harness (DSH) runtime while keeping one conversation, policy, tool, persistence, and observability plane. Persistent Goals survive bounded turns and backend restarts, and A2A connects governed experts across systems. Read the [v2.2.0 release notes](https://claw.mate.vip/docs/en/releases/2.2.0).
+> **Latest stable: v2.2.0 — a pluggable, recoverable Agent Runtime.** Digital experts can now run on HUJIA Mate's native StateGraph engine or the managed DeepSeek Harness (DSH) runtime while keeping one conversation, policy, tool, persistence, and observability plane. Persistent Goals survive bounded turns and backend restarts, and A2A connects governed experts across systems. Read the [v2.2.0 release notes](https://claw.mate.vip/docs/en/releases/2.2.0).
 
 ---
 
-> **Other personal AI agents are built for one person. HjjMate is the one your IT department can actually sign off on.**
+> **Other personal AI agents are built for one person. HUJIA Mate is the one your IT department can actually sign off on.**
 >
 > Multi-user workspaces. Approval-gated sensitive actions. Full audit trail. Spring Boot Actuator health monitoring. Per-channel error isolation so one chat platform's outage doesn't take down the rest. One JAR in your environment; you control persisted data, and task content is sent only to model, channel, or tool services you explicitly configure — which is exactly what a hospital intranet needs.
 >
@@ -45,7 +45,7 @@
 
 Most AI tools die when their vendor has a bad day. Most forget you the moment the tab closes. Most give you a chatbox and call it a product.
 
-**HjjMate is the whole widget.** One deployment. Reasoning, knowledge, memory, tools, channels — built together, not bolted on. And when your primary model is unavailable, the next healthy provider retries the current request.
+**HUJIA Mate is the whole widget.** One deployment. Reasoning, knowledge, memory, tools, channels — built together, not bolted on. And when your primary model is unavailable, the next healthy provider retries the current request.
 
 ---
 
@@ -55,7 +55,7 @@ Most AI tools die when their vendor has a bad day. Most forget you the moment th
 
 Primary key expired. Vendor returns 401. Network blip. Quota drained.
 
-Other tools hand you a red error card. HjjMate tries the next healthy provider in configured order — including built-in and OpenAI-compatible options such as DashScope, OpenAI, Anthropic, Gemini, DeepSeek, Kimi, Ollama, LM Studio, and MLX — and attempts to recover the current request. It returns an error only when the available chain is exhausted. A provider health tracker parks bad vendors in a cooldown window so they don't waste seconds on every turn.
+Other tools hand you a red error card. HUJIA Mate tries the next healthy provider in configured order — including built-in and OpenAI-compatible options such as DashScope, OpenAI, Anthropic, Gemini, DeepSeek, Kimi, Ollama, LM Studio, and MLX — and attempts to recover the current request. It returns an error only when the available chain is exhausted. A provider health tracker parks bad vendors in a cooldown window so they don't waste seconds on every turn.
 
 You don't write a retry script. You drag providers into priority order in **Settings → Models** and watch the health dashboard fill with green dots as requests route around failures in real time.
 
@@ -63,7 +63,7 @@ You don't write a retry script. You drag providers into priority order in **Sett
 
 Upload a PDF, a batch of markdown, a scraped page — raw material in.
 
-HjjMate's **LLM Wiki** digests it into structured pages, builds `[[links]]` between them, and preserves traceable citations for generated content. Open the citation drawer to inspect the corresponding source chunk and verify page or answer references. For the hospital edition this is the grounding layer the built-in policy expert answers from.
+HUJIA Mate's **LLM Wiki** digests it into structured pages, builds `[[links]]` between them, and preserves traceable citations for generated content. Open the citation drawer to inspect the corresponding source chunk and verify page or answer references. For the hospital edition this is the grounding layer the built-in policy expert answers from.
 
 This is the difference between a warehouse and a library.
 
@@ -89,7 +89,7 @@ Same brain. Same memory. Same tools. Different doors.
 You hire experts, not chat boxes. Each one has a **Role**, a **Goal**, a **Backstory**, a runtime, a pixel-art avatar, and a color of their own — ready-made experts ship seeded (General Assistant · Task Planner · Reasoning Analyst, plus scenario experts like the Hospital Policy Advisor and Content Studio). Expert identity and governance stay stable even when the execution engine changes. Each expert also gets a **context workbench** (`/agents/:id/context`) — a per-expert file workspace over `AGENTS.md`, `SOUL.md`, `MEMORY.md`, and the rest.
 
 ### Agent Runtime: native or DSH (2.2.0+)
-The `AgentRuntimeProvider` contract separates an expert from the engine that runs its turn. The **native runtime** keeps ReAct, Plan-and-Execute, persistent Goals, and Team Runs inside HjjMate. The **DSH runtime** manages `dsh-jsonrpc-agent` as an authenticated child process and streams thinking, text, tool calls, usage, completion, and cancellation back as normalized runtime events. DSH owns the external Agent loop; HjjMate still owns the session, workspace, credentials, tools, approvals, messages, and UI projection. Runtime availability and capabilities are validated before startup, and DSH can be installed, verified, connection-tested, enabled, or disabled from the console. [Configure DeepSeek Harness →](https://claw.mate.vip/docs/en/deepseek-harness)
+The `AgentRuntimeProvider` contract separates an expert from the engine that runs its turn. The **native runtime** keeps ReAct, Plan-and-Execute, persistent Goals, and Team Runs inside HUJIA Mate. The **DSH runtime** manages `dsh-jsonrpc-agent` as an authenticated child process and streams thinking, text, tool calls, usage, completion, and cancellation back as normalized runtime events. DSH owns the external Agent loop; HjjMate still owns the session, workspace, credentials, tools, approvals, messages, and UI projection. Runtime availability and capabilities are validated before startup, and DSH can be installed, verified, connection-tested, enabled, or disabled from the console. [Configure DeepSeek Harness →](https://claw.mate.vip/docs/en/deepseek-harness)
 
 ### Team Runs (2.1.0+)
 One request, one durable **Team Run**. A stable `runId` links the user's objective, task DAG, worker executions, final synthesis, and deliverables. Chat is the outcome surface, Agents Live groups the workers for real-time observation, and Teams owns history and governance — all three consume the same server projection. Worker conversations no longer flood the normal sidebar; summaries and files lead, while tasks, evidence, approvals, and read-only worker records drill down on demand. Underneath, the 2.0 shared board still provides dependency orchestration, parallel dispatch, prerequisite hand-off, execution leases, cancel-interrupt, and human approval gates.
@@ -133,15 +133,15 @@ RBAC + JWT. **Personal Access Tokens** for headless scripts and CI. **HMAC-SHA-2
 
 Model providers rate-limit, networks fail, keys expire, and services become temporarily unavailable. Betting every AI capability on one provider turns an upstream incident into your own outage.
 
-Once AI enters production, the stable layer should not be tied to one model supplier or one Agent loop. HjjMate absorbs model uncertainty through provider priorities, health tracking, cooldown, and failover, then places native and external execution engines behind one governed Agent Runtime contract.
+Once AI enters production, the stable layer should not be tied to one model supplier or one Agent loop. HUJIA Mate absorbs model uncertainty through provider priorities, health tracking, cooldown, and failover, then places native and external execution engines behind one governed Agent Runtime contract.
 
-**HjjMate is that layer — built the Spring Boot way.**
+**HUJIA Mate is that layer — built the Spring Boot way.**
 
 ---
 
-## Why HjjMate
+## Why HUJIA Mate
 
-| | HjjMate | [OpenClaw](https://github.com/openclaw/openclaw) | [Hermes Agent](https://github.com/NousResearch/hermes-agent) | [Claude Code](https://github.com/anthropics/claude-code) | [Cursor](https://cursor.com) |
+| | HUJIA Mate | [OpenClaw](https://github.com/openclaw/openclaw) | [Hermes Agent](https://github.com/NousResearch/hermes-agent) | [Claude Code](https://github.com/anthropics/claude-code) | [Cursor](https://cursor.com) |
 |:---|:---:|:---:|:---:|:---:|:---:|
 | **Multi-vendor failover** | **Chain + health tracker + cooldown** | Swap providers via config | Orchestration w/ retry | Anthropic only | One model |
 | **Knowledge digestion** | **LLM Wiki + page-level citations** | Canvas + memory | Skills Hub + memory | — | Code index |
@@ -151,9 +151,9 @@ Once AI enters production, the stable layer should not be tied to one model supp
 | **Stack** | **Java (Spring Boot)** | TypeScript | Python | TypeScript | Electron/TS |
 | **License / Price** | **Apache 2.0 · Free** | MIT · Free | MIT · Free | Proprietary · $20–200/mo | Proprietary · $0–200/mo |
 
-**OpenClaw and Hermes Agent are excellent personal AI platforms** — pick either if you're running one user on one laptop, building your own agent from CLI, and treating everything as config files to hand-tune. Both have bigger communities than HjjMate today.
+**OpenClaw and Hermes Agent are excellent personal AI platforms** — pick either if you're running one user on one laptop, building your own agent from CLI, and treating everything as config files to hand-tune. Both have bigger communities than HUJIA Mate today.
 
-**HjjMate is the version built for institutions — teams, and hospitals in particular.** Digital experts, models, and tools sit behind permissions and workspace boundaries. Approval flows can pause risky actions for review, and key operations enter the audit trail. The Admin Runtime Console centralizes active expert and provider state with force-recycle for stuck runs. Spring Boot inside — a natural fit for Java shops already running production services, and for an intranet that cannot let data out.
+**HUJIA Mate is the version built for institutions — teams, and hospitals in particular.** Digital experts, models, and tools sit behind permissions and workspace boundaries. Approval flows can pause risky actions for review, and key operations enter the audit trail. The Admin Runtime Console centralizes active expert and provider state with force-recycle for stuck runs. Spring Boot inside — a natural fit for Java shops already running production services, and for an intranet that cannot let data out.
 
 Same "whole widget" philosophy. Different center of gravity.
 
@@ -217,7 +217,7 @@ hjjmate/
 └── .env.example
 ```
 
-Module directories keep the upstream `mateclaw-*` names; the product, branding, and default content are **HjjMate**.
+Module directories keep the upstream `mateclaw-*` names; the product, branding, and default content are **HUJIA Mate**.
 
 Desktop binaries ship via [GitHub Releases](https://github.com/androidwangboy/hjjmate/releases) with a bundled JRE 21 — no Java install needed.
 
@@ -244,9 +244,9 @@ In-app help docs are bundled with the server and served from the console. Full o
 
 ## Roadmap
 
-**HjjMate Hospital Edition (2026-08 → 2026-09, on top of v2.2.0)** — what this distribution changes over upstream MateClaw:
+**HUJIA Mate Hospital Edition (2026-08 → 2026-09, on top of v2.2.0)** — what this distribution changes over upstream MateClaw:
 
-- **Rebrand** — product name HjjMate with matching logo, favicon, login page, and desktop assets
+- **Rebrand** — product name HUJIA Mate with matching logo, favicon, login page, and desktop assets
 - **"Employee" → "Expert"** — the digital-employee concept is renamed to digital expert across the console, prompts, skill packs, and all bundled help docs (Chinese and English)
 - **Hospital Policy Advisor pre-seeded by default** — new installs get it from the seed data; existing databases get it via the `V190` migration on H2 / MySQL / Kingbase
 - **Oracle data sources** — 11g / 12c / 19c support end to end: connection management, ROWNUM pagination, `ALL_*` metadata, SQL validation, front end, and skill pack
@@ -334,7 +334,7 @@ cd ../mateclaw-ui && npm install && npm run dev
 
 **Mate** is companion. **Claw** is capability — the promise of the upstream **MateClaw (太一)** this edition is built on.
 
-**HjjMate** carries that same engine into the hospital: stay beside the staff, grab work and move it — inside a network you control.
+**HUJIA Mate** carries that same engine into the hospital: stay beside the staff, grab work and move it — inside a network you control.
 
 ## License
 

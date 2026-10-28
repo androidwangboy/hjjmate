@@ -1,10 +1,10 @@
 <div align="center">
 
 <p align="center">
-  <img src="mateclaw-ui/public/logo/hjjmate_logo.png" alt="HjjMate Logo" width="120">
+  <img src="mateclaw-ui/public/logo/hujiamate_logo.png" alt="HUJIA Mate Logo" width="120">
 </p>
 
-# HjjMate
+# HUJIA Mate
 
 <p align="center"><b>你的超级大脑</b></p>
 
@@ -24,20 +24,20 @@
 </div>
 
 <p align="center">
-  <img src="assets/images/preview.png" alt="HjjMate 预览" width="800">
+  <img src="assets/images/preview.png" alt="HUJIA Mate 预览" width="800">
 </p>
 
 ---
 
-> **HjjMate 是开源项目 [MateClaw（太一）](https://github.com/mateaix/mateclaw) 的医院私有化发行版。** 面向医院内网自部署定制：品牌与登录界面按医院场景调整，开箱默认内置「医院规章制度专家」，业务数据源在 MySQL / PostgreSQL 之外新增 **Oracle（11g / 12c / 19c）** 支持，聊天输入框一键**提示词优化**。作为一个受治理的 Agent 平台，上游的全部核心能力原样保留。
+> **HUJIA Mate 是开源项目 [MateClaw（太一）](https://github.com/mateaix/mateclaw) 的医院私有化发行版。** 面向医院内网自部署定制：品牌与登录界面按医院场景调整，开箱默认内置「医院规章制度专家」，业务数据源在 MySQL / PostgreSQL 之外新增 **Oracle（11g / 12c / 19c）** 支持，聊天输入框一键**提示词优化**。作为一个受治理的 Agent 平台，上游的全部核心能力原样保留。
 
 ---
 
-> **最新稳定版：v2.2.0 —— 可插拔、可恢复的 Agent Runtime。** 数字专家现在可以选择 HjjMate 原生 StateGraph 引擎或受管理的 DeepSeek Harness（DSH）运行时，同时复用同一套会话、策略、工具、持久化与可观测面；Persistent Goal 可跨有界回合和后端重启继续，A2A 则让受治理的专家跨系统互联。详见 [v2.2.0 更新记录](https://claw.mate.vip/docs/zh/releases/2.2.0)。
+> **最新稳定版：v2.2.0 —— 可插拔、可恢复的 Agent Runtime。** 数字专家现在可以选择 HUJIA Mate 原生 StateGraph 引擎或受管理的 DeepSeek Harness（DSH）运行时，同时复用同一套会话、策略、工具、持久化与可观测面；Persistent Goal 可跨有界回合和后端重启继续，A2A 则让受治理的专家跨系统互联。详见 [v2.2.0 更新记录](https://claw.mate.vip/docs/zh/releases/2.2.0)。
 
 ---
 
-> **别的 AI 助手是给一个人用的。HjjMate 是公司允许部署的那一个。**
+> **别的 AI 助手是给一个人用的。HUJIA Mate 是公司允许部署的那一个。**
 >
 > 多用户工作空间。敏感操作走审批。完整审计日志。Spring Boot Actuator 健康监控。单个渠道挂掉不影响其他渠道的错误隔离。一个 JAR 包跑在自己的环境里；持久化数据由你掌控，任务所需内容只会发送到你主动配置的模型、渠道或工具服务——这正是医院内网最需要的形态。
 >
@@ -45,7 +45,7 @@
 
 大多数 AI 工具一到厂商抽风那天就两手一摊。关一次标签页就忘了你是谁。给你一个聊天框，就敢叫产品。
 
-**HjjMate 是完整的一整套。** 一次部署——推理、知识、记忆、工具、多渠道入口，从第一天就一起设计，不是事后拼接。主模型不可用时，系统会按优先级改由下一家健康供应商重新完成当前请求。
+**HUJIA Mate 是完整的一整套。** 一次部署——推理、知识、记忆、工具、多渠道入口，从第一天就一起设计，不是事后拼接。主模型不可用时，系统会按优先级改由下一家健康供应商重新完成当前请求。
 
 ---
 
@@ -55,7 +55,7 @@
 
 Key 过期。厂商返回 401。网络抖动。配额耗尽。
 
-别的工具丢你一张红色错误卡。HjjMate 会按配置顺序尝试下一家健康供应商——DashScope、OpenAI、Anthropic、Gemini、DeepSeek、Kimi、Ollama、LM Studio、MLX 等内置或 OpenAI 兼容供应商——尽可能恢复当前请求；仅当可用链路全部失败时才返回错误。内置的 **Provider Health Tracker** 会把连续失败的供应商放进冷却窗口，避免每一轮对话都白白撞壁。
+别的工具丢你一张红色错误卡。HUJIA Mate 会按配置顺序尝试下一家健康供应商——DashScope、OpenAI、Anthropic、Gemini、DeepSeek、Kimi、Ollama、LM Studio、MLX 等内置或 OpenAI 兼容供应商——尽可能恢复当前请求；仅当可用链路全部失败时才返回错误。内置的 **Provider Health Tracker** 会把连续失败的供应商放进冷却窗口，避免每一轮对话都白白撞壁。
 
 你不用写重试脚本。在 **设置 → 模型** 里把供应商拖成你想要的优先顺序，健康面板实时亮起一排绿点——请求绕着故障流过去。
 
@@ -63,7 +63,7 @@ Key 过期。厂商返回 401。网络抖动。配额耗尽。
 
 上传 PDF、一批 markdown、抓下来的网页——原始材料进去。
 
-HjjMate 的 **LLM Wiki** 把它消化成结构化页面，页面之间自己长出 `[[链接]]`，生成内容保留可追踪引用。点开引用抽屉，就能看到对应的原始 chunk；页面与回答中的引用可以回到来源核对。在医院版里，这层知识正是内置制度专家回答问题的地基。
+HUJIA Mate 的 **LLM Wiki** 把它消化成结构化页面，页面之间自己长出 `[[链接]]`，生成内容保留可追踪引用。点开引用抽屉，就能看到对应的原始 chunk；页面与回答中的引用可以回到来源核对。在医院版里，这层知识正是内置制度专家回答问题的地基。
 
 这是**仓库**和**图书馆**的区别。
 
@@ -89,7 +89,7 @@ HjjMate 的 **LLM Wiki** 把它消化成结构化页面，页面之间自己长�
 你雇佣专家，不是开聊天框。每位有**角色**、**目标**、**背景故事**、运行时、像素艺术头像与专属配色——开箱预置通用助手 · 任务规划师 · 推理分析师，外加医院规章制度专家、内容工作室这类场景专家。**ReAct** 做迭代推理，**Plan-and-Execute** 做复杂多步任务，专家之间可以并行委派。每位专家还有自己的**上下文工作台**（`/agents/:id/context`）——围绕 `AGENTS.md` / `SOUL.md` / `MEMORY.md` 等提示文件的单人编辑间。即使更换执行引擎，专家身份和治理边界仍保持不变。
 
 ### Agent Runtime：原生或 DSH（2.2.0+）
-`AgentRuntimeProvider` contract 把专家与实际执行回合的引擎分开。**原生运行时**在 HjjMate 内运行 ReAct、Plan-and-Execute、Persistent Goal 与 Team Run；**DSH 运行时**把 `dsh-jsonrpc-agent` 作为认证子进程管理，并将思考、文本、工具调用、用量、完成与取消统一映射为 runtime event。DSH 掌管外部 Agent loop，HjjMate 继续掌管 session、workspace、凭证、工具、审批、消息和 UI 投影。启动前会校验 runtime 可用性与能力；控制台可完成 DSH 的安装、配置、校验、连接测试和启停。[配置 DeepSeek Harness →](https://claw.mate.vip/docs/zh/deepseek-harness)
+`AgentRuntimeProvider` contract 把专家与实际执行回合的引擎分开。**原生运行时**在 HUJIA Mate 内运行 ReAct、Plan-and-Execute、Persistent Goal 与 Team Run；**DSH 运行时**把 `dsh-jsonrpc-agent` 作为认证子进程管理，并将思考、文本、工具调用、用量、完成与取消统一映射为 runtime event。DSH 掌管外部 Agent loop，HUJIA Mate 继续掌管 session、workspace、凭证、工具、审批、消息和 UI 投影。启动前会校验 runtime 可用性与能力；控制台可完成 DSH 的安装、配置、校验、连接测试和启停。[配置 DeepSeek Harness →](https://claw.mate.vip/docs/zh/deepseek-harness)
 
 ### Team Run（2.1.0+）
 一次请求对应一个持久化的 **Team Run**。稳定的 `runId` 串起用户目标、任务 DAG、成员执行、最终汇总与交付物。Chat 是成果交付面，Agents Live 按运行聚合成员并展示实时状态，Teams 管理历史与治理；三处读取同一份服务端投影。成员子会话不再挤进普通会话列表，摘要和文件优先展示，任务、证据、审批与只读成员记录按需下钻。底层继续使用 2.0 的共享任务板，保留依赖编排、并行派发、前置结果传递、执行租约、取消中断和人工审批卡点。
@@ -133,15 +133,15 @@ RBAC + JWT。**Personal Access Token** 给无人值守脚本和 CI 使用。**We
 
 模型供应商会限流，网络会抖动，Key 会过期，服务也可能临时不可用。把所有 AI 能力押在单一供应商上，会让上游故障直接变成自己的业务故障。
 
-当 AI 进入生产环境，稳定的一层既不应绑定一家模型供应商，也不应绑定一套 Agent loop。HjjMate 用供应商优先级、健康追踪、冷却与故障转移吸收模型侧不确定性，再把原生与外部执行引擎收进同一份受治理的 Agent Runtime contract。
+当 AI 进入生产环境，稳定的一层既不应绑定一家模型供应商，也不应绑定一套 Agent loop。HUJIA Mate 用供应商优先级、健康追踪、冷却与故障转移吸收模型侧不确定性，再把原生与外部执行引擎收进同一份受治理的 Agent Runtime contract。
 
-**HjjMate 就是那一层——用 Spring Boot 方式盖的。**
+**HUJIA Mate 就是那一层——用 Spring Boot 方式盖的。**
 
 ---
 
-## 为什么选 HjjMate
+## 为什么选 HUJIA Mate
 
-| | HjjMate | [OpenClaw](https://github.com/openclaw/openclaw) | [Hermes Agent](https://github.com/NousResearch/hermes-agent) | [Claude Code](https://github.com/anthropics/claude-code) | [Cursor](https://cursor.com) |
+| | HUJIA Mate | [OpenClaw](https://github.com/openclaw/openclaw) | [Hermes Agent](https://github.com/NousResearch/hermes-agent) | [Claude Code](https://github.com/anthropics/claude-code) | [Cursor](https://cursor.com) |
 |:---|:---:|:---:|:---:|:---:|:---:|
 | **多厂商失败转移** | **Chain + 健康追踪 + 冷却** | 切换供应商（改配置） | 内置编排重试 | 仅 Anthropic | 单模型 |
 | **知识消化式加工** | **Wiki + 页面级引用溯源** | Canvas + 记忆 | Skills Hub + 记忆 | — | 代码索引 |
@@ -151,9 +151,9 @@ RBAC + JWT。**Personal Access Token** 给无人值守脚本和 CI 使用。**We
 | **技术栈** | **Java（Spring Boot）** | TypeScript | Python | TypeScript | Electron/TS |
 | **许可 / 定价** | **Apache 2.0 · 免费** | MIT · 免费 | MIT · 免费 | 闭源 · $20–200/月 | 闭源 · $0–200/月 |
 
-**OpenClaw 和 Hermes Agent 是优秀的个人 AI 平台**——如果你是一个人、一台笔记本、习惯从 CLI 搭自己的 agent、所有东西都靠手工配置文件调优，选它们没问题。两家的社区规模今天都大于 HjjMate。
+**OpenClaw 和 Hermes Agent 是优秀的个人 AI 平台**——如果你是一个人、一台笔记本、习惯从 CLI 搭自己的 agent、所有东西都靠手工配置文件调优，选它们没问题。两家的社区规模今天都大于 HUJIA Mate。
 
-**HjjMate 是那个给机构——尤其是医院——用的版本。** 数字专家、模型与工具都纳入权限和工作空间边界。危险动作可暂停等待审批，关键操作进入审计事件流。Admin 运行时控制台集中展示正在执行的专家与供应商状态，卡住时可回收。底座是 Spring Boot，适合并入已有 Java 服务体系，也适合一个数据不能出院的网络。
+**HUJIA Mate 是那个给机构——尤其是医院——用的版本。** 数字专家、模型与工具都纳入权限和工作空间边界。危险动作可暂停等待审批，关键操作进入审计事件流。Admin 运行时控制台集中展示正在执行的专家与供应商状态，卡住时可回收。底座是 Spring Boot，适合并入已有 Java 服务体系，也适合一个数据不能出院的网络。
 
 **同一套"完整一整套"哲学，不同的重心。**
 
@@ -217,7 +217,7 @@ hjjmate/
 └── .env.example
 ```
 
-模块目录沿用上游 `mateclaw-*` 命名；产品名、品牌与默认内容均为 **HjjMate**。
+模块目录沿用上游 `mateclaw-*` 命名；产品名、品牌与默认内容均为 **HUJIA Mate**。
 
 桌面端安装包通过 [GitHub Releases](https://github.com/androidwangboy/hjjmate/releases) 分发，内嵌 JRE 21——无需安装 Java。
 
@@ -244,9 +244,9 @@ hjjmate/
 
 ## 路线图
 
-**HjjMate 医院版（2026-08 ~ 2026-09 · 基于 v2.2.0）** —— 这个发行版在上游 MateClaw 之上改了什么：
+**HUJIA Mate 医院版（2026-08 ~ 2026-09 · 基于 v2.2.0）** —— 这个发行版在上游 MateClaw 之上改了什么：
 
-- **品牌化** — 产品名改为 HjjMate，logo、favicon、登录页与桌面端资源全部更换
+- **品牌化** — 产品名改为 HUJIA Mate，logo、favicon、登录页与桌面端资源全部更换
 - **「员工」→「专家」** — 数字员工概念全局更名为数字专家，覆盖控制台、提示词、技能包与全部内置帮助文档（中英双语）
 - **默认注入医院规章制度专家** — 新装由种子数据带入，存量库经 `V190` 迁移在 H2 / MySQL / Kingbase 上自动注入
 - **Oracle 数据源** — 11g / 12c / 19c 端到端支持：连接管理、ROWNUM 分页、`ALL_*` 元数据、SQL 校验、前端与技能包
@@ -287,7 +287,7 @@ hjjmate/
 
 完整故事见 [v2.0.0 release notes](https://claw.mate.vip/docs/zh/releases/2.0.0)。
 
-**v1.8.0（2026-07-12 发布）** — 专家*转向对外、干完一整件活*：**内容工作室**——第一个完全用 HjjMate 自身原子能力端到端搭起来的招牌场景：
+**v1.8.0（2026-07-12 发布）** — 专家*转向对外、干完一整件活*：**内容工作室**——第一个完全用 HUJIA Mate 自身原子能力端到端搭起来的招牌场景：
 
 - **内容工作室——一句话到可发布成品** — 预置「内容工作室」专家跑通 选题 → 搜集 → 成文 → 配图 → 去 AI 化 → 排版 → 交付。**微信公众号(公众号)** 图文文章(内联样式 HTML → 草稿箱)与 **小红书** 以图为主图文笔记(≥3 张竖版 3:4 卡片 + 在线预览)首批一等公民
 - **可度量的去 AI 化** — 启发式 AI 痕迹评分(无 LLM、确定性)驱动 检测 → 改写 → 复检 闭环,硬上限 3 轮
@@ -336,7 +336,7 @@ cd ../mateclaw-ui && npm install && npm run dev
 
 **Mate** 是陪伴，**Claw** 是能力——这是上游 **MateClaw（太一）** 名字的由来。
 
-**HjjMate** 把同一套引擎带进医院：陪在员工身边，抓住工作、把它推向完成——在一个数据不出院的网络里。
+**HUJIA Mate** 把同一套引擎带进医院：陪在员工身边，抓住工作、把它推向完成——在一个数据不出院的网络里。
 
 ## 许可证
 

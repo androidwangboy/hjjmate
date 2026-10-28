@@ -2,12 +2,12 @@
 layout: home
 
 hero:
-  name: HjjMate
+  name: HUJIA Mate
   text: The personal AI your IT department can actually sign off on.
-  tagline: Other personal AI agents are built for one person. HjjMate is built for a team — multi-user workspaces, approval-gated sensitive actions, full audit trail, production-grade health monitoring. One self-hosted JAR; you control persisted data and outbound integration boundaries.
+  tagline: Other personal AI agents are built for one person. HUJIA Mate is built for a team — multi-user workspaces, approval-gated sensitive actions, full audit trail, production-grade health monitoring. One self-hosted JAR; you control persisted data and outbound integration boundaries.
   image:
     src: /logo.png
-    alt: HjjMate
+    alt: HUJIA Mate
   actions:
     - theme: brand
       text: Get Started →

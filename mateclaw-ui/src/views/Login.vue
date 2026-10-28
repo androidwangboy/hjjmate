@@ -10,8 +10,8 @@
       </div>
     <div class="login-center">
       <div class="login-logo">
-        <img :src="appLogo" alt="HjjMate" class="logo-image" />
-        <h1 class="logo-title">Hjj<span class="logo-title-highlight">Mate</span></h1>
+        <img :src="appLogo" alt="HUJIA Mate" class="logo-image" />
+        <h1 class="logo-title">HUJIA&nbsp;<span class="logo-title-highlight">Mate</span></h1>
       </div>
 
       <form class="login-form" @submit.prevent="handleLogin">
@@ -80,9 +80,9 @@
       <div v-if="bindDialog.visible" class="bind-dialog">
         <div class="bind-dialog-content">
           <h3 class="bind-title">首次使用 {{ bindDialog.provider }} 登录</h3>
-          <p class="bind-desc">请绑定你的 HjjMate 账号</p>
-          <input v-model="bindDialog.username" type="text" class="form-input" placeholder="HjjMate 用户名" autocomplete="username" />
-          <input v-model="bindDialog.password" type="password" class="form-input" placeholder="HjjMate 密码" autocomplete="current-password" />
+          <p class="bind-desc">请绑定你的 HUJIA Mate 账号</p>
+          <input v-model="bindDialog.username" type="text" class="form-input" placeholder="HUJIA Mate 用户名" autocomplete="username" />
+          <input v-model="bindDialog.password" type="password" class="form-input" placeholder="HUJIA Mate 密码" autocomplete="current-password" />
           <div v-if="bindDialog.error" class="error-msg">{{ bindDialog.error }}</div>
           <button class="login-btn" :disabled="loading" @click="handleBind">绑定</button>
           <button class="bind-cancel" @click="cancelBind">取消</button>
@@ -282,7 +282,7 @@ function cancelBind() {
       rgba(3, 22, 27, 0.25) 64%,
       rgba(2, 15, 21, 0.70) 100%
     ),
-    url('/images/login/hjjmate-login-bg-pc.png');
+    url('/images/login/hujiamate-login-bg-pc.png');
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;

@@ -30,7 +30,7 @@ VALUES (1000000003, 'Reasoning Analyst', 'Thinks step by step with visible reaso
 MERGE INTO mate_agent (id, name, description, agent_type, system_prompt, model_name, max_iterations, enabled, icon, tags, create_time, update_time, deleted)
 KEY (id)
 VALUES (1000000100, 'Hospital Policy Advisor', 'RAG-grounded Q&A over the hospital internal regulations: covers HR, admin, medical, nursing, infection control, emergency response, infosec, and beyond.', 'react',
-        'You are the HjjMate "Hospital Policy Advisor" — an expert on the day-to-day internal regulations of a tertiary general hospital. You map staff questions (annual leave, infection-control reporting, on-call allowances, IT account provisioning, etc.) to the exact clauses of the corresponding policy and deliver accurate, actionable answers.
+        'You are the HUJIA Mate "Hospital Policy Advisor" — an expert on the day-to-day internal regulations of a tertiary general hospital. You map staff questions (annual leave, infection-control reporting, on-call allowances, IT account provisioning, etc.) to the exact clauses of the corresponding policy and deliver accurate, actionable answers.
 
 # Working principles
 

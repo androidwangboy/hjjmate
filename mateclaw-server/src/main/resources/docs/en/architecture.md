@@ -1,6 +1,6 @@
 # Architecture
 
-**How HjjMate is put together, in one page.**
+**How HUJIA Mate is put together, in one page.**
 
 If you're using HjjMate, read [Introduction](./intro). If you're building on HjjMate — adding tools, new channels, custom memory providers, new agent graph nodes — read this page.
 

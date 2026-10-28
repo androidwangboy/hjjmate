@@ -1,6 +1,6 @@
 ---
-title: ACP Integration — Plug External Coding Agents Into HjjMate
-description: HjjMate acts as an ACP host. Delegate prompts to Claude Code, Codex, OpenCode, Qwen Code or any Agent Client Protocol agent over stdio. Built-in endpoints, visual env editor, auto-bridged skill cards, trust model, error translation.
+title: ACP Integration — Plug External Coding Agents Into HUJIA Mate
+description: HUJIA Mate acts as an ACP host. Delegate prompts to Claude Code, Codex, OpenCode, Qwen Code or any Agent Client Protocol agent over stdio. Built-in endpoints, visual env editor, auto-bridged skill cards, trust model, error translation.
 head:
   - - meta
     - name: keywords
@@ -9,11 +9,11 @@ head:
 
 # ACP — Agent Client Protocol
 
-**ACP is how HjjMate hands a prompt to an agent someone else built.**
+**ACP is how HUJIA Mate hands a prompt to an agent someone else built.**
 
-Agent Client Protocol is an open spec for agent clients to talk to agent servers over JSON-RPC. HjjMate acts as the **host**: it spawns an external CLI (Claude Code, Codex, OpenCode, Qwen Code, …), runs the `initialize` → `session/new` → `session/prompt` handshake on stdio, streams the response back into the conversation, and closes the process.
+Agent Client Protocol is an open spec for agent clients to talk to agent servers over JSON-RPC. HUJIA Mate acts as the **host**: it spawns an external CLI (Claude Code, Codex, OpenCode, Qwen Code, …), runs the `initialize` → `session/new` → `session/prompt` handshake on stdio, streams the response back into the conversation, and closes the process.
 
-If MCP is "plug in a tool", ACP is **"plug in a whole agent"**. From inside a HjjMate turn, calling Claude Code looks the same as calling any built-in tool — your agent just asks for `acp_claude-code_prompt` and reads the answer.
+If MCP is "plug in a tool", ACP is **"plug in a whole agent"**. From inside a HUJIA Mate turn, calling Claude Code looks the same as calling any built-in tool — your agent just asks for `acp_claude-code_prompt` and reads the answer.
 
 ---
 
@@ -23,7 +23,7 @@ If MCP is "plug in a tool", ACP is **"plug in a whole agent"**. From inside a Hj
 |---|---|---|
 | What you connect | A tool server | An agent |
 | Granularity | Per-tool (`tools/list`) | Per-prompt (one shot) |
-| Transport in HjjMate | stdio / streamable_http / sse | stdio |
+| Transport in HUJIA Mate | stdio / streamable_http / sse | stdio |
 | Session model | Long-lived, multi-call | Stateless: spawn → prompt → close |
 | Typical use | Filesystem, search, custom data API | Delegate a coding task to Claude Code / Codex |
 | Surface in HjjMate | Tool catalog | Skill catalog (auto-bridged) + tool wrapper |

@@ -38,4 +38,4 @@ export function stripCtx(path: string): string {
 }
 
 /** 静态品牌 logo 地址。 */
-export const appLogo = `${ctxPath}/logo/hjjmate_logo.png`
+export const appLogo = `${ctxPath}/logo/hujiamate_logo.png`

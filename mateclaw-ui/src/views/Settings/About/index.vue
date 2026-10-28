@@ -2,9 +2,9 @@
   <div class="about-page">
     <!-- Hero: Logo + Identity -->
     <section class="hero">
-      <img :src="appLogo" alt="HjjMate" class="hero-logo" />
+      <img :src="appLogo" alt="HUJIA Mate" class="hero-logo" />
       <div class="hero-copy">
-        <h1 class="hero-title">Hjj<span class="hero-accent">Mate</span></h1>
+        <h1 class="hero-title">HUJIA&nbsp;<span class="hero-accent">Mate</span></h1>
         <div class="hero-version">v{{ appVersion }}</div>
         <p class="hero-desc">{{ t('settings.about.heroDesc') }}</p>
       </div>

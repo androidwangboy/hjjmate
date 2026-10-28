@@ -2,7 +2,7 @@
 
 **Same brain, same memory, everywhere your team works.**
 
-A channel in HjjMate is a different door into the same agent. Your team chats in Feishu? Put an agent in Feishu. Someone prefers Telegram? Same agent, same memory, in Telegram. Web console for the operators, DingTalk for the field, Slack for engineering — one deployment, nine doors.
+A channel in HUJIA Mate is a different door into the same agent. Your team chats in Feishu? Put an agent in Feishu. Someone prefers Telegram? Same agent, same memory, in Telegram. Web console for the operators, DingTalk for the field, Slack for engineering — one deployment, nine doors.
 
 Every channel is an adapter. Underneath the adapter, the agent doesn't know (or care) which door the message came through.
 

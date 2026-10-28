@@ -13,7 +13,7 @@ head:
 
 ChatGPT, Claude, Gemini — every AI assistant waits for you to open it. Open the browser, log in, click into the input box, type, wait. The AI is something you have to walk over to.
 
-HjjMate isn't.
+HUJIA Mate isn't.
 
 You can have any agent show up at any time, in any messenger you use, **and find you**.
 
