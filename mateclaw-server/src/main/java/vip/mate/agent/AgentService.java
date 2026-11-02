@@ -37,6 +37,8 @@ import vip.mate.workspace.conversation.model.ConversationEntity;
 import vip.mate.workspace.conversation.model.MessageEntity;
 import vip.mate.workspace.conversation.repository.ConversationMapper;
 import vip.mate.workspace.conversation.repository.MessageMapper;
+import vip.mate.workspace.core.model.WorkspaceMemberEntity;
+import vip.mate.workspace.core.repository.WorkspaceMemberMapper;
 
 import java.util.*;
 import java.time.Duration;
@@ -114,6 +116,8 @@ public class AgentService {
     private UserMapper userMapper;
     @Autowired
     private MessageMapper messageMapper;
+    @Autowired
+    private  WorkspaceMemberMapper memberMapper;
 
     // ==================== CRUD ====================
 
@@ -150,20 +154,26 @@ public class AgentService {
             return List.of();
         }
         //查询账户维护的agents
-        if (auth != null && !"admin".equals(auth.getName())){
+        if (auth != null && StrUtil.isNotEmpty(auth.getName())){
             UserEntity userEntity = userMapper.selectOne(new LambdaQueryWrapper<UserEntity>().eq(UserEntity::getUsername, auth.getName()));
             if (userEntity == null){
                 log.warn("---------------查询专家列表，当前账户不存在");
                 return List.of();
             }
-            List<UserPrimissionEntity> userPrimissionEntities = userPrimissionMapper.selectList(new LambdaQueryWrapper<UserPrimissionEntity>().eq(UserPrimissionEntity::getUserId, userEntity.getId())
-                    .eq(UserPrimissionEntity::getDeleted, 0));
-            if (CollUtil.isNotEmpty(userPrimissionEntities)){
-                List<Long> agentIds = userPrimissionEntities.stream().filter(s -> s != null && s.getAgentId() != null).map(s -> s.getAgentId()).distinct().toList();
-                agentEntities = agentEntities.stream().filter(s->s != null && agentIds.contains(s.getId())).toList();
-            }else{
-                //成员管理未选择agents
-                return List.of();
+            WorkspaceMemberEntity workspaceMemberEntity = memberMapper.selectOne(
+                    new LambdaQueryWrapper<WorkspaceMemberEntity>()
+                            .eq(WorkspaceMemberEntity::getWorkspaceId, workspaceId)
+                            .eq(WorkspaceMemberEntity::getUserId, userEntity.getId()));
+            if (workspaceMemberEntity != null && !"admin".equals(workspaceMemberEntity.getRole())){
+                List<UserPrimissionEntity> userPrimissionEntities = userPrimissionMapper.selectList(new LambdaQueryWrapper<UserPrimissionEntity>().eq(UserPrimissionEntity::getUserId, userEntity.getId())
+                        .eq(UserPrimissionEntity::getDeleted, 0));
+                if (CollUtil.isNotEmpty(userPrimissionEntities)){
+                    List<Long> agentIds = userPrimissionEntities.stream().filter(s -> s != null && s.getAgentId() != null).map(s -> s.getAgentId()).distinct().toList();
+                    agentEntities = agentEntities.stream().filter(s->s != null && agentIds.contains(s.getId())).toList();
+                }else{
+                    //成员管理未选择agents
+                    return List.of();
+                }
             }
         }
 

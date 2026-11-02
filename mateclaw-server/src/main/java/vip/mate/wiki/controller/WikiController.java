@@ -1,15 +1,24 @@
 package vip.mate.wiki.controller;
 
+import cn.hutool.core.collection.CollUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import vip.mate.agent.AgentService;
+import vip.mate.agent.binding.model.AgentWikiKbBinding;
+import vip.mate.agent.binding.repository.AgentWikiKbBindingMapper;
+import vip.mate.agent.model.AgentEntity;
 import vip.mate.audit.service.AuditEventService;
+import vip.mate.auth.model.UserEntity;
+import vip.mate.auth.service.AuthService;
 import vip.mate.channel.web.Utf8SseEmitter;
 import vip.mate.common.result.R;
 import vip.mate.exception.MateClawException;
@@ -30,6 +39,8 @@ import vip.mate.wiki.service.WikiPageTypePermissionService;
 import vip.mate.wiki.service.WikiProcessingService;
 import vip.mate.wiki.service.WikiRawMaterialService;
 import vip.mate.wiki.sse.WikiProgressBus;
+import vip.mate.workspace.core.model.WorkspaceMemberEntity;
+import vip.mate.workspace.core.service.WorkspaceService;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -38,10 +49,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Wiki 知识库接口
@@ -72,16 +81,49 @@ public class WikiController {
     private final vip.mate.wiki.repository.WikiPipelineRunMapper pipelineRunMapper;
     private final vip.mate.wiki.repository.WikiPipelineStepRunMapper pipelineStepRunMapper;
     private final ObjectMapper objectMapper;
-
+    private final AgentService agentService;
+    private final AgentWikiKbBindingMapper kbBindingMapper;
+    private final AuthService authService;
+    private final WorkspaceService workspaceService;
     // ==================== Knowledge Base ====================
 
     @RequireWorkspaceRole("viewer")
     @Operation(summary = "获取所有知识库")
     @GetMapping("/knowledge-bases")
     public R<List<WikiKnowledgeBaseEntity>> listKBs(
-            @RequestHeader(value = "X-Workspace-Id", required = false) Long workspaceId) {
+            @RequestHeader(value = "X-Workspace-Id", required = false) Long workspaceId,
+            Authentication auth) {
         long wsId = workspaceId != null ? workspaceId : 1L;
-        return R.ok(withLivePageCount(kbService.listByWorkspace(wsId)));
+        Long userId = resolveUserId(auth);
+        WorkspaceMemberEntity workspaceMemberEntity = workspaceService.getMembership(wsId, userId);
+
+        List<WikiKnowledgeBaseEntity> knowledgeBaseEntities = kbService.listByWorkspace(wsId);
+        if (workspaceMemberEntity != null && !"admin".equals(workspaceMemberEntity.getRole())){
+            List<AgentEntity> agentEntities = agentService.listAgentsByWorkspace(workspaceId, true, auth);
+            if (CollUtil.isNotEmpty(agentEntities)){
+                Set<Long> agentIds = agentEntities.stream().map(s -> s.getId()).collect(Collectors.toSet());
+                List<AgentWikiKbBinding> agentWikiKbBindings = kbBindingMapper.selectList(new LambdaQueryWrapper<AgentWikiKbBinding>().in(AgentWikiKbBinding::getAgentId, agentIds)
+                        .eq(AgentWikiKbBinding::getEnabled, true).eq(AgentWikiKbBinding::getDeleted, 0));
+                if (CollUtil.isNotEmpty(agentWikiKbBindings)){
+                    Set<Long> kbIds = agentWikiKbBindings.stream().filter(s -> s != null && s.getKbId() != null).map(s -> s.getKbId()).collect(Collectors.toSet());
+                    knowledgeBaseEntities = knowledgeBaseEntities.stream().filter(s->s != null && kbIds.contains(s.getId())).toList();
+                }
+            }
+        }
+        return R.ok(withLivePageCount(knowledgeBaseEntities));
+    }
+
+    private Long resolveUserId(Authentication auth) {
+        return resolveUser(auth).getId();
+    }
+
+    private UserEntity resolveUser(Authentication auth) {
+        String username = auth.getName();
+        UserEntity user = authService.findByUsername(username);
+        if (user == null) {
+            throw new MateClawException("用户不存在: " + username);
+        }
+        return user;
     }
 
     @RequireWorkspaceRole("viewer")
