@@ -98,7 +98,7 @@ public class WikiController {
         WorkspaceMemberEntity workspaceMemberEntity = workspaceService.getMembership(wsId, userId);
 
         List<WikiKnowledgeBaseEntity> knowledgeBaseEntities = kbService.listByWorkspace(wsId);
-        if (workspaceMemberEntity != null && !"admin".equals(workspaceMemberEntity.getRole())){
+        if (workspaceMemberEntity != null && !List.of("owner","admin").contains(workspaceMemberEntity.getRole())){
             List<AgentEntity> agentEntities = agentService.listAgentsByWorkspace(workspaceId, true, auth);
             if (CollUtil.isNotEmpty(agentEntities)){
                 Set<Long> agentIds = agentEntities.stream().map(s -> s.getId()).collect(Collectors.toSet());
