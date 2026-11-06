@@ -164,7 +164,7 @@ public class AgentService {
                     new LambdaQueryWrapper<WorkspaceMemberEntity>()
                             .eq(WorkspaceMemberEntity::getWorkspaceId, workspaceId)
                             .eq(WorkspaceMemberEntity::getUserId, userEntity.getId()));
-            if (workspaceMemberEntity != null && !"admin".equals(workspaceMemberEntity.getRole())){
+            if (workspaceMemberEntity != null && !List.of("owner","admin").contains(workspaceMemberEntity.getRole())){
                 List<UserPrimissionEntity> userPrimissionEntities = userPrimissionMapper.selectList(new LambdaQueryWrapper<UserPrimissionEntity>().eq(UserPrimissionEntity::getUserId, userEntity.getId())
                         .eq(UserPrimissionEntity::getDeleted, 0));
                 if (CollUtil.isNotEmpty(userPrimissionEntities)){
