@@ -29,6 +29,8 @@ import vip.mate.workspace.conversation.ConversationService;
 import vip.mate.workspace.conversation.MessageMetadataJson;
 import vip.mate.workspace.conversation.model.MessageContentPart;
 import vip.mate.workspace.conversation.model.MessageEntity;
+import vip.mate.agent.binding.service.AgentBindingService;
+import vip.mate.wiki.service.WikiRecordTemplateService;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -41,6 +43,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -70,6 +73,8 @@ public class ChatController {
     private final vip.mate.workspace.core.service.ChatUploadLocationResolver uploadLocationResolver;
     private final vip.mate.tool.document.preview.OfficePreviewService officePreviewService;
     private final ConversationInputQueueStore inputQueue;
+    private final AgentBindingService agentBindingService;
+    private final WikiRecordTemplateService recordTemplateService;
 
     @org.springframework.beans.factory.annotation.Autowired
     private ConversationTurnGate turnGate = new ConversationTurnGate();
@@ -614,6 +619,17 @@ public class ChatController {
                         ? regenerateSeed.parts()
                         : normalizeRequestParts(request);
                 String promptText = buildPromptText(message, requestParts);
+
+                // 样例模板样式召回：用户上传 docx/xlsx/pdf 样例时，与 agent 绑定知识库下的模板做样式比对；
+                // 命中则把最相似模板内容注入提示，未命中/无模板时保持原提示由模型自由生成。
+               /* try {
+                    String recall = recallTemplateReference(requestParts, agentId, workspaceId, conversationId);
+                    if (recall != null && !recall.isBlank()) {
+                        promptText = promptText + recall;
+                    }
+                } catch (Exception e) {
+                    log.debug("[ChatRecall] 样例召回异常（忽略，转交模型）: {}", e.getMessage());
+                }*/
                 Long originMessageId;
                 if (regenerateSeed == null) {
                     // Regenerate reuses the already-persisted seed user row —
@@ -1965,6 +1981,62 @@ public class ChatController {
             builder.append('\n');
         }
         builder.append(text);
+    }
+
+    // ===================== 样例模板样式召回 =====================
+
+    private static boolean isSupportedTemplateExt(String fileName) {
+        if (fileName == null) return false;
+        int i = fileName.lastIndexOf('.');
+        if (i < 0) return false;
+        String ext = fileName.substring(i + 1).toLowerCase();
+        return ext.equals("docx") || ext.equals("xlsx") || ext.equals("pdf");
+    }
+
+    /**
+     * 从用户消息的附件中挑出第一个支持的样例模板文件，解析其样式并与 agent 绑定知识库下的
+     * wiki_record_template 做余弦比对；命中则返回注入提示的文本块，否则返回空字符串（模型自由生成）。
+     */
+    private String recallTemplateReference(List<MessageContentPart> parts, Long agentId,
+                                           Long workspaceId, String conversationId) {
+        if (recordTemplateService == null || agentBindingService == null || parts == null) return "";
+        for (MessageContentPart p : parts) {
+            if (p == null || !"file".equals(p.getType())) continue;
+            String storedName = p.getStoredName();
+            String fileName = p.getFileName();
+            if (storedName == null || fileName == null) continue;
+            if (!isSupportedTemplateExt(fileName)) continue;
+            try {
+                Path file = uploadLocationResolver.resolveExistingFile(conversationId, storedName);
+                if (file == null || !Files.isRegularFile(file)) continue;
+                Set<Long> kbIds = agentBindingService.getBoundKbIds(agentId);
+                WikiRecordTemplateService.TemplateMatch match =
+                        recordTemplateService.matchBySample(file, fileName, kbIds, workspaceId);
+                if (match != null && match.entity() != null) {
+                    return buildTemplateRecallText(match);
+                }
+            } catch (Exception e) {
+                log.warn("[ChatRecall] 样例模板召回失败，转交模型自由生成: {}", e.getMessage());
+            }
+        }
+        return "";
+    }
+
+    private String buildTemplateRecallText(WikiRecordTemplateService.TemplateMatch match) {
+        var e = match.entity();
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n\n【参考病历模板（系统按您上传样例的样式，从知识库召回，相似度 ")
+          .append(String.format("%.2f", match.score())).append("）】\n");
+        sb.append("模板名称：").append(e.getName() == null ? "" : e.getName()).append("\n");
+        if (e.getContentJson() != null && !e.getContentJson().isBlank()) {
+            sb.append("ctlExtends：\n").append(e.getContentJson()).append("\n");
+        }
+        if (e.getExtAttrsJson() != null && !e.getExtAttrsJson().isBlank()) {
+            sb.append("attrExtends：\n").append(e.getExtAttrsJson()).append("\n");
+        }
+        sb.append("请依据上述模板的结构与字段要求，结合用户需求生成对应的病历内容；")
+          .append("若用户未提供具体信息，可给出该模板的填空示例。\n");
+        return sb.toString();
     }
 
     private String safe(String text) {

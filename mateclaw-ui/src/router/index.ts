@@ -320,6 +320,12 @@ const router = createRouter({
               component: () => import('@/views/Settings/About/index.vue'),
               meta: { title: 'Settings - About' },
             },
+            {
+              path: 'bingli',
+              name: 'SettingsBingliTemplate',
+              component: () => import('@/views/Settings/Bingli/index.vue'),
+              meta: { title: 'Settings - BinliTemplate' },
+            },
           ],
         },
         // ==================== Security ====================

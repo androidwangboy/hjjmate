@@ -711,6 +711,67 @@ public class WikiEmbeddingService {
         return denom == 0 ? 0f : dot / denom;
     }
 
+    /**
+     * Resolve an embedding model without a KB context — used by the standalone
+     * record-template library (方案 B) which is not attached to a Wiki KB.
+     * Falls back through: system default embedding id → any enabled embedding model.
+     *
+     * @return the resolved model, or {@code null} when none is configured
+     */
+    public Resolved resolveDefault() {
+        Long defaultId = readSystemDefaultEmbeddingId();
+        if (defaultId != null) {
+            ModelConfigEntity model = safeGetModel(defaultId);
+            if (isUsable(model)) {
+                try {
+                    return new Resolved(factory.build(model), model.getModelName());
+                } catch (Exception e) {
+                    log.warn("[WikiEmbedding] System default embedding model {} build failed: {}",
+                            defaultId, e.getMessage());
+                }
+            } else {
+                log.warn("[WikiEmbedding] System default embedding model {} is unusable, falling back",
+                        defaultId);
+            }
+        }
+        ModelConfigEntity anyEnabled = modelConfigService.findFirstEnabledEmbedding();
+        if (isUsable(anyEnabled)) {
+            try {
+                return new Resolved(factory.build(anyEnabled), anyEnabled.getModelName());
+            } catch (Exception e) {
+                log.warn("[WikiEmbedding] Fallback embedding model {} build failed: {}",
+                        anyEnabled.getId(), e.getMessage());
+            }
+        }
+        log.warn("[WikiEmbedding] No usable embedding model configured for standalone template library.");
+        return null;
+    }
+
+    /**
+     * Embed a template style-description string using the standalone (KB-less)
+     * model resolution. Returns both the vector and the model name so callers can
+     * stamp them onto the template row for later cosine recall.
+     *
+     * @return {@code null} when no embedding model is available
+     */
+    public TemplateEmbedding embedForTemplate(String text) {
+        Resolved r = resolveDefault();
+        if (r == null) return null;
+        int maxChars = Math.max(500, properties.getEmbeddingMaxChars());
+        String safe = (text != null && text.length() > maxChars) ? text.substring(0, maxChars) : text;
+        if (safe == null || safe.isBlank()) return null;
+        try {
+            EmbeddingResponse resp = r.model().call(new EmbeddingRequest(List.of(safe), null));
+            return new TemplateEmbedding(resp.getResults().get(0).getOutput(), r.modelName());
+        } catch (Exception e) {
+            log.error("[WikiEmbedding] Template style embedding failed: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /** Result of {@link #embedForTemplate(String)}: vector + the producing model name. */
+    public record TemplateEmbedding(float[] vector, String modelName) {}
+
     /** 解析结果 DTO */
     public record Resolved(EmbeddingModel model, String modelName) {}
 
