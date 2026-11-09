@@ -49,10 +49,10 @@
       v-if="(!collapsed || isMobile) && agentFilterOptions.length > 1"
       class="conv-filter"
     >
-      <select v-model="convAgentFilter" class="conv-filter-select">
+<!--      <select v-model="convAgentFilter" class="conv-filter-select">
         <option value="">{{ t('chat.allAgents') }}</option>
         <option v-for="opt in agentFilterOptions" :key="opt.id" :value="opt.id">{{ opt.name }}</option>
-      </select>
+      </select>-->
     </div>
 
     <div class="conversation-list">
@@ -271,7 +271,7 @@ const groupedConversations = computed(() => {
     { label: t('chat.dateEarlier'), items: [] },
   ]
 
-  const agentFilter = convAgentFilter.value
+  const agentFilter = props.selectedAgentId//convAgentFilter.value
   for (const conv of sidebarConversations.value) {
     if (agentFilter && String(conv.agentId ?? '') !== agentFilter) continue
     if ((conv.conversationId && conv.conversationId.startsWith('tasks_')) || conv.pinned) {
