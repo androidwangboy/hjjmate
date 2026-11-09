@@ -406,6 +406,16 @@ mateclaw:
     # when the child must produce multi-section structured output.
     parallel-timeout-seconds: 300
 
+  # minio
+minio:
+  enabled: true
+  ip: localhost
+  port: 9000
+  accessKey: A5lXPbbhLt3ZFLMtrynY
+  secretKey: rhY6ReJklJxVgGkBBLx2gF09vt4cJITuTjqTix4Q
+  bucket: hjj-mate
+  urlExpireTime: 5
+  maxParts: 10000
 # MateClaw Agent 配置
 mate:
   channel:
