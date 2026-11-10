@@ -131,7 +131,16 @@ springdoc:
     path: /swagger-ui.html
   # 把单个嵌套 query 参数对象（如分页 wrapper）拍平成独立字段，减少 schema 噪音
   default-flat-param-object: true
-
+# minio
+minio:
+  enabled: true
+  ip: 171.16.101.13
+  port: 9000
+  accessKey: KMilDmYl8Wyf7rddbTz6
+  secretKey: CApOLFqvdboEjYQ8SuOB7ybMSdIRl0DFrbzM4OVc
+  bucket: hjj-mate
+  urlExpireTime: 5
+  maxParts: 10000
 # MateClaw 自定义配置
 mateclaw:
   a2a:
