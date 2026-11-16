@@ -27,7 +27,7 @@ public class DatasourceController {
 
     @Operation(summary = "获取数据源列表")
     @GetMapping
-    @RequireGlobalAdmin
+    //@RequireGlobalAdmin
     public R<List<DatasourceEntity>> list() {
         return R.ok(datasourceService.listAll());
     }
@@ -76,4 +76,5 @@ public class DatasourceController {
     public R<DatasourceEntity> toggle(@PathVariable Long id, @RequestParam boolean enabled) {
         return R.ok(datasourceService.toggle(id, enabled));
     }
+
 }

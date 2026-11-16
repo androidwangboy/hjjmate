@@ -6,6 +6,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
+// 修改人:祝奔；时间：2026-11-16T14:09:29.021Z；修改原因/内容：引入事务注解，保证 Agent 主体与数据源绑定关系同时成功或回滚；代码来源：AI生成
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import vip.mate.channel.web.Utf8SseEmitter;
@@ -17,6 +19,9 @@ import vip.mate.agent.service.PromptOptimizeService;
 import vip.mate.agent.vo.AgentCapabilitiesVO;
 import vip.mate.agent.vo.AgentDraftVO;
 import vip.mate.audit.service.AuditEventService;
+// 修改人:祝奔；时间：2026-11-16T14:09:29.021Z；修改原因/内容：引入数据源关系服务与实体，用于 Agent 更新时保存数据源多选绑定；代码来源：AI生成
+import vip.mate.datasource.model.AgentDatasourceRelationEntity;
+import vip.mate.datasource.service.AgentDatasourceRelationService;
 import vip.mate.llm.model.ModelConfigEntity;
 import vip.mate.llm.service.ModelCapabilityService;
 import vip.mate.llm.service.ModelConfigService;
@@ -33,6 +38,8 @@ import vip.mate.workspace.conversation.ConversationService;
 import vip.mate.workspace.conversation.model.MessageEntity;
 
 import java.io.IOException;
+// 修改人:祝奔；时间：2026-11-16T14:09:29.021Z；修改原因/内容：新增 ArrayList 用于解析数据源 ID 列表；代码来源：AI生成
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -60,6 +67,8 @@ public class AgentController {
     private final SystemSettingService systemSettingService;
     private final AgentGenerationService agentGenerationService;
     private final PromptOptimizeService promptOptimizeService;
+    // 修改人:祝奔；时间：2026-11-16T14:09:29.021Z；修改原因/内容：注入数据源关系服务，供更新/查询 Agent 数据源绑定使用；代码来源：AI生成
+    private final AgentDatasourceRelationService agentDatasourceRelationService;
     private final ObjectMapper objectMapper;
     private final ExecutorService sseExecutor = Executors.newCachedThreadPool();
 
@@ -167,10 +176,14 @@ public class AgentController {
     @Operation(summary = "更新Agent")
     @PutMapping("/{id}")
     @RequireWorkspaceRole("member")
+    // 修改人:祝奔；时间：2026-11-16T14:09:29.021Z；修改原因/内容：Agent 主体更新与数据源关系入库置于同一事务；代码来源：AI生成
+    @Transactional(rollbackFor = Exception.class)
     public R<AgentEntity> update(@PathVariable Long id, @RequestBody Map<String, Object> body,
                                  @RequestHeader(value = "X-Workspace-Id", required = false) Long workspaceId) {
         AgentEntity existing = agentService.getAgent(id);
         verifyResourceWorkspace(existing.getWorkspaceId(), workspaceId);
+        // 修改人:祝奔；时间：2026-11-16T14:09:29.021Z；修改原因/内容：从请求体中提取 datasourceIds 后再转换为 AgentEntity，避免未知字段干扰；代码来源：AI生成
+        Object datasourceIdsObj = body.remove("datasourceIds");
         AgentEntity agent = objectMapper.convertValue(body, AgentEntity.class);
         if (!body.containsKey("primaryKbId")) {
             agent.setPrimaryKbId(existing.getPrimaryKbId());
@@ -178,8 +191,30 @@ public class AgentController {
         agent.setId(id);
         agent.setWorkspaceId(existing.getWorkspaceId()); // 不允许跨 workspace 迁移
         AgentEntity updated = agentService.updateAgent(agent);
+        // 修改人:祝奔；时间：2026-11-16T14:09:29.021Z；修改原因/内容：Agent 更新时同步覆盖其数据源多选绑定关系并入库；代码来源：AI生成
+        if (datasourceIdsObj != null) {
+            List<AgentDatasourceRelationEntity> relations = new ArrayList<>();
+            for (Long datasourceId : parseDatasourceIds(datasourceIdsObj)) {
+                AgentDatasourceRelationEntity relation = new AgentDatasourceRelationEntity();
+                relation.setAgentId(id);
+                relation.setDatasourceId(datasourceId);
+                relations.add(relation);
+            }
+            agentDatasourceRelationService.updateAgentDatasourceRelation(id, relations);
+        }
         auditEventService.record("UPDATE", "AGENT", String.valueOf(id), updated.getName(), null);
         return R.ok(updated);
+    }
+
+    // 修改人:祝奔；时间：2026-11-16T14:09:29.021Z；修改原因/内容：新增按 Agent 查询已绑定数据源关系列表接口，供前端编辑页回填多选状态；代码来源：AI生成
+    @Operation(summary = "获取Agent已绑定的数据源列表")
+    @GetMapping("/{id}/datasources")
+    public R<List<AgentDatasourceRelationEntity>> listDatasources(
+            @PathVariable Long id,
+            @RequestHeader(value = "X-Workspace-Id", required = false) Long workspaceId) {
+        AgentEntity agent = agentService.getAgent(id);
+        verifyResourceWorkspace(agent.getWorkspaceId(), workspaceId);
+        return R.ok(agentDatasourceRelationService.selectByAgentId(id));
     }
 
     @Operation(summary = "删除Agent")
@@ -338,6 +373,27 @@ public class AgentController {
     @lombok.Data
     public static class GenerateRequest {
         private String requirement;
+    }
+
+    /**
+     * 修改人:祝奔；时间：2026-11-16T14:09:29.021Z；修改原因/内容：解析前端提交的数据源 ID 列表（兼容数字/字符串形式，忽略非法值）；代码来源：AI生成
+     */
+    private List<Long> parseDatasourceIds(Object raw) {
+        List<Long> ids = new ArrayList<>();
+        if (!(raw instanceof List<?> list)) {
+            return ids;
+        }
+        for (Object item : list) {
+            if (item == null) {
+                continue;
+            }
+            try {
+                ids.add(Long.parseLong(String.valueOf(item).trim()));
+            } catch (NumberFormatException ignored) {
+                // 忽略非法 ID，避免单条脏数据导致整个 Agent 更新失败
+            }
+        }
+        return ids;
     }
 
     /**

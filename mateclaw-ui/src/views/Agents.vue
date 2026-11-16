@@ -275,6 +275,11 @@
               {{ t('agents.tabs.api', 'API 调用') }}
               <span v-if="apiPublication?.enabled" class="tab-badge tab-badge--on">{{ t('agents.api.published', '已发布') }}</span>
             </button>
+            <!-- 修改人:祝奔；时间：2026-11-16T14:09:29.021Z；修改原因/内容：数据源 Tab 徽标改为显示已勾选数据源数量；代码来源：AI生成 -->
+            <button v-if="editingAgent" class="modal-tab" :class="{ active: modalTab === 'datasource' }" @click="modalTab = 'datasource'">
+              {{ t('agents.tabs.datasource', '数据源') }}
+              <span v-if="selectedDatasourceIds.length" class="tab-badge">{{ selectedDatasourceIds.length }}</span>
+            </button>
           </div>
 
           <!-- Basic Tab -->
@@ -756,6 +761,49 @@
             </div>
             <p class="binding-hint">{{ t('agents.api.hint', '控制台可管理 Key、限流、文档、调用日志、统计和在线测试。') }}</p>
           </div>
+
+          <!-- 数据源 Tab：从 /api/v1/datasources 拉取可用数据源，支持多选绑定。
+               修改人:祝奔；时间：2026-11-16T14:09:29.021Z；修改原因/内容：新增数据源多选绑定面板；代码来源：AI生成 -->
+          <div v-if="modalTab === 'datasource'" class="binding-tab">
+            <div class="binding-intro">
+              <span class="binding-intro__kicker">{{ t('agents.binding.datasourceKicker', '可查询的数据源') }}</span>
+              <p class="binding-intro__tagline">{{ t('agents.binding.datasourceTagline', '勾选此专家允许查询的数据源，可多选。') }}</p>
+            </div>
+            <p class="binding-hint">{{ t('agents.binding.datasourceHint', '数据源来自系统「数据源管理」中已配置的连接；留空表示不限制。') }}</p>
+            <div v-if="availableDatasources.length === 0" class="binding-empty">{{ t('agents.binding.noDatasources', '暂无可用数据源') }}</div>
+            <template v-else>
+              <div class="binding-search">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input v-model="datasourceBindingSearch" :placeholder="t('agents.binding.searchDatasources', '搜索数据源')" />
+              </div>
+              <div v-if="filteredAvailableDatasources.length === 0" class="binding-empty binding-empty--compact">{{ t('agents.binding.noMatchingDatasources', '没有匹配的数据源') }}</div>
+              <div v-else class="binding-list">
+                <label
+                  v-for="ds in filteredAvailableDatasources"
+                  :key="ds.id"
+                  class="binding-item"
+                  :class="{ selected: selectedDatasourceIds.includes(String(ds.id)) }"
+                >
+                  <input
+                    type="checkbox"
+                    class="binding-checkbox"
+                    :value="String(ds.id)"
+                    :checked="selectedDatasourceIds.includes(String(ds.id))"
+                    @change="onDatasourceToggle(ds.id, $event)"
+                  />
+                  <span class="binding-icon">🗄️</span>
+                  <div class="binding-info">
+                    <span class="binding-name">{{ ds.name }}</span>
+                    <span v-if="ds.description" class="binding-desc">{{ ds.description?.slice(0, 80) }}</span>
+                  </div>
+                  <span v-if="ds.dbType" class="binding-version">{{ ds.dbType }}</span>
+                  <span v-if="ds.enabled === false" class="binding-unavailable-badge">{{ t('agents.binding.datasourceDisabled', '已停用') }}</span>
+                </label>
+              </div>
+            </template>
+          </div>
         </div>
         <div class="modal-footer">
           <button class="btn-secondary" @click="closeModal">{{ t('common.cancel') }}</button>
@@ -774,7 +822,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { mcToast } from '@/composables/useMcToast'
 import { mcConfirm } from '@/components/common/useConfirm'
-import { agentApi, agentApiManagement, agentBindingApi, modelApi, skillApi, toolApi, templateApi, liveApi, wikiApi } from '@/api/index'
+// 修改人:祝奔；时间：2026-11-16T14:09:29.021Z；修改原因/内容：引入数据源 API 供专家编辑页加载可用数据源列表；代码来源：AI生成
+import { agentApi, agentApiManagement, agentBindingApi, datasourceApi, modelApi, skillApi, toolApi, templateApi, liveApi, wikiApi } from '@/api/index'
 import type { Agent } from '@/types/index'
 import { parseAgentsLiveRoute, type AgentsView } from '@/composables/agentsLiveRouteState'
 import {
@@ -808,7 +857,8 @@ const activeFilter = ref('all')
 const activeTags = ref<string[]>([])
 const showModal = ref(false)
 const editingAgent = ref<Agent | null>(null)
-const modalTab = ref<'basic' | 'skills' | 'tools' | 'providers' | 'wiki' | 'api'>('basic')
+// 修改人:祝奔；时间：2026-11-16T14:09:29.021Z；修改原因/内容：modalTab 联合类型增加 datasource；代码来源：AI生成
+const modalTab = ref<'basic' | 'skills' | 'tools' | 'providers' | 'wiki' | 'api' | 'datasource'>('basic')
 const apiPublication = ref<any | null>(null)
 /** RFC-090 §9.2 调整 B — Tool picker is an Advanced bypass; collapsed by
  *  default but stays open as soon as the agent has any direct tool
@@ -971,6 +1021,24 @@ const selectedToolNames = ref<string[]>([])
 const availableKBs = ref<any[]>([])
 const selectedKBId = ref<string | null>(null)
 const selectedKbIds = ref<string[]>([])
+
+// 修改人:祝奔；时间：2026-11-16T14:09:29.021Z；修改原因/内容：新增 Agent 数据源多选绑定状态（可用列表、已选 ID、搜索词）与切换函数；代码来源：AI生成
+const availableDatasources = ref<any[]>([])
+const selectedDatasourceIds = ref<string[]>([])
+const datasourceBindingSearch = ref('')
+const filteredAvailableDatasources = computed(() =>
+  filterAgentBindingItems(availableDatasources.value, datasourceBindingSearch.value)
+)
+
+function onDatasourceToggle(id: string | number, event: Event) {
+  const sid = String(id)
+  const target = event.target as HTMLInputElement
+  if (target.checked) {
+    if (!selectedDatasourceIds.value.includes(sid)) selectedDatasourceIds.value.push(sid)
+  } else {
+    selectedDatasourceIds.value = selectedDatasourceIds.value.filter((x) => x !== sid)
+  }
+}
 
 function isKbInScope(id: string | number): boolean {
   return selectedKbIds.value.includes(String(id))
@@ -1359,6 +1427,10 @@ function openBlankCreateModal() {
   availableKBs.value = []
   selectedKBId.value = null
   selectedKbIds.value = []
+  // 修改人:祝奔；时间：2026-11-16T14:09:29.021Z；修改原因/内容：新建专家时重置数据源绑定状态；代码来源：AI生成
+  availableDatasources.value = []
+  selectedDatasourceIds.value = []
+  datasourceBindingSearch.value = ''
   apiPublication.value = null
   showModal.value = true
 }
@@ -1536,6 +1608,23 @@ async function openEditModal(agent: Agent) {
   } catch {
     mcToast.error(t('agents.binding.wikiLoadFailed'))
   }
+
+  // 修改人:祝奔；时间：2026-11-16T14:09:29.021Z；修改原因/内容：编辑专家时并行加载可用数据源与已绑定数据源，回填多选状态；代码来源：AI生成
+  try {
+    const [dsRes, dsBindRes]: any = await Promise.all([
+      datasourceApi.list(),
+      agentBindingApi.listDatasources(agent.id),
+    ])
+    const availableDs = (dsRes.data || []) as any[]
+    availableDatasources.value = availableDs
+    const availableDsIds = new Set(availableDs.map((ds: any) => String(ds.id)))
+    selectedDatasourceIds.value = ((dsBindRes.data || []) as any[])
+      .filter((b: any) => b.datasourceId != null && availableDsIds.has(String(b.datasourceId)))
+      .map((b: any) => String(b.datasourceId))
+    datasourceBindingSearch.value = ''
+  } catch {
+    mcToast.error(t('agents.binding.datasourceLoadFailed', '加载数据源列表失败'))
+  }
 }
 
 function closeModal() {
@@ -1547,6 +1636,10 @@ function closeModal() {
   availableKBs.value = []
   selectedKBId.value = null
   selectedKbIds.value = []
+  // 修改人:祝奔；时间：2026-11-16T14:09:29.021Z；修改原因/内容：关闭弹窗时清理数据源选择状态；代码来源：AI生成
+  availableDatasources.value = []
+  selectedDatasourceIds.value = []
+  datasourceBindingSearch.value = ''
 }
 
 async function saveAgent() {
@@ -1567,7 +1660,8 @@ async function saveAgent() {
     // sending to the backend — the schema is unchanged, only the editor
     // exposes the H2 sections to the user.
     const serialized = serializePrompt(profileForm.value)
-    const payload = { ...form.value, systemPrompt: serialized, primaryKbId: selectedKBId.value }
+    // 修改人:祝奔；时间：2026-11-16T14:09:29.021Z；修改原因/内容：保存 Agent 时把多选数据源 ID 一并提交，由服务端 update 接口统一入库；代码来源：AI生成
+    const payload = { ...form.value, systemPrompt: serialized, primaryKbId: selectedKBId.value, datasourceIds: selectedDatasourceIds.value }
 
     let agentId: string | number
     if (editingAgent.value) {
@@ -1995,7 +2089,7 @@ html.dark .seg-count.warn {
 
 /* Modal */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-.modal { background: var(--mc-bg-elevated); border: 1px solid var(--mc-border); border-radius: 16px; width: 100%; max-width: 600px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
+.modal { background: var(--mc-bg-elevated); border: 1px solid var(--mc-border); border-radius: 16px; width: 100%; max-width: 800px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
 .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid var(--mc-border-light); }
 .modal-header h2 { font-size: 18px; font-weight: 600; color: var(--mc-text-primary); margin: 0; }
 .modal-close { width: 32px; height: 32px; border: none; background: none; cursor: pointer; color: var(--mc-text-tertiary); display: flex; align-items: center; justify-content: center; border-radius: 6px; }

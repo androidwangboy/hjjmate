@@ -1,5 +1,6 @@
 package vip.mate.tool.builtin;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -66,7 +67,7 @@ public class DatasourceTool {
 
         try {
             return switch (action) {
-                case "list_datasources" -> listDatasources();
+                case "list_datasources" -> listDatasources(datasourceId);
                 case "list_tables" -> listTables(datasourceId);
                 case "describe_table" -> describeTable(datasourceId, tableName);
                 default -> error("未知动作: " + action + "，支持: list_datasources / list_tables / describe_table");
@@ -77,8 +78,11 @@ public class DatasourceTool {
         }
     }
 
-    private String listDatasources() throws Exception {
+    private String listDatasources(String datasourceId) throws Exception {
         List<DatasourceEntity> list = datasourceService.listEnabled();
+        if (list != null && !list.isEmpty() && StrUtil.isNotEmpty(datasourceId)){
+            list = list.stream().filter(s->s != null && s.getId().toString().equals(datasourceId)).toList();
+        }
         List<Map<String, Object>> rows = new ArrayList<>();
         for (DatasourceEntity ds : list) {
             Map<String, Object> obj = new LinkedHashMap<>();

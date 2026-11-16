@@ -1471,6 +1471,8 @@ export const agentBindingApi = {
   listKbs: (agentId: string | number) => http.get(`/agents/${agentId}/kbs`),
   setKbs: (agentId: string | number, kbIds: (string | number)[]) =>
     http.put(`/agents/${agentId}/kbs`, kbIds),
+  // 修改人:祝奔；时间：2026-11-16T14:09:29.021Z；修改原因/内容：新增查询 Agent 已绑定数据源关系列表接口；代码来源：AI生成
+  listDatasources: (agentId: string | number) => http.get(`/agents/${agentId}/datasources`),
 }
 
 // ==================== Dashboard ====================

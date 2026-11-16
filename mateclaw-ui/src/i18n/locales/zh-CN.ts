@@ -1498,6 +1498,7 @@ export default {
       wiki: '知识库',
       context: '上下文',
       api: 'API 调用',
+      datasource: '数据源',
     },
     api: {
       open: 'API 管理',
@@ -1688,6 +1689,16 @@ export default {
       wikiLoadFailed: '加载知识库列表失败',
       contextHint: '管理此智能体的上下文文件（如 AGENT.md），定义智能体的行为、知识和指令。',
       goToContext: '前往编辑上下文',
+      // 修改人:祝奔；时间：2026-11-16T14:09:29.021Z；修改原因/内容：新增专家编辑页数据源多选绑定相关文案；代码来源：AI生成
+      datasourceKicker: '可查询的数据源',
+      datasourceTagline: '勾选此专家允许查询的数据源，可多选。SQL 查询工具将只在这些数据源上执行。',
+      datasourceHint: '数据源来自系统「数据源管理」中已配置的连接；留空表示不限制（沿用工具自身默认行为）。',
+      searchDatasources: '搜索数据源名称、描述或类型',
+      noDatasources: '暂无可用数据源，请先在「数据源管理」中添加',
+      noMatchingDatasources: '没有匹配的数据源',
+      datasourceLoadFailed: '加载数据源列表失败',
+      datasourceType: '类型',
+      datasourceDisabled: '已停用',
     },
     wizard: {
       entry: 'AI 创建',

@@ -1654,6 +1654,8 @@ export default {
       wiki: 'Knowledge Base',
       context: 'Context',
       api: 'API',
+      // 修改人:祝奔；时间：2026-11-16T14:09:29.021Z；修改原因/内容：新增专家编辑页数据源 Tab 文案；代码来源：AI生成
+      datasource: 'Datasources',
     },
     api: {
       open: 'API Management',
@@ -1844,6 +1846,16 @@ export default {
       wikiLoadFailed: 'Failed to load knowledge bases',
       contextHint: 'Manage context files (e.g. AGENT.md) that define this agent\'s behavior, knowledge, and instructions.',
       goToContext: 'Edit Context Files',
+      // 修改人:祝奔；时间：2026-11-16T14:09:29.021Z；修改原因/内容：新增专家编辑页数据源多选绑定相关文案；代码来源：AI生成
+      datasourceKicker: 'Queryable Datasources',
+      datasourceTagline: 'Tick the datasources this agent may query. SQL tools will only run against the selected ones.',
+      datasourceHint: 'Datasources come from the system Datasources page. Leave empty for no restriction (tool default).',
+      searchDatasources: 'Search datasource name, description, or type',
+      noDatasources: 'No datasources available — add one under Datasources first',
+      noMatchingDatasources: 'No matching datasources',
+      datasourceLoadFailed: 'Failed to load datasources',
+      datasourceType: 'Type',
+      datasourceDisabled: 'Disabled',
     },
     wizard: {
       entry: 'AI Create',
