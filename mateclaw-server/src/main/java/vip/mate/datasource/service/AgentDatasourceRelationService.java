@@ -75,7 +75,7 @@ public class AgentDatasourceRelationService {
         }
         List<DatasourceEntity> datasourceEntities = datasourceMapper.selectList(new LambdaQueryWrapper<DatasourceEntity>()
                 .in(DatasourceEntity::getId, datasourceIds)
-                .eq(DatasourceEntity::getEnabled, 1)
+                .eq(DatasourceEntity::getEnabled, true)
                 .eq(DatasourceEntity::getDeleted, 0));
         if (datasourceEntities == null || datasourceEntities.isEmpty()) {
             return "";
