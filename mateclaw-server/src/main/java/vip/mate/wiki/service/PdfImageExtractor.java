@@ -10,10 +10,13 @@ import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.graphics.PDXObject;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import vip.mate.tool.image.vision.ImageVisionService;
 import vip.mate.tool.image.vision.VisionRequest;
 import vip.mate.tool.image.vision.VisionResult;
+// 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：引入图片存储服务，使 PDF 内嵌图落盘并生成鉴权 URL；代码来源：AI生成
+import vip.mate.wiki.service.WikiImageService;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -52,6 +55,13 @@ public class PdfImageExtractor {
     private final ImageVisionService imageVisionService;
 
     /**
+     * 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：可选注入图片存储服务，直接 new 的测试场景为 null 时仅生成 caption 不落盘；代码来源：AI生成
+     */
+    @Autowired(required = false)
+    @Nullable
+    private WikiImageService wikiImageService;
+
+    /**
      * Optional dependency: when {@link #captionInlineImages(Path)} is called
      * but no vision service is wired (test harness, vision module excluded),
      * the extractor returns an empty list rather than NPE-ing.
@@ -73,6 +83,15 @@ public class PdfImageExtractor {
      * still processed.
      */
     public List<String> captionInlineImages(Path pdfPath) {
+        return captionInlineImages(pdfPath, null, null, null, true);
+    }
+
+    /**
+     * 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：新增带素材上下文的重载：PDF 内嵌图落盘为图片 URL 后再追加 caption，使页面可显示图片；
+     * kbId 为 null 时退化为旧的"仅 caption"行为；代码来源：AI生成
+     */
+    public List<String> captionInlineImages(Path pdfPath, Long kbId, Long rawId, Long workspaceId,
+                                            boolean captionEnabled) {
         if (pdfPath == null) {
             return List.of();
         }
@@ -143,14 +162,22 @@ public class PdfImageExtractor {
                         continue;
                     }
 
-                    String caption = captionOrNull(pngBytes);
-                    if (caption == null || caption.isBlank()) {
-                        log.debug("[PdfImage] vision returned no caption page={} idx={}",
-                                pageIdx, imgIdx);
-                        continue;
+                    // 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：有上下文时把 PDF 内嵌图落盘，并输出 markdown 图片引用供页面显示；代码来源：AI生成
+                    String sourceRef = String.format("P%d#%d", pageIdx, imgIdx);
+                    if (kbId != null && wikiImageService != null) {
+                        String url = wikiImageService.store(pngBytes, "png", "image/png",
+                                kbId, rawId, workspaceId, sourceRef);
+                        if (url != null) {
+                            snippets.add(String.format("![图 %s](%s)", sourceRef, url));
+                        }
                     }
 
-                    snippets.add(String.format("[图 P%d#%d]: %s", pageIdx, imgIdx, caption));
+                    String caption = captionEnabled ? captionOrNull(pngBytes) : null;
+                    if (caption != null && !caption.isBlank()) {
+                        snippets.add(String.format("[图 %s]: %s", sourceRef, caption));
+                    } else {
+                        log.debug("[PdfImage] no caption (disabled or empty) page={} idx={}", pageIdx, imgIdx);
+                    }
                 }
             }
         } catch (IOException e) {

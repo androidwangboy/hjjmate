@@ -6,11 +6,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import vip.mate.tool.guard.WorkspacePathGuard;
+import vip.mate.wiki.service.WikiImageService;
 
 import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,6 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -42,6 +48,21 @@ public class DocumentExtractTool {
     private static final int MAX_OUTPUT_LENGTH = 500000; // 500KB — CLOB column has no size limit
     private static final boolean IS_WINDOWS = System.getProperty("os.name", "")
             .toLowerCase(Locale.ROOT).contains("win");
+
+    /** pandoc 输出 markdown 中的图片引用：![alt](media/imageN.png)。 */
+    private static final Pattern MD_IMAGE_PATTERN =
+            Pattern.compile("!\\[([^\\]]*)\\]\\(([^)\\s]+)(?:\\s+\"[^\"]*\")?\\)");
+
+    /**
+     * 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：可选注入图片存储服务，供 pandoc 抽取 DOCX 内嵌图片时落盘并改写为鉴权 URL；
+     * 直接 new 的测试/工具场景该字段为 null，自动跳过图片处理；代码来源：AI生成
+     */
+    @Autowired(required = false)
+    @Nullable
+    private WikiImageService wikiImageService;
+
+    /** 内嵌图片持久化所需的上下文（仅 Wiki 摄取链路传入）。 */
+    public record ImageContext(Long kbId, Long rawId, Long workspaceId) {}
 
     @Tool(description = """
         从 Office/PDF 文档中提取文本内容。
@@ -143,6 +164,9 @@ public class DocumentExtractTool {
             String mimeType = detectMimeType(path);
             result.set("mimeType", mimeType);
 
+            // 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：解析 Wiki 摄取链路传入的图片落盘上下文；代码来源：AI生成
+            ImageContext imageContext = parseImageContext(options);
+
             // RFC-051: method=tika 短路 —— 跳过整条 fallback 链，直接调 Tika。
             // 用于：1) 测试 Tika 集成是否健康；2) 用户明知系统命令不可用、想免去
             // 那一长串失败日志的场景。结果里仍然带 attempts 数组，告知"应用户要求跳过自动链"。
@@ -180,7 +204,8 @@ public class DocumentExtractTool {
             if (mimeType.contains("pdf")) {
                 content = extractPdf(path, options, attempts);
             } else if (mimeType.contains("wordprocessingml") || mimeType.contains("msword")) {
-                content = extractDocx(path, options, attempts);
+                // 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：DOCX 提取传入图片上下文；代码来源：AI生成
+                content = extractDocx(path, options, attempts, imageContext);
             } else if (mimeType.contains("spreadsheetml") || mimeType.contains("excel")) {
                 content = extractXlsx(path, options, attempts);
             } else if (mimeType.contains("presentationml") || mimeType.contains("powerpoint")) {
@@ -716,7 +741,8 @@ public class DocumentExtractTool {
 
     // ==================== DOCX 提取链 ====================
 
-    private ExtractedContent extractDocx(Path path, String options, List<String> attempts) throws Exception {
+    // 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：extractDocx 增加图片上下文参数；代码来源：AI生成
+    private ExtractedContent extractDocx(Path path, String options, List<String> attempts, ImageContext imageContext) throws Exception {
         // 1. 尝试 textutil (macOS)
         String content = tryTextutil(path);
         if (content != null && !content.isBlank()) {
@@ -726,7 +752,8 @@ public class DocumentExtractTool {
         attempts.add("textutil: 失败或不可用");
 
         // 2. 尝试 pandoc
-        content = tryPandoc(path);
+        // 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：pandoc 分支传入图片上下文以抽取内嵌图片；代码来源：AI生成
+        content = tryPandoc(path, imageContext);
         if (content != null && !content.isBlank()) {
             attempts.add("pandoc: 成功");
             return new ExtractedContent(content, "pandoc", 0);
@@ -785,7 +812,42 @@ public class DocumentExtractTool {
         }
     }
 
-    private String tryPandoc(Path path) {
+    /**
+     * 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：pandoc 抽取 DOCX：有图片上下文时用 gfm + --extract-media 抽出内嵌图片，
+     * 落盘并改写为 /wiki-images/{id}.{ext} 引用；无上下文时维持原 plain 行为；代码来源：AI生成
+     */
+    private String tryPandoc(Path path, ImageContext imageContext) {
+        if (imageContext == null || wikiImageService == null) {
+            return tryPandocPlain(path);
+        }
+        Path tempDir = null;
+        try {
+            tempDir = Files.createTempDirectory("mc_pandoc_media_");
+            Path outputMd = tempDir.resolve("out.md");
+            List<String> command = List.of(
+                    "pandoc",
+                    path.toString(),
+                    "-t", "markdown",
+                    "--wrap=none",
+                    "--extract-media=" + tempDir.toString(),
+                    "-o", outputMd.toString()
+            );
+            executeCommand(command);
+            if (!Files.isRegularFile(outputMd)) {
+                return null;
+            }
+            String markdown = Files.readString(outputMd);
+            return rewriteDocxImages(markdown, tempDir, imageContext);
+        } catch (Exception e) {
+            log.debug("[DocumentExtract] pandoc(media) 失败，回退 plain: {}", e.getMessage());
+            return tryPandocPlain(path);
+        } finally {
+            deleteRecursively(tempDir);
+        }
+    }
+
+    /** 原有 pandoc plain 提取（无图片需求时走这里）。 */
+    private String tryPandocPlain(Path path) {
         try {
             List<String> command = List.of(
                     "pandoc",
@@ -797,6 +859,102 @@ public class DocumentExtractTool {
         } catch (Exception e) {
             log.debug("pandoc 失败: {}", e.getMessage());
             return null;
+        }
+    }
+
+    /** 把 markdown 中的 media/image 引用替换为鉴权图片 URL。 */
+    private String rewriteDocxImages(String markdown, Path baseDir, ImageContext ctx) {
+        Matcher matcher = MD_IMAGE_PATTERN.matcher(markdown);
+        StringBuffer out = new StringBuffer();
+        int count = 0;
+        while (matcher.find()) {
+            String alt = matcher.group(1);
+            String ref = matcher.group(2);
+            String url = ref;
+            try {
+                String decoded = java.net.URLDecoder.decode(ref, java.nio.charset.StandardCharsets.UTF_8);
+                Path img = baseDir.resolve(decoded).normalize();
+                if (!img.startsWith(baseDir) || !Files.isRegularFile(img)) {
+                    Path abs = Paths.get(decoded);
+                    img = abs.isAbsolute() ? abs.normalize() : img;
+                }
+                if (Files.isRegularFile(img)) {
+                    String ext = extOf(img.getFileName().toString());
+                    String stored = wikiImageService.store(
+                            Files.readAllBytes(img), ext, mimeOf(ext),
+                            ctx.kbId(), ctx.rawId(), ctx.workspaceId(), ref);
+                    if (stored != null) {
+                        url = stored;
+                        count++;
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("[DocumentExtract] 内嵌图片处理失败 ref={}: {}", ref, e.getMessage());
+            }
+            matcher.appendReplacement(out,
+                    Matcher.quoteReplacement("![" + alt + "](" + url + ")"));
+        }
+        matcher.appendTail(out);
+        if (count > 0) {
+            log.info("[DocumentExtract] DOCX 内嵌图片已入库 {} 张 (raw={})", count, ctx.rawId());
+        }
+        return out.toString();
+    }
+
+    /** 解析 options 中的 wikiContext（仅 Wiki 摄取链路传入）。 */
+    private ImageContext parseImageContext(String options) {
+        if (options == null || options.isBlank()) {
+            return null;
+        }
+        try {
+            JSONObject json = JSONUtil.parseObj(options);
+            JSONObject ctx = json.getJSONObject("wikiContext");
+            if (ctx == null) {
+                return null;
+            }
+            Long kbId = longOf(ctx.get("kbId"));
+            if (kbId == null) {
+                return null;
+            }
+            return new ImageContext(kbId, longOf(ctx.get("rawId")), longOf(ctx.get("workspaceId")));
+        } catch (Exception e) {
+            log.debug("[DocumentExtract] 解析 wikiContext 失败: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    private static Long longOf(Object value) {
+        if (value == null) return null;
+        try {
+            return Long.parseLong(String.valueOf(value).trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private static String extOf(String fileName) {
+        int dot = fileName.lastIndexOf('.');
+        return dot >= 0 && dot < fileName.length() - 1
+                ? fileName.substring(dot + 1).toLowerCase(Locale.ROOT) : "png";
+    }
+
+    private static String mimeOf(String ext) {
+        return switch (ext) {
+            case "jpg", "jpeg" -> "image/jpeg";
+            case "gif" -> "image/gif";
+            case "webp" -> "image/webp";
+            case "bmp" -> "image/bmp";
+            default -> "image/png";
+        };
+    }
+
+    private static void deleteRecursively(Path dir) {
+        if (dir == null || !Files.exists(dir)) return;
+        try (java.util.stream.Stream<Path> paths = Files.walk(dir)) {
+            paths.sorted(java.util.Comparator.reverseOrder())
+                    .forEach(p -> { try { Files.deleteIfExists(p); } catch (IOException ignored) {} });
+        } catch (IOException ignored) {
+            // best effort
         }
     }
 
@@ -830,6 +988,14 @@ public class DocumentExtractTool {
         }
     }
 
+    public static void main(String[] args) throws Exception {
+        DocumentExtractTool tool = new DocumentExtractTool();
+        File file = new File("F:\\工作\\AI\\005售后运维智能体\\护理管理信息平台常见问题处理指南.docx");
+        URI uri = file.toURI();
+        //String s = tool.extractDocxWithJava(Path.of(uri));
+        String s = TikaExtractor.extract(Path.of(uri));
+        System.out.println(s);
+    }
     private String extractDocxWithJava(Path path) throws Exception {
         StringBuilder text = new StringBuilder();
 

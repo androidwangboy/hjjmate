@@ -15,6 +15,8 @@ import vip.mate.tool.image.vision.VisionRequest;
 import vip.mate.tool.image.vision.VisionResult;
 import vip.mate.wiki.WikiProperties;
 import vip.mate.wiki.event.WikiProcessingEvent;
+// 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：引入知识库实体以解析图片归属工作区；代码来源：AI生成
+import vip.mate.wiki.model.WikiKnowledgeBaseEntity;
 import vip.mate.wiki.model.WikiRawMaterialEntity;
 import vip.mate.wiki.repository.WikiRawMaterialMapper;
 
@@ -787,7 +789,9 @@ public class WikiRawMaterialService {
                 // Server-managed path (staged under the wiki upload dir): use the
                 // sandbox-exempt entry so the workspace boundary guard does not
                 // reject the upload dir as "outside workspace boundary".
-                String result = documentExtractTool.extractTrustedDocument(entity.getSourcePath(), null);
+                // 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：传入图片落盘上下文，使 DOCX 内嵌图片落盘并写入鉴权 URL；代码来源：AI生成
+                String extractOptions = buildImageOptions(entity);
+                String result = documentExtractTool.extractTrustedDocument(entity.getSourcePath(), extractOptions);
                 JSONObject json = JSONUtil.parseObj(result);
                 if (json.getBool("success", false)) {
                     String text = json.getStr("text");
@@ -821,6 +825,31 @@ public class WikiRawMaterialService {
     }
 
     /**
+     * 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：构造图片落盘上下文 option（kbId/rawId/workspaceId）传给文档提取器；代码来源：AI生成
+     */
+    private String buildImageOptions(WikiRawMaterialEntity entity) {
+        try {
+            JSONObject context = new JSONObject();
+            context.set("kbId", entity.getKbId());
+            context.set("rawId", entity.getId());
+            Long workspaceId = 1L;
+            if (kbService != null && entity.getKbId() != null) {
+                WikiKnowledgeBaseEntity kb = kbService.getById(entity.getKbId());
+                if (kb != null && kb.getWorkspaceId() != null) {
+                    workspaceId = kb.getWorkspaceId();
+                }
+            }
+            context.set("workspaceId", workspaceId);
+            JSONObject options = new JSONObject();
+            options.set("wikiContext", context);
+            return options.toString();
+        } catch (Exception e) {
+            log.warn("[Wiki] build image options failed for raw={}: {}", entity.getId(), e.getMessage());
+            return null;
+        }
+    }
+
+    /**
      * For PDF raw materials, walks the inline images and appends a section of
      * {@code [图 P{n}#{m}]: <caption>} markers so downstream chunking and
      * search can index image contents.
@@ -834,13 +863,23 @@ public class WikiRawMaterialService {
         if (!"pdf".equals(entity.getSourceType()) || pdfImageExtractor == null) {
             return body;
         }
-        if (featureFlagService == null || !featureFlagService.isEnabled(VISION_FLAG_KEY)) {
-            return body;
+        // 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：图片 URL 落盘始终执行，不再受 vision caption 开关限制；caption 开关仅影响文字描述生成；代码来源：AI生成
+        boolean captionEnabled = featureFlagService != null && featureFlagService.isEnabled(VISION_FLAG_KEY);
+
+        Long kbId = entity.getKbId();
+        Long workspaceId = 1L;
+        if (kbService != null && kbId != null) {
+            WikiKnowledgeBaseEntity kb = kbService.getById(kbId);
+            if (kb != null && kb.getWorkspaceId() != null) {
+                workspaceId = kb.getWorkspaceId();
+            }
         }
 
         java.nio.file.Path pdfPath = java.nio.file.Paths.get(entity.getSourcePath());
         try {
-            List<String> snippets = pdfImageExtractor.captionInlineImages(pdfPath);
+            // 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：调用带上下文的重载落盘 PDF 内嵌图并生成可访问 URL；代码来源：AI生成
+            List<String> snippets = pdfImageExtractor.captionInlineImages(
+                    pdfPath, kbId, entity.getId(), workspaceId, captionEnabled);
             if (snippets.isEmpty()) {
                 return body;
             }

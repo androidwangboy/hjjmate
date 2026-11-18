@@ -103,6 +103,8 @@ import { useWikiStore, isProtectedPage, type WikiPage } from '@/stores/useWikiSt
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore'
 import { wikiApi } from '@/api/index'
 import { useMarkdownRenderer } from '@/composables/useMarkdownRenderer'
+// 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：引入 Wiki 鉴权图片加载，使正文内嵌图片显示；代码来源：AI生成
+import { useWikiImageBlob } from '@/composables/useWikiImageBlob'
 import { postprocessWikilinks, resolveWikilink, type WikilinkRef } from '@/composables/wikilink'
 import { Link, SetUp } from '@element-plus/icons-vue'
 import PageHeader from './PageHeader.vue'
@@ -115,6 +117,8 @@ const router = useRouter()
 const store = useWikiStore()
 const workspace = useWorkspaceStore()
 const { renderMarkdown } = useMarkdownRenderer()
+// 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：初始化 Wiki 鉴权图片加载器；代码来源：AI生成
+const { scan: scanWikiImages } = useWikiImageBlob()
 
 // Editing, enriching, repairing and deleting pages all require manage:wiki.
 // Read-only viewers get the rendered page without the action bar.
@@ -175,6 +179,8 @@ async function runWikilinkPostprocess() {
 // bound elements are skipped by the lightbox itself.
 watch(renderedContent, async () => {
   await runWikilinkPostprocess()
+  // 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：正文渲染后扫描内嵌图片换成鉴权 blob URL，再绑定灯箱；代码来源：AI生成
+  if (articleRef.value) scanWikiImages(articleRef.value)
   lightboxRef.value?.attach(articleRef.value)
 })
 
@@ -360,6 +366,9 @@ onMounted(() => {
 .page-content :deep(th) { background: var(--mc-bg-sunken); font-weight: 600; }
 .page-content :deep(hr) { border: none; border-top: 1px solid var(--mc-border-light); margin: 20px 0; }
 .page-content :deep(img) { max-width: 100%; border-radius: 10px; }
+/* 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：Wiki 鉴权图片加载中/失败时给出可见占位与最小尺寸；代码来源：AI生成 */
+.page-content :deep(img.markdown-wiki-image) { display: block; margin: 12px 0; min-height: 40px; background: var(--mc-bg-muted); }
+.page-content :deep(img.markdown-wiki-image[data-wiki-image-loading='1']) { opacity: 0.5; }
 .page-content :deep(.wiki-link) { color: var(--mc-primary); text-decoration: none; cursor: pointer; border-bottom: 1px dashed var(--mc-primary); }
 .page-content :deep(.wiki-link:hover) { text-decoration: underline; }
 /* Archived target — still clickable to view/restore, but visually de-emphasised

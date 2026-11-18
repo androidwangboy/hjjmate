@@ -51,10 +51,13 @@ import vip.mate.wiki.sse.WikiProgressBus;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -74,6 +77,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Service
 @RequiredArgsConstructor
 public class WikiProcessingService {
+
+    /** 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：匹配正文中已落盘的图片引用；代码来源：AI生成 */
+    private static final Pattern WIKI_IMAGE_URL_RE =
+            Pattern.compile("/wiki-images/\\d+\\.[a-zA-Z0-9]+");
 
     private final WikiKnowledgeBaseService kbService;
     private final WikiRawMaterialService rawService;
@@ -1660,6 +1667,49 @@ public class WikiProcessingService {
         return savePageContent(kb, raw, slug, title, content, pageSummary, pageType, null, null);
     }
 
+    /**
+     * 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：从原始材料提取文本中收集图片引用，补齐 LLM 生成正文里遗漏的图片，
+     * 以"附图"小节追加，保证知识库页面能显示素材内嵌图；代码来源：AI生成
+     */
+    private String backfillWikiImages(String content, WikiRawMaterialEntity raw) {
+        if (content == null || raw == null) {
+            return content;
+        }
+        try {
+            String sourceText = rawService.getTextContent(raw);
+            if (sourceText == null || sourceText.isBlank()) {
+                return content;
+            }
+            Set<String> present = new LinkedHashSet<>();
+            Matcher inPage = WIKI_IMAGE_URL_RE.matcher(content);
+            while (inPage.find()) {
+                present.add(inPage.group());
+            }
+            Set<String> missing = new LinkedHashSet<>();
+            Matcher inSource = WIKI_IMAGE_URL_RE.matcher(sourceText);
+            while (inSource.find()) {
+                String url = inSource.group();
+                if (!present.contains(url)) {
+                    missing.add(url);
+                }
+            }
+            if (missing.isEmpty()) {
+                return content;
+            }
+            StringBuilder sb = new StringBuilder(content);
+            sb.append("\n\n--- 附图 ---\n");
+            int idx = 1;
+            for (String url : missing) {
+                sb.append("![图 ").append(idx++).append("](").append(url).append(")\n");
+            }
+            log.info("[Wiki] Backfilled {} image reference(s) for raw={}", missing.size(), raw.getId());
+            return sb.toString();
+        } catch (Exception e) {
+            log.warn("[Wiki] Backfill images failed for raw={}: {}", raw.getId(), e.getMessage());
+            return content;
+        }
+    }
+
     private boolean savePageContent(WikiKnowledgeBaseEntity kb, WikiRawMaterialEntity raw,
                                      String slug, String title, String content, String pageSummary,
                                      String pageType, JsonNode metadataNode) {
@@ -1671,6 +1721,9 @@ public class WikiProcessingService {
                                      String pageType, JsonNode metadataNode, JsonNode dependsOnNode) {
         Long kbId = kb.getId();
         Long rawId = raw.getId();
+
+        // 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：把原始材料中的图片引用回填到 LLM 生成的页面正文，防止模型丢弃图片；代码来源：AI生成
+        content = backfillWikiImages(content, raw);
 
         // Derive the slug deterministically from the title rather than trusting
         // the model-supplied one. A model-minted slug romanizes inconsistently
