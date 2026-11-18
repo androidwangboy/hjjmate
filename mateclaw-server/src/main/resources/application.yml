@@ -506,6 +506,8 @@ mate:
     max-parallel-phase-b-pages: 3       # RFC-012 follow-up #3：单 chunk 内 phase B 阶段并行处理的 page 数
     auto-process-on-upload: true        # 上传原始材料后是否自动触发 AI 消化
     upload-dir: ./data/wiki-uploads     # 上传文件存储目录
+    # 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：新增 Wiki 素材内嵌图片落盘目录配置；代码来源：AI生成
+    image-dir: ./data/wiki-images       # 素材内嵌图片落盘目录（通过 /api/v1/wiki/images 鉴权访问）
     max-scan-files: 500                 # 目录扫描最大文件数
     max-scan-file-size: 52428800        # 扫描时跳过大于此大小的文件（字节，默认 50MB）
   # Dream v2 feature flags — production defaults after GA validation
