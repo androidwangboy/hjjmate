@@ -23,8 +23,11 @@ import vip.mate.wiki.repository.WikiRawMaterialMapper;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
+// 修改人:祝奔；时间：2026-11-18T11:29:06.231Z；修改原因/内容：引入 Map/ArrayList 用于 PDF 图片按页内联；代码来源：AI生成
+import java.util.Map;
 import vip.mate.wiki.dto.WikiFailureItem;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -877,23 +880,65 @@ public class WikiRawMaterialService {
 
         java.nio.file.Path pdfPath = java.nio.file.Paths.get(entity.getSourcePath());
         try {
-            // 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：调用带上下文的重载落盘 PDF 内嵌图并生成可访问 URL；代码来源：AI生成
-            List<String> snippets = pdfImageExtractor.captionInlineImages(
+            // 修改人:祝奔；时间：2026-11-18T11:29:06.231Z；修改原因/内容：PDF 图片引用与 caption 按页就地内联到 "--- Page N ---" 之后，
+            // 使切片时图片只跟随对应页文本，图文交错；无页标记时退化为追加到末尾；代码来源：AI生成
+            Map<Integer, List<String>> byPage = pdfImageExtractor.captionImagesByPage(
                     pdfPath, kbId, entity.getId(), workspaceId, captionEnabled);
-            if (snippets.isEmpty()) {
+            if (byPage.isEmpty()) {
                 return body;
             }
-            StringBuilder sb = new StringBuilder(body);
-            sb.append("\n\n--- Inline images ---\n");
-            for (String snippet : snippets) {
-                sb.append(snippet).append('\n');
-            }
-            return sb.toString();
+            return inlineImagesByPage(body, byPage);
         } catch (Exception e) {
             log.warn("[Wiki] PDF inline-image captioning failed for id={}: {}",
                     entity.getId(), e.getMessage());
             return body;
         }
+    }
+
+    /**
+     * 修改人:祝奔；时间：2026-11-18T11:29:06.231Z；修改原因/内容：把每页的图片/ caption 片段插入正文中对应 "--- Page N ---" 段落之后；
+     * 找不到页标记则统一追加到末尾，保证图片信息不丢失；代码来源：AI生成
+     */
+    private String inlineImagesByPage(String body, Map<Integer, List<String>> byPage) {
+        java.util.regex.Pattern pageMarker = java.util.regex.Pattern.compile("(?m)^--- Page (\\d+) ---\\s*$");
+        java.util.regex.Matcher matcher = pageMarker.matcher(body);
+        StringBuilder result = new StringBuilder();
+        Set<Integer> inserted = new java.util.HashSet<>();
+        int cursor = 0;
+        while (matcher.find()) {
+            result.append(body, cursor, matcher.end());
+            int pageNo;
+            try {
+                pageNo = Integer.parseInt(matcher.group(1));
+            } catch (NumberFormatException e) {
+                pageNo = -1;
+            }
+            List<String> snippets = byPage.get(pageNo);
+            if (snippets != null && !snippets.isEmpty()) {
+                result.append('\n');
+                for (String snippet : snippets) {
+                    result.append(snippet).append('\n');
+                }
+                inserted.add(pageNo);
+            }
+            cursor = matcher.end();
+        }
+        result.append(body, cursor, body.length());
+
+        // 没有对应页标记的图片（如 pdftotext 不带页标记）统一追加到末尾
+        List<String> leftover = new ArrayList<>();
+        for (Map.Entry<Integer, List<String>> e : byPage.entrySet()) {
+            if (!inserted.contains(e.getKey())) {
+                leftover.addAll(e.getValue());
+            }
+        }
+        if (!leftover.isEmpty()) {
+            result.append("\n\n--- 附图 ---\n");
+            for (String snippet : leftover) {
+                result.append(snippet).append('\n');
+            }
+        }
+        return result.toString();
     }
 
     /**

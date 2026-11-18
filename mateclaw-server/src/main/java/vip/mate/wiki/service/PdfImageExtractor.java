@@ -25,7 +25,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Extracts inline images from a PDF and runs each through the vision-in
@@ -92,16 +94,30 @@ public class PdfImageExtractor {
      */
     public List<String> captionInlineImages(Path pdfPath, Long kbId, Long rawId, Long workspaceId,
                                             boolean captionEnabled) {
+        Map<Integer, List<String>> byPage = captionImagesByPage(pdfPath, kbId, rawId, workspaceId, captionEnabled);
+        List<String> flat = new ArrayList<>();
+        byPage.values().forEach(flat::addAll);
+        return flat;
+    }
+
+    /**
+     * 修改人:祝奔；时间：2026-11-18T11:29:06.231Z；修改原因/内容：新增按页分组的图片片段提取：每页图片引用与 caption 一起返回，
+     * 供正文在 "--- Page N ---" 处就地内联，使切片时图片紧贴对应页文本；代码来源：AI生成
+     *
+     * @return key=页码(1-based)，value=该页的图片 markdown 引用与 caption 行；无图片时为空 Map
+     */
+    public Map<Integer, List<String>> captionImagesByPage(Path pdfPath, Long kbId, Long rawId,
+                                                          Long workspaceId, boolean captionEnabled) {
+        Map<Integer, List<String>> byPage = new LinkedHashMap<>();
         if (pdfPath == null) {
-            return List.of();
+            return byPage;
         }
         File pdfFile = pdfPath.toFile();
         if (!pdfFile.isFile()) {
             log.warn("[PdfImage] PDF path is not a regular file: {}", pdfPath);
-            return List.of();
+            return byPage;
         }
 
-        List<String> snippets = new ArrayList<>();
         int totalCaptioned = 0;
 
         try (PDDocument doc = Loader.loadPDF(pdfFile)) {
@@ -119,6 +135,7 @@ public class PdfImageExtractor {
                     continue;
                 }
 
+                List<String> pageSnippets = new ArrayList<>();
                 int imgIdx = 0;
                 for (COSName xobjectName : resources.getXObjectNames()) {
                     if (totalCaptioned >= MAX_IMAGES_PER_PDF) {
@@ -162,30 +179,33 @@ public class PdfImageExtractor {
                         continue;
                     }
 
-                    // 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：有上下文时把 PDF 内嵌图落盘，并输出 markdown 图片引用供页面显示；代码来源：AI生成
+                    // 修改人:祝奔；时间：2026-11-18T11:29:06.231Z；修改原因/内容：图片引用与 caption 一起按页收集，内联到该页文本附近；代码来源：AI生成
                     String sourceRef = String.format("P%d#%d", pageIdx, imgIdx);
                     if (kbId != null && wikiImageService != null) {
                         String url = wikiImageService.store(pngBytes, "png", "image/png",
                                 kbId, rawId, workspaceId, sourceRef);
                         if (url != null) {
-                            snippets.add(String.format("![图 %s](%s)", sourceRef, url));
+                            pageSnippets.add(String.format("![图 %s](%s)", sourceRef, url));
                         }
                     }
 
                     String caption = captionEnabled ? captionOrNull(pngBytes) : null;
                     if (caption != null && !caption.isBlank()) {
-                        snippets.add(String.format("[图 %s]: %s", sourceRef, caption));
+                        pageSnippets.add(String.format("[图 %s]: %s", sourceRef, caption));
                     } else {
                         log.debug("[PdfImage] no caption (disabled or empty) page={} idx={}", pageIdx, imgIdx);
                     }
+                }
+                if (!pageSnippets.isEmpty()) {
+                    byPage.put(pageIdx, pageSnippets);
                 }
             }
         } catch (IOException e) {
             log.warn("[PdfImage] PDF load failed for {}: {}", pdfPath, e.getMessage());
         }
 
-        log.info("[PdfImage] captioned {} image(s) from {}", snippets.size(), pdfPath);
-        return snippets;
+        log.info("[PdfImage] captioned images across {} page(s) from {}", byPage.size(), pdfPath);
+        return byPage;
     }
 
     private String captionOrNull(byte[] pngBytes) {

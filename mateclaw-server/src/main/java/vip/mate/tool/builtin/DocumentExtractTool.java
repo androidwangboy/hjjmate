@@ -9,6 +9,8 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
+import vip.mate.tool.document.ImageSink;
+import vip.mate.tool.document.OfficeImageExtractor;
 import vip.mate.tool.guard.WorkspacePathGuard;
 import vip.mate.wiki.service.WikiImageService;
 
@@ -61,8 +63,25 @@ public class DocumentExtractTool {
     @Nullable
     private WikiImageService wikiImageService;
 
+    // 修改人:祝奔；时间：2026-11-18T11:29:06.231Z；修改原因/内容：注入 Office 图文交错提取器（Word/Excel 精确内联图片）；代码来源：AI生成
+    @Autowired(required = false)
+    @Nullable
+    private OfficeImageExtractor officeImageExtractor;
+
     /** 内嵌图片持久化所需的上下文（仅 Wiki 摄取链路传入）。 */
     public record ImageContext(Long kbId, Long rawId, Long workspaceId) {}
+
+    /**
+     * 修改人:祝奔；时间：2026-11-18T11:29:06.231Z；修改原因/内容：由图片上下文构造落盘回调，把图片字节交给 WikiImageService 并返回正文引用 URL；代码来源：AI生成
+     */
+    @Nullable
+    private ImageSink imageSink(ImageContext ctx) {
+        if (ctx == null || wikiImageService == null) return null;
+        return (bytes, mime, sourceRef) -> {
+            // 扩展名交给 WikiImageService 依据 MIME 归一化，sourceRef 仅用于去重
+            return wikiImageService.store(bytes, "", mime, ctx.kbId(), ctx.rawId(), ctx.workspaceId(), sourceRef);
+        };
+    }
 
     @Tool(description = """
         从 Office/PDF 文档中提取文本内容。
@@ -207,7 +226,8 @@ public class DocumentExtractTool {
                 // 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：DOCX 提取传入图片上下文；代码来源：AI生成
                 content = extractDocx(path, options, attempts, imageContext);
             } else if (mimeType.contains("spreadsheetml") || mimeType.contains("excel")) {
-                content = extractXlsx(path, options, attempts);
+                // 修改人:祝奔；时间：2026-11-18T11:29:06.231Z；修改原因/内容：XLSX 提取传入图片上下文；代码来源：AI生成
+                content = extractXlsx(path, options, attempts, imageContext);
             } else if (mimeType.contains("presentationml") || mimeType.contains("powerpoint")) {
                 content = extractPptx(path, options, attempts);
             } else if (mimeType.contains("html")) {
@@ -760,6 +780,15 @@ public class DocumentExtractTool {
         }
         attempts.add("pandoc: 失败或不可用");
 
+        // 2.5 修改人:祝奔；时间：2026-11-18T11:29:06.231Z；修改原因/内容：pandoc 不可用时用 POI 按 body 顺序内联 Word 图片；代码来源：AI生成
+        if (imageContext != null && officeImageExtractor != null) {
+            String rich = officeImageExtractor.extractDocx(path, imageSink(imageContext));
+            if (rich != null && !rich.isBlank()) {
+                attempts.add("poi-docx(images): 成功");
+                return new ExtractedContent(rich, "poi-docx-images", 0);
+            }
+        }
+
         // 3. 尝试 LibreOffice
         content = tryLibreOffice(path);
         if (content != null && !content.isBlank()) {
@@ -1042,8 +1071,16 @@ public class DocumentExtractTool {
 
     // ==================== XLSX 提取 ====================
 
-    private ExtractedContent extractXlsx(Path path, String options, List<String> attempts) throws Exception {
+    private ExtractedContent extractXlsx(Path path, String options, List<String> attempts, ImageContext imageContext) throws Exception {
         long t = System.currentTimeMillis();
+        // 修改人:祝奔；时间：2026-11-18T11:29:06.231Z；修改原因/内容：Excel 优先用 POI ClientAnchor 精确内联图片；无图片时回退 Tika；代码来源：AI生成
+        if (imageContext != null && officeImageExtractor != null) {
+            String rich = officeImageExtractor.extractXlsx(path, imageSink(imageContext));
+            if (rich != null && !rich.isBlank()) {
+                attempts.add("poi-xlsx(images): 成功 (" + (System.currentTimeMillis() - t) + "ms)");
+                return new ExtractedContent(rich, "poi-xlsx-images", 0);
+            }
+        }
         String text = TikaExtractor.extract(path);
         long elapsed = System.currentTimeMillis() - t;
         if (text != null && !text.isBlank()) {
