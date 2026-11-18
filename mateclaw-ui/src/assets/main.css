@@ -424,6 +424,22 @@ html.dark body::before {
   cursor: zoom-in;
 }
 
+/* 修改人:祝奔；时间：2026-11-18T12:05:00.000Z；修改原因/内容：会话回答内嵌的知识库图片单独成块展示，点击由 ImageLightbox 放大缩小；代码来源：AI生成 */
+.markdown-body img.markdown-wiki-image {
+  display: block;
+  max-width: min(560px, 100%);
+  max-height: 640px;
+  height: auto;
+  margin: 12px 0;
+  border-radius: 10px;
+  border: 1px solid var(--mc-code-header-border);
+  object-fit: contain;
+  cursor: zoom-in;
+  min-height: 40px;
+  background: var(--mc-bg-muted);
+}
+.markdown-body img.markdown-wiki-image[data-wiki-image-loading='1'] { opacity: 0.5; }
+
 /* headings */
 .markdown-body h1,
 .markdown-body h2,

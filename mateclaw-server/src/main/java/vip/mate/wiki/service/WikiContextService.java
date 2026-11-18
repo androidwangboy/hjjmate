@@ -5,10 +5,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import vip.mate.agent.context.TokenEstimator;
 import vip.mate.wiki.WikiProperties;
+import vip.mate.wiki.dto.ImageRef;
 import vip.mate.wiki.dto.PageSearchResult;
 import vip.mate.wiki.model.WikiKnowledgeBaseEntity;
 import vip.mate.wiki.model.WikiPageEntity;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -105,7 +107,12 @@ public class WikiContextService {
                 "is and what they are working on, rely on <memory-context> instead; it takes " +
                 "precedence over these pages. Use wiki_read_page(slug) for full content. When using " +
                 "information from these pages in your answer, always cite the source page title, " +
-                "e.g. 「来源：[[页面标题]]」or「(来源：页面标题)」.]\n\n");
+                "e.g. 「来源：[[页面标题]]」or「(来源：页面标题)」. " +
+                // 修改人:祝奔；时间：2026-11-18T11:55:00.000Z；修改原因/内容：引导模型在回答引用知识页内容的位置就地输出页面携带的图片 Markdown，使图片穿插在回答正文中而非末尾汇总；代码来源：AI生成
+                "Some pages list a 'Page images:' section with image markdown. When you use a " +
+                "page's content, copy the relevant image markdown VERBATIM into your answer at " +
+                "the exact spot where that content is discussed, so the image appears inline. " +
+                "Do NOT collect images into a separate list or append them at the end.]\n\n");
         int totalChars = 0;
         int maxChars = properties.getMaxContextChars();
         int totalTokens = TokenEstimator.estimateTokens(sb.toString());
@@ -143,8 +150,45 @@ public class WikiContextService {
         if (hit.reason() != null && !hit.reason().isBlank()) {
             entry.append("  Relevance: ").append(hit.reason()).append("\n");
         }
+        // 修改人:祝奔；时间：2026-11-18T11:55:00.000Z；修改原因/内容：把命中知识页携带的图片 Markdown 注入上下文条目，供模型在回答引用该页时就地输出，图片穿插在回答正文；代码来源：AI生成
+        List<String> imageLines = buildPageImageLines(hit);
+        if (!imageLines.isEmpty()) {
+            entry.append("  Page images: ").append(String.join(" ", imageLines)).append("\n");
+        }
         entry.append("\n");
         return entry.toString();
+    }
+
+    /**
+     * 修改人:祝奔；时间：2026-11-18T11:55:00.000Z；修改原因/内容：新增把命中页图片引用转成可直接内联到回答正文的 Markdown 行，过滤掉非 /wiki-images/ 的外链并做去重；代码来源：AI生成
+     */
+    private List<String> buildPageImageLines(PageSearchResult hit) {
+        if (hit.imageRefs() == null || hit.imageRefs().isEmpty()) {
+            return List.of();
+        }
+        List<String> lines = new ArrayList<>();
+        Set<String> seenUrls = new java.util.HashSet<>();
+        for (ImageRef ref : hit.imageRefs()) {
+            if (ref == null || ref.url() == null
+                    || !ref.url().matches("/(?:hjjmate/)?wiki-images/\\d+\\.[a-zA-Z0-9]+")) {
+                continue;
+            }
+            if (!seenUrls.add(ref.url())) {
+                continue;
+            }
+            String alt = ref.alt() == null || ref.alt().isBlank()
+                    ? "知识库图片"
+                    : ref.alt().replace("[", "").replace("]", "").replace("\n", " ").trim();
+            // 修改人:祝奔；时间：2026-11-18T11:55:00.000Z；修改原因/内容：纯数字 alt 会被前端引用解析误判为 [n] 来源标记，补前缀规避；代码来源：AI生成
+            if (alt.matches("\\d+")) {
+                alt = "图" + alt;
+            }
+            lines.add("![" + alt + "](" + ref.url() + ")");
+            if (lines.size() >= 3) {
+                break;
+            }
+        }
+        return lines;
     }
 
     /**

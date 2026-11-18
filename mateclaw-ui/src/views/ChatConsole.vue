@@ -168,6 +168,9 @@
         </template>
       </MessageList>
 
+      <!-- 修改人:祝奔；时间：2026-11-18T12:05:00.000Z；修改原因/内容：挂载图片查看器（委托模式），让会话回答中的 markdown 图片可点击放大缩小，与知识库查看图片一致；代码来源：AI生成 -->
+      <ImageLightbox delegate selector=".msg-bubble .markdown-body img" />
+
       <!-- Issue #81: non-blocking banner — active provider is unhealthy but the
            backend fallback chain has a LIVE provider to take over. -->
       <RecoverableModelBanner
@@ -358,6 +361,10 @@ import ModelSelector from '@/components/chat/ModelSelector.vue'
 import { useEChartsRenderer } from '@/composables/useEChartsRenderer'
 import { useKatexRenderer } from '@/composables/useKatexRenderer'
 import { useMermaidRenderer, handleMermaidDownload } from '@/composables/useMermaidRenderer'
+// 修改人:祝奔；时间：2026-11-18T11:35:00.000Z；修改原因/内容：聊天页接入 Wiki 图片鉴权加载，使回答中命中的知识库图片能显示；代码来源：AI生成
+import { useWikiImageBlob } from '@/composables/useWikiImageBlob'
+// 修改人:祝奔；时间：2026-11-18T12:05:00.000Z；修改原因/内容：引入图片灯箱组件，供会话回答图片点击放大缩小；代码来源：AI生成
+import ImageLightbox from '@/views/Wiki/components/ImageLightbox.vue'
 import { useGoalStore } from '@/stores/useGoalStore'
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore'
 import { buildViewerModelProviders } from '@/utils/viewerModelProviders'
@@ -781,6 +788,8 @@ const echartsContainerRef = computed(() => messageListRef.value?.$el as HTMLElem
 const { startObserving: startECharts, dispose: disposeECharts } = useEChartsRenderer(echartsContainerRef)
 const { startObserving: startKatex, dispose: disposeKatex } = useKatexRenderer(echartsContainerRef)
 const { startObserving: startMermaid, dispose: disposeMermaid } = useMermaidRenderer(echartsContainerRef)
+// 修改人:祝奔；时间：2026-11-18T11:35:00.000Z；修改原因/内容：在聊天页挂载 Wiki 图片 blob 扫描，回答渲染出图片引用后自动换成带鉴权的 URL；代码来源：AI生成
+useWikiImageBlob()
 
 // Last-attempt draft, restored into the input box when the SSE error event
 // arrives async (sendChatMessage resolves on connect, the error fires later,
