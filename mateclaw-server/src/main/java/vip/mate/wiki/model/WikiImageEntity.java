@@ -43,6 +43,10 @@ public class WikiImageEntity {
     /** 素材内原始引用，如 media/image1.png 或 P1#2 */
     private String sourceRef;
 
+    // 修改人:祝奔；时间：2026-11-20T06:14:14.191Z；修改原因/内容：新增图片内容 SHA-256，用于 workspace+kb 范围内去重；代码来源：AI生成
+    /** 图片内容 SHA-256 */
+    private String contentHash;
+
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 

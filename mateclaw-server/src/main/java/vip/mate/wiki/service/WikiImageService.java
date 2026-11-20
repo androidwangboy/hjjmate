@@ -4,7 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import vip.mate.wiki.model.WikiImageEntity;
 import vip.mate.wiki.repository.WikiImageMapper;
@@ -14,6 +16,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
@@ -57,8 +61,9 @@ public class WikiImageService {
 
     /**
      * 保存一张内嵌图片并返回写入正文的引用 URL（形如 {@code /wiki-images/{id}.png}）。
-     * 同一个素材的同一来源引用（rawId + sourceRef）重复处理时复用已有记录，避免重处理把图片无限堆积。
+     * 去重优先级：workspace+kb+内容 SHA-256（跨素材/跨转换复用同一张图），其次兼容旧逻辑 rawId+sourceRef。
      */
+    // 修改人:祝奔；时间：2026-11-20T06:14:14.191Z；修改原因/内容：图片按内容 sha256 在 workspace+kb 范围内去重，并处理并发冲突与写盘失败脏记录；代码来源：AI生成
     public String store(byte[] bytes, String ext, String mimeType, Long kbId, Long rawId,
                         Long workspaceId, String sourceRef) {
         if (bytes == null || bytes.length == 0) {
@@ -69,7 +74,21 @@ public class WikiImageService {
             log.warn("[WikiImage] Unsupported image ext={} mime={}", ext, mimeType);
             return null;
         }
+        final String contentHash = sha256Hex(bytes);
 
+        // 1) 内容 hash 去重（workspace + kb 范围内，同一张图跨素材/跨转换只存一份）
+        WikiImageEntity same = imageMapper.selectOne(new LambdaQueryWrapper<WikiImageEntity>()
+                .eq(WikiImageEntity::getWorkspaceId, workspaceId)
+                .eq(WikiImageEntity::getKbId, kbId)
+                .eq(WikiImageEntity::getContentHash, contentHash)
+                .eq(WikiImageEntity::getDeleted, 0)
+                .orderByDesc(WikiImageEntity::getId)
+                .last("LIMIT 1"));
+        if (same != null) {
+            return url(same);
+        }
+
+        // 2) 兼容旧逻辑：同一素材同一来源引用（存量无 content_hash 的记录仍可命中）
         if (rawId != null && sourceRef != null && !sourceRef.isBlank()) {
             WikiImageEntity existing = imageMapper.selectOne(new LambdaQueryWrapper<WikiImageEntity>()
                     .eq(WikiImageEntity::getRawId, rawId)
@@ -90,22 +109,60 @@ public class WikiImageService {
         entity.setMimeType(mimeType != null && !mimeType.isBlank() ? mimeType : "image/" + normalizedExt);
         entity.setFileSize((long) bytes.length);
         entity.setSourceRef(sourceRef);
+        entity.setContentHash(contentHash);
         entity.setDeleted(0);
-        imageMapper.insert(entity);
+        try {
+            imageMapper.insert(entity);
+        } catch (DataIntegrityViolationException dup) {
+            // 并发插入同一张图：唯一索引冲突后回查已存在的记录复用其 URL
+            WikiImageEntity concurrent = imageMapper.selectOne(new LambdaQueryWrapper<WikiImageEntity>()
+                    .eq(WikiImageEntity::getWorkspaceId, workspaceId)
+                    .eq(WikiImageEntity::getKbId, kbId)
+                    .eq(WikiImageEntity::getContentHash, contentHash)
+                    .eq(WikiImageEntity::getDeleted, 0)
+                    .orderByDesc(WikiImageEntity::getId)
+                    .last("LIMIT 1"));
+            if (concurrent != null) {
+                log.info("[WikiImage] dedup concurrent insert, reuse id={} hash={}", concurrent.getId(), contentHash);
+                return url(concurrent);
+            }
+            throw dup;
+        }
 
-        Path target = storageDir.resolve(entity.getId() + "." + normalizedExt).normalize();
+        Path target = storageDir.resolve(kbId+"").resolve(entity.getId() + "." + normalizedExt).normalize();
         if (!target.startsWith(storageDir)) {
+            imageMapper.deleteById(entity.getId());
             throw new MateClawException("err.wiki.image_path", "Illegal image storage path");
         }
         try {
+            Files.createDirectories(storageDir.resolve(kbId+""));
             Files.write(target, bytes);
         } catch (IOException e) {
+            // 写盘失败不留脏记录（否则下次会命中一条指向空文件的映射）
+            try {
+                imageMapper.deleteById(entity.getId());
+            } catch (Exception cleanup) {
+                log.warn("[WikiImage] failed to cleanup dirty row id={}: {}", entity.getId(), cleanup.toString());
+            }
             log.error("[WikiImage] Failed to write image id={}: {}", entity.getId(), e.toString());
             throw new MateClawException("err.wiki.image_write", "Failed to store image");
         }
-        log.info("[WikiImage] stored id={} raw={} bytes={} path={}",
-                entity.getId(), rawId, bytes.length, target.getFileName());
+        log.info("[WikiImage] stored id={} raw={} bytes={} hash={} path={}",
+                entity.getId(), rawId, bytes.length, contentHash, target.getFileName());
         return url(entity);
+    }
+
+    private static String sha256Hex(byte[] bytes) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(bytes);
+            StringBuilder sb = new StringBuilder(digest.length * 2);
+            for (byte b : digest) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 not available", e);
+        }
     }
 
     /** 取图片元数据（不存在返回 empty）。 */
@@ -123,7 +180,7 @@ public class WikiImageService {
         if (ext == null) {
             return Optional.empty();
         }
-        Path file = storageDir.resolve(entity.getId() + "." + ext).normalize();
+        Path file = storageDir.resolve(entity.getKbId()+"").resolve(entity.getId() + "." + ext).normalize();
         if (!file.startsWith(storageDir) || !Files.isRegularFile(file)) {
             return Optional.empty();
         }
@@ -179,5 +236,16 @@ public class WikiImageService {
             candidate = "jpg";
         }
         return ALLOWED_EXT.contains(candidate) ? candidate : null;
+    }
+
+    public int deleteByKbId(Long kbId) {
+        int delete = imageMapper.delete(new LambdaQueryWrapper<WikiImageEntity>().eq(WikiImageEntity::getKbId, kbId));
+        Path resolve = storageDir.resolve(kbId + "");
+        try {
+            FileUtils.deleteDirectory(resolve.toFile());
+        } catch (IOException e) {
+            log.warn("[WikiImage] failed to delete image id={}: {}", kbId, e.toString());
+        }
+        return delete;
     }
 }

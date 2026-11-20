@@ -3,6 +3,7 @@ package vip.mate.wiki.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vip.mate.agent.binding.model.AgentWikiKbBinding;
@@ -10,17 +11,8 @@ import vip.mate.agent.binding.repository.AgentWikiKbBindingMapper;
 import vip.mate.agent.model.AgentEntity;
 import vip.mate.agent.repository.AgentMapper;
 import vip.mate.wiki.job.model.WikiProcessingJobEntity;
-import vip.mate.wiki.model.WikiChunkEntity;
-import vip.mate.wiki.model.WikiKnowledgeBaseEntity;
-import vip.mate.wiki.model.WikiPageCitationEntity;
-import vip.mate.wiki.model.WikiPageEntity;
-import vip.mate.wiki.model.WikiRawMaterialEntity;
-import vip.mate.wiki.repository.WikiChunkMapper;
-import vip.mate.wiki.repository.WikiKnowledgeBaseMapper;
-import vip.mate.wiki.repository.WikiPageCitationMapper;
-import vip.mate.wiki.repository.WikiPageMapper;
-import vip.mate.wiki.repository.WikiProcessingJobMapper;
-import vip.mate.wiki.repository.WikiRawMaterialMapper;
+import vip.mate.wiki.model.*;
+import vip.mate.wiki.repository.*;
 
 import java.util.List;
 import java.util.Set;
@@ -62,6 +54,8 @@ public class WikiKnowledgeBaseService {
      */
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private AgentWikiKbBindingMapper kbBindingMapper;
+    @Autowired
+    private WikiImageService wikiImageService;
 
     /**
      * Summary returned from cascade delete — used by callers (e.g. the
@@ -465,10 +459,12 @@ public class WikiKnowledgeBaseService {
                 new LambdaQueryWrapper<WikiProcessingJobEntity>()
                         .eq(WikiProcessingJobEntity::getKbId, id));
 
+        int imageCount = wikiImageService.deleteByKbId(id);
+
         kbMapper.deleteById(id);
 
-        log.info("[Wiki] Knowledge base cascade-deleted: id={}, name={}, raw={}, page={}, chunk={}, citation={}, job={}",
-                id, kb.getName(), rawCount, pageCount, chunkCount, citationCount, jobCount);
+        log.info("[Wiki] Knowledge base cascade-deleted: id={}, name={}, raw={}, page={}, chunk={}, citation={}, job={}, image={}",
+                id, kb.getName(), rawCount, pageCount, chunkCount, citationCount, jobCount, imageCount);
 
         return new CascadeDeleteResult(kb.getName(), rawCount, pageCount, chunkCount, citationCount, jobCount);
     }

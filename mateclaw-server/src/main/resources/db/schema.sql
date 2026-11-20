@@ -572,12 +572,15 @@ CREATE TABLE IF NOT EXISTS mate_wiki_image (
     mime_type       VARCHAR(64),
     file_size       BIGINT       NOT NULL DEFAULT 0,
     source_ref      VARCHAR(256),
+    -- 修改人:祝奔；时间：2026-11-20T06:14:14.191Z；修改原因/内容：wiki 图片新增 content_hash 字段与唯一索引；代码来源：AI生成
+    content_hash    VARCHAR(64),
     create_time     DATETIME     NOT NULL,
     update_time     DATETIME     NOT NULL,
     deleted         INT          NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_wiki_image_raw ON mate_wiki_image(raw_id);
 CREATE INDEX IF NOT EXISTS idx_wiki_image_kb ON mate_wiki_image(kb_id);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_wiki_image_ws_kb_hash ON mate_wiki_image(workspace_id, kb_id, content_hash);
 
 -- =============================================
 -- 工作区表（Phase 2）
