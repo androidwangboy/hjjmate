@@ -3,6 +3,7 @@ package vip.mate.tool.builtin;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +11,10 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Component;
 import vip.mate.datasource.model.DatasourceEntity;
+import vip.mate.datasource.model.DatasourceTableColEntity;
+import vip.mate.datasource.model.DatasourceTableEntity;
+import vip.mate.datasource.repository.DatasourceTableColMapper;
+import vip.mate.datasource.repository.DatasourceTableMapper;
 import vip.mate.datasource.service.DatasourceConnectionManager;
 import vip.mate.datasource.service.DatasourceService;
 
@@ -35,6 +40,8 @@ public class DatasourceTool {
 
     private final DatasourceService datasourceService;
     private final DatasourceConnectionManager connectionManager;
+    private final DatasourceTableMapper datasourceTableMapper;
+    private final DatasourceTableColMapper colMapper;
     /**
      * The application ObjectMapper, which serializes every {@code Long} as a JSON
      * string (see {@code JacksonConfig}). Tool output goes through it so 19-digit
@@ -106,6 +113,17 @@ public class DatasourceTool {
         if (datasourceId == null) {
             return error("list_tables 需要 datasourceId 参数");
         }
+        // 修改人:祝奔；时间：2026-11-19T09:35:02.124Z；修改原因/内容：优先查询落库表配置，无数据时回退原有元数据查询；代码来源：AI生成
+        List<DatasourceTableEntity> configuredTables = datasourceTableMapper.selectList(
+                new LambdaQueryWrapper<DatasourceTableEntity>()
+                        .eq(DatasourceTableEntity::getDatasourceId, datasourceId)
+                        .eq(DatasourceTableEntity::getDeleted, 0)
+                        .eq(DatasourceTableEntity::getEnabled, true)
+                        .orderByAsc(DatasourceTableEntity::getTableName));
+        if (configuredTables != null && !configuredTables.isEmpty()) {
+            return formatTableConfigs(configuredTables);
+        }
+
         DatasourceEntity entity = datasourceService.getDecrypted(datasourceId);
 
         String sql = buildListTablesSql(entity);
@@ -161,6 +179,18 @@ public class DatasourceTool {
         if (datasourceId == null || tableName == null || tableName.isBlank()) {
             return error("describe_table 需要 datasourceId 和 tableName 参数");
         }
+        // 修改人:祝奔；时间：2026-11-19T09:40:42.854Z；修改原因/内容：优先查询落库字段配置，无数据时回退原有元数据查询；代码来源：AI生成
+        List<DatasourceTableColEntity> configuredCols = colMapper.selectList(
+                new LambdaQueryWrapper<DatasourceTableColEntity>()
+                        .eq(DatasourceTableColEntity::getDatasourceId, datasourceId)
+                        .eq(DatasourceTableColEntity::getTableName, tableName)
+                        .eq(DatasourceTableColEntity::getDeleted, 0)
+                        .eq(DatasourceTableColEntity::getEnabled, true)
+                        .orderByAsc(DatasourceTableColEntity::getId));
+        if (configuredCols != null && !configuredCols.isEmpty()) {
+            return formatTableColumnConfigs(configuredCols);
+        }
+
         DatasourceEntity entity = datasourceService.getDecrypted(datasourceId);
 
         String sql = buildDescribeTableSql(entity, tableName);
@@ -287,6 +317,74 @@ public class DatasourceTool {
             sb.append("（已截断，实际可能更多）");
         }
         return sb.toString();
+    }
+
+    // 修改人:祝奔；时间：2026-11-19T09:35:02.124Z；修改原因/内容：参照 formatResultSet 将落库表配置格式化为 Markdown 表格；代码来源：AI生成
+    private String formatTableConfigs(List<DatasourceTableEntity> tables) {
+        List<String> headers = new ArrayList<>();
+        headers.add("TABLE_NAME");
+        headers.add("TABLE_COMMENT");
+        headers.add("TABLE_SCHEMA");
+        headers.add("TABLE_TYPE");
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("| ").append(String.join(" | ", headers)).append(" |\n");
+        sb.append("| ").append("--- | ".repeat(headers.size())).append("\n");
+
+        int rowCount = 0;
+        int maxRows = 200;
+        for (DatasourceTableEntity table : tables) {
+            if (rowCount >= maxRows) break;
+            sb.append("| ")
+                    .append(cell(table.getTableName())).append(" | ")
+                    .append(cell(table.getTableComment())).append(" | ")
+                    .append(cell(table.getTableSchema())).append(" | ")
+                    .append(cell(table.getTableType())).append(" | ");
+            rowCount++;
+        }
+        if (rowCount == 0) {
+            return "查询结果为空";
+        }
+        sb.append("\n共 ").append(rowCount).append(" 条记录");
+        if (rowCount >= maxRows) {
+            sb.append("（已截断，实际可能更多）");
+        }
+        return sb.toString();
+    }
+
+    // 修改人:祝奔；时间：2026-11-19T09:40:42.854Z；修改原因/内容：参照 formatResultSet 将落库字段配置格式化为 Markdown 表格；代码来源：AI生成
+    private String formatTableColumnConfigs(List<DatasourceTableColEntity> cols) {
+        List<String> headers = new ArrayList<>();
+        headers.add("COLUMN_NAME");
+        headers.add("COLUMN_TYPE");
+        headers.add("COLUMN_COMMENT");
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("| ").append(String.join(" | ", headers)).append(" |\n");
+        sb.append("| ").append("--- | ".repeat(headers.size())).append("\n");
+
+        int rowCount = 0;
+        int maxRows = 500;
+        for (DatasourceTableColEntity col : cols) {
+            if (rowCount >= maxRows) break;
+            sb.append("| ")
+                    .append(cell(col.getColumnName())).append(" | ")
+                    .append(cell(col.getColumnType())).append(" | ")
+                    .append(cell(StrUtil.isNotEmpty(col.getCustomComment()) ? col.getCustomComment() : col.getColumnComment())).append(" | ");
+            rowCount++;
+        }
+        if (rowCount == 0) {
+            return "查询结果为空";
+        }
+        sb.append("\n共 ").append(rowCount).append(" 条记录");
+        if (rowCount >= maxRows) {
+            sb.append("（已截断，实际可能更多）");
+        }
+        return sb.toString();
+    }
+
+    private String cell(String value) {
+        return value != null ? value.replace("|", "\\|") : "NULL";
     }
 
     private String error(String message) {

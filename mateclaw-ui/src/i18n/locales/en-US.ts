@@ -2653,6 +2653,46 @@ export default {
       testSuccess: 'Connection successful',
       testFailed: 'Connection failed. Please check configuration.',
     },
+    // 修改人:祝奔；时间：2026-11-19T08:10:28.021Z；修改原因/内容：新增数据源表字段维护弹框相关文案；代码来源：AI生成
+    schema: {
+      action: 'Table Fields',
+      // 修改人:祝奔；时间：2026-11-19T08:22:08.586Z；修改原因/内容：新增连接未成功时表字段维护按钮的禁用提示文案；代码来源：AI生成
+      actionDisabledTip: 'Test the connection successfully first',
+      // 修改人:祝奔；时间：2026-11-19T08:24:55.722Z；修改原因/内容：新增数据源未启用时的禁用提示文案；代码来源：AI生成
+      actionDisabledByEnabledTip: 'Enable the datasource first',
+      title: 'Table Field Maintenance',
+      searchPlaceholder: 'Search tables',
+      tableList: 'Tables',
+      useTable: 'Use this table',
+      // 修改人:祝奔；时间：2026-11-19T08:15:31.042Z；修改原因/内容：新增表使用状态展示文案；代码来源：AI生成
+      tableUsed: 'In use',
+      tableUnused: 'Not used',
+      tableName: 'Table Name',
+      // 修改人:祝奔；时间：2026-11-19T08:49:01.621Z；修改原因/内容：新增来源库展示文案；代码来源：AI生成
+      sourceSchema: 'Source',
+      tableComment: 'Table Description',
+      tableCommentPlaceholder: 'Enter table description',
+      columns: 'Columns',
+      colName: 'Column',
+      colType: 'Type',
+      colComment: 'Description',
+      colCustomComment: 'Custom Description',
+      colUse: 'Use',
+      customCommentPlaceholder: 'Enter custom description',
+      selectTableHint: 'Select a table from the left',
+      noTables: 'No matching tables',
+      save: 'Save',
+      cancel: 'Cancel',
+      saved: 'Table field configuration saved',
+      // 修改人:祝奔；时间：2026-11-19T08:34:53.175Z；修改原因/内容：新增表集合加载状态文案；代码来源：AI生成
+      loading: 'Loading…',
+      loadFailed: 'Failed to load tables',
+      // 修改人:祝奔；时间：2026-11-19T09:02:06.584Z；修改原因/内容：新增字段集合加载状态文案；代码来源：AI生成
+      columnsLoading: 'Loading columns…',
+      columnsLoadFailed: 'Failed to load columns',
+      // 修改人:祝奔；时间：2026-11-19T09:18:14.021Z；修改原因/内容：新增表字段配置保存失败文案；代码来源：AI生成
+      saveFailed: 'Failed to save table field configuration',
+    },
   },
   wiki: {
     kicker: 'Knowledge Engine',

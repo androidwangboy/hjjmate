@@ -543,6 +543,13 @@ export const datasourceApi = {
   toggle: (id: string | number, enabled: boolean) =>
     http.put(`/datasources/${id}/toggle?enabled=${enabled}`),
   test: (id: string | number) => http.post(`/datasources/${id}/test`),
+  // 修改人:祝奔；时间：2026-11-19T08:34:53.175Z；修改原因/内容：新增根据数据源ID查询数据库表集合接口；代码来源：AI生成
+  tables: (id: string | number) => http.get(`/datasources/${id}/tables`),
+  // 修改人:祝奔；时间：2026-11-19T09:02:06.584Z；修改原因/内容：新增根据表名查询字段集合接口；代码来源：AI生成
+  tableColumns: (id: string | number, tableName: string) =>
+    http.get(`/datasources/${id}/tables/${encodeURIComponent(tableName)}/columns`),
+  // 修改人:祝奔；时间：2026-11-19T09:18:14.021Z；修改原因/内容：新增保存表及字段配置接口；代码来源：AI生成
+  saveSchema: (data: any) => http.post('/datasources/tables/save', data),
 }
 
 // ==================== Tool ====================

@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.ai.support.ToolCallbacks;
 import org.springframework.ai.tool.ToolCallback;
 import vip.mate.datasource.model.DatasourceEntity;
+import vip.mate.datasource.repository.DatasourceTableColMapper;
+import vip.mate.datasource.repository.DatasourceTableMapper;
 import vip.mate.datasource.service.DatasourceConnectionManager;
 import vip.mate.datasource.service.DatasourceService;
 import vip.mate.datasource.service.SqlValidationService;
@@ -51,7 +53,12 @@ class DatasourceToolIdPrecisionTest {
 
         DatasourceService service = mock(DatasourceService.class);
         when(service.listEnabled()).thenReturn(List.of(ds));
-        DatasourceTool tool = new DatasourceTool(service, mock(DatasourceConnectionManager.class), idSafeMapper());
+        DatasourceTool tool = new DatasourceTool(
+                service,
+                mock(DatasourceConnectionManager.class),
+                mock(DatasourceTableMapper.class),
+                mock(DatasourceTableColMapper.class),
+                idSafeMapper());
 
         String out = tool.query_datasource("list_datasources", null, null);
 
@@ -67,6 +74,8 @@ class DatasourceToolIdPrecisionTest {
         DatasourceTool datasourceTool = new DatasourceTool(
                 mock(DatasourceService.class),
                 mock(DatasourceConnectionManager.class),
+                mock(DatasourceTableMapper.class),
+                mock(DatasourceTableColMapper.class),
                 idSafeMapper());
         SqlQueryTool sqlQueryTool = new SqlQueryTool(
                 mock(DatasourceService.class),

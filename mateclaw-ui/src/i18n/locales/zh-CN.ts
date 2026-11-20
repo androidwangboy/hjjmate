@@ -2496,6 +2496,46 @@ export default {
       testSuccess: '连接成功',
       testFailed: '连接失败，请检查配置',
     },
+    // 修改人:祝奔；时间：2026-11-19T08:10:28.021Z；修改原因/内容：新增数据源表字段维护弹框相关文案；代码来源：AI生成
+    schema: {
+      action: '表字段维护',
+      // 修改人:祝奔；时间：2026-11-19T08:22:08.586Z；修改原因/内容：新增连接未成功时表字段维护按钮的禁用提示文案；代码来源：AI生成
+      actionDisabledTip: '请先测试连接成功后再维护表字段',
+      // 修改人:祝奔；时间：2026-11-19T08:24:55.722Z；修改原因/内容：新增数据源未启用时的禁用提示文案；代码来源：AI生成
+      actionDisabledByEnabledTip: '请先启用数据源后再维护表字段',
+      title: '表字段维护',
+      searchPlaceholder: '搜索表名',
+      tableList: '数据表',
+      useTable: '使用该表',
+      // 修改人:祝奔；时间：2026-11-19T08:15:31.042Z；修改原因/内容：新增表使用状态展示文案；代码来源：AI生成
+      tableUsed: '已使用',
+      tableUnused: '未使用',
+      tableName: '表名',
+      // 修改人:祝奔；时间：2026-11-19T08:49:01.621Z；修改原因/内容：新增来源库展示文案；代码来源：AI生成
+      sourceSchema: '来源库',
+      tableComment: '表描述',
+      tableCommentPlaceholder: '请输入表描述',
+      columns: '字段列表',
+      colName: '字段名',
+      colType: '类型',
+      colComment: '字段描述',
+      colCustomComment: '自定义描述',
+      colUse: '是否使用',
+      customCommentPlaceholder: '请输入自定义描述',
+      selectTableHint: '请从左侧选择一个数据表',
+      noTables: '没有匹配的数据表',
+      save: '保存',
+      cancel: '取消',
+      saved: '表字段配置已保存',
+      // 修改人:祝奔；时间：2026-11-19T08:34:53.175Z；修改原因/内容：新增表集合加载状态文案；代码来源：AI生成
+      loading: '加载中…',
+      loadFailed: '加载表集合失败',
+      // 修改人:祝奔；时间：2026-11-19T09:02:06.584Z；修改原因/内容：新增字段集合加载状态文案；代码来源：AI生成
+      columnsLoading: '字段加载中…',
+      columnsLoadFailed: '加载字段失败',
+      // 修改人:祝奔；时间：2026-11-19T09:18:14.021Z；修改原因/内容：新增表字段配置保存失败文案；代码来源：AI生成
+      saveFailed: '保存表字段配置失败',
+    },
   },
   notifications: {
     pendingApprovals: '{n} 个工具调用等待审批',
