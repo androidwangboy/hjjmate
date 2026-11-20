@@ -22,8 +22,11 @@ import vip.mate.team.model.AgentTeamMemberEntity;
 import vip.mate.trigger.model.TriggerEntity;
 import vip.mate.trigger.repository.TriggerMapper;
 import vip.mate.trigger.service.TriggerService;
+import vip.mate.wiki.model.WikiImageEntity;
 import vip.mate.wiki.model.WikiKnowledgeBaseEntity;
 import vip.mate.wiki.model.WikiRawMaterialEntity;
+import vip.mate.wiki.repository.WikiImageMapper;
+import vip.mate.wiki.service.WikiImageService;
 import vip.mate.wiki.service.WikiKnowledgeBaseService;
 import vip.mate.wiki.service.WikiRawMaterialService;
 import vip.mate.workflow.model.WorkflowEntity;
@@ -32,6 +35,9 @@ import vip.mate.workflow.service.WorkflowService;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Optional;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -78,6 +84,8 @@ public class PortabilityExportService {
     private final SkillFileService skillFileService;
     private final WikiKnowledgeBaseService kbService;
     private final WikiRawMaterialService rawService;
+    private final WikiImageMapper wikiImageMapper;
+    private final WikiImageService wikiImageService;
     private final vip.mate.wiki.service.WikiPageService wikiPageService;
     private final vip.mate.workspace.document.WorkspaceFileService workspaceFileService;
     private final vip.mate.workflow.repository.WorkflowRevisionMapper workflowRevisionMapper;
@@ -115,6 +123,9 @@ public class PortabilityExportService {
         List<Map<String, Object>> workflows = new ArrayList<>();
         List<Map<String, Object>> triggers = new ArrayList<>();
         List<Map<String, Object>> memories = new ArrayList<>();
+        // 修改人:祝奔；时间：2026-11-20T07:23:14.892Z；修改原因/内容：导出知识库图片：元数据列表与二进制条目映射；代码来源：AI生成
+        List<Map<String, Object>> wikiImages = new ArrayList<>();
+        Map<String, byte[]> imageBinaries = new LinkedHashMap<>();
         List<String> warnings = new ArrayList<>();
 
         Map<Long, String> agentIdToName = new LinkedHashMap<>();
@@ -286,6 +297,9 @@ public class PortabilityExportService {
                         kb.getConfigContent(), raws, includePages ? pages : null);
                 dto.put("contentHash", fingerprint.hash(dto));
                 kbs.add(dto);
+
+                // 修改人:祝奔；时间：2026-11-20T07:23:14.892Z；修改原因/内容：随知识库导出图片元数据与磁盘二进制，目录用 kbId；代码来源：AI生成
+                collectWikiImages(kb.getId(), kb.getName(), wikiImages, imageBinaries, warnings);
             }
         }
 
@@ -383,6 +397,8 @@ public class PortabilityExportService {
         counts.put("workflows", workflows.size());
         counts.put("triggers", triggers.size());
         counts.put("memorySets", memories.size());
+        // 修改人:祝奔；时间：2026-11-20T07:23:14.892Z；修改原因/内容：清单计入 wiki 图片数量；代码来源：AI生成
+        counts.put("wikiImages", wikiImages.size());
         manifest.setCounts(counts);
         manifest.setWarnings(warnings);
 
@@ -394,6 +410,8 @@ public class PortabilityExportService {
         payloads.put("workflows.json", writeJson(workflows));
         payloads.put("triggers.json", writeJson(triggers));
         payloads.put("agent-memory.json", writeJson(memories));
+        // 修改人:祝奔；时间：2026-11-20T07:23:14.892Z；修改原因/内容：图片元数据独立 payload，不进 KB 指纹；代码来源：AI生成
+        payloads.put("wiki-images.json", writeJson(wikiImages));
 
         Map<String, String> checksums = new LinkedHashMap<>();
         payloads.forEach((path, body) -> checksums.put(path, "sha256:" + hash(body)));
@@ -403,6 +421,8 @@ public class PortabilityExportService {
         try (ZipOutputStream zos = new ZipOutputStream(bos)) {
             put(zos, "manifest.json", writeJson(manifest));
             payloads.forEach((path, body) -> put(zos, path, body));
+            // 修改人:祝奔；时间：2026-11-20T07:23:14.892Z；修改原因/内容：图片以原始二进制写入 zip（非文本/base64）；代码来源：AI生成
+            imageBinaries.forEach((path, bytes) -> putBytes(zos, path, bytes));
         }
         log.info("[portability] exported bundle: {}", counts);
         return bos.toByteArray();
@@ -450,6 +470,52 @@ public class PortabilityExportService {
         try {
             zos.putNextEntry(new ZipEntry(path));
             zos.write(content.getBytes(StandardCharsets.UTF_8));
+            zos.closeEntry();
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to write bundle entry " + path, e);
+        }
+    }
+
+    // 修改人:祝奔；时间：2026-11-20T07:23:14.892Z；修改原因/内容：新增按 kbId 收集知识库图片元数据与二进制；代码来源：AI生成
+    private void collectWikiImages(Long kbId, String kbName, List<Map<String, Object>> wikiImages,
+                                   Map<String, byte[]> imageBinaries, List<String> warnings) {
+        List<WikiImageEntity> images = wikiImageMapper.selectList(
+                new LambdaQueryWrapper<WikiImageEntity>()
+                        .eq(WikiImageEntity::getKbId, kbId)
+                        .eq(WikiImageEntity::getDeleted, 0)
+                        .orderByAsc(WikiImageEntity::getId));
+        for (WikiImageEntity image : images) {
+            Map<String, Object> meta = new LinkedHashMap<>();
+            meta.put("id", String.valueOf(image.getId()));
+            meta.put("kbId", String.valueOf(kbId));
+            meta.put("kbName", kbName);
+            meta.put("rawId", image.getRawId() == null ? null : String.valueOf(image.getRawId()));
+            meta.put("ext", image.getExt());
+            meta.put("mimeType", image.getMimeType());
+            meta.put("fileSize", image.getFileSize());
+            meta.put("sourceRef", image.getSourceRef());
+            meta.put("contentHash", image.getContentHash());
+            wikiImages.add(meta);
+
+            Optional<Path> file = wikiImageService.pathOf(image);
+            if (file.isEmpty()) {
+                warnings.add("知识库「" + kbName + "」图片 " + image.getId() + " 磁盘文件缺失，已跳过");
+                continue;
+            }
+            try {
+                byte[] bytes = Files.readAllBytes(file.get());
+                imageBinaries.put("wiki-images/" + kbId + "/" + image.getId() + "." + image.getExt(), bytes);
+            } catch (IOException e) {
+                warnings.add("知识库「" + kbName + "」图片 " + image.getId() + " 读取失败：" + e.getMessage());
+            }
+        }
+    }
+
+    // 修改人:祝奔；时间：2026-11-20T07:23:14.892Z；修改原因/内容：新增二进制 zip 条目写入方法；代码来源：AI生成
+    private static void putBytes(ZipOutputStream zos, String path, byte[] bytes) {
+        try {
+            zos.putNextEntry(new ZipEntry(path));
+            zos.write(bytes);
             zos.closeEntry();
         } catch (IOException e) {
             throw new IllegalStateException("Failed to write bundle entry " + path, e);

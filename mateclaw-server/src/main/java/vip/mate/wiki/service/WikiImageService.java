@@ -165,6 +165,27 @@ public class WikiImageService {
         }
     }
 
+    // 修改人:祝奔；时间：2026-11-20T07:23:14.892Z；修改原因/内容：新增按指定 kbId/图片ID 落盘方法，供导入还原图片复用；代码来源：AI生成
+    /** 导入场景：把图片字节写到 image-dir/{kbId}/{imageId}.{ext}，返回落盘路径。 */
+    public Path restoreFile(Long kbId, Long imageId, String ext, byte[] bytes) {
+        String normalizedExt = normalizeExt(ext, null);
+        if (normalizedExt == null) {
+            throw new MateClawException("err.wiki.image_path", "Illegal image ext: " + ext);
+        }
+        Path dir = storageDir.resolve(String.valueOf(kbId)).normalize();
+        Path target = dir.resolve(imageId + "." + normalizedExt).normalize();
+        if (!target.startsWith(storageDir)) {
+            throw new MateClawException("err.wiki.image_path", "Illegal image storage path");
+        }
+        try {
+            Files.createDirectories(dir);
+            Files.write(target, bytes);
+        } catch (IOException e) {
+            throw new MateClawException("err.wiki.image_write", "Failed to restore image: " + e.getMessage());
+        }
+        return target;
+    }
+
     /** 取图片元数据（不存在返回 empty）。 */
     public Optional<WikiImageEntity> get(Long id) {
         if (id == null) {

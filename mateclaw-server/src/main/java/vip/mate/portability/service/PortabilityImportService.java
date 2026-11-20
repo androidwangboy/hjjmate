@@ -28,7 +28,10 @@ import vip.mate.team.service.TeamService;
 import vip.mate.trigger.model.TriggerEntity;
 import vip.mate.trigger.repository.TriggerMapper;
 import vip.mate.trigger.service.TriggerService;
+import vip.mate.wiki.model.WikiImageEntity;
 import vip.mate.wiki.model.WikiKnowledgeBaseEntity;
+import vip.mate.wiki.repository.WikiImageMapper;
+import vip.mate.wiki.service.WikiImageService;
 import vip.mate.wiki.service.WikiKnowledgeBaseService;
 import vip.mate.wiki.service.WikiRawMaterialService;
 import vip.mate.workflow.compiler.PublishContext;
@@ -48,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.HashMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -79,6 +83,10 @@ public class PortabilityImportService {
     private static final long MAX_UNCOMPRESSED_BYTES = 64L * 1024 * 1024;
     private static final int MAX_ENTRIES = 500;
     private static final int MAX_ENTRY_BYTES = 16 * 1024 * 1024;
+    // 修改人:祝奔；时间：2026-11-20T07:23:14.892Z；修改原因/内容：图片二进制条目的容量上限与前缀；代码来源：AI生成
+    private static final String WIKI_IMAGE_PREFIX = "wiki-images/";
+    private static final long MAX_IMAGE_BYTES = 50L * 1024 * 1024;
+    private static final long MAX_IMAGE_TOTAL_BYTES = 512L * 1024 * 1024;
 
     private final ObjectMapper objectMapper;
     private final PortabilityFingerprint fingerprint;
@@ -91,6 +99,8 @@ public class PortabilityImportService {
     private final WikiKnowledgeBaseService kbService;
     private final vip.mate.wiki.repository.WikiKnowledgeBaseMapper kbMapper;
     private final WikiRawMaterialService rawService;
+    private final WikiImageMapper wikiImageMapper;
+    private final WikiImageService wikiImageService;
     private final vip.mate.wiki.service.WikiPageService wikiPageService;
     private final vip.mate.workflow.repository.WorkflowRevisionMapper workflowRevisionMapper;
     private final vip.mate.workspace.document.WorkspaceFileService workspaceFileService;
@@ -105,17 +115,25 @@ public class PortabilityImportService {
 
     // ===================== bundle reading =====================
 
+    // 修改人:祝奔；时间：2026-11-20T07:23:14.892Z；修改原因/内容：Bundle 增加图片二进制条目容器；代码来源：AI生成
     /** Parsed bundle held in memory between the preview and the apply call. */
-    public record Bundle(BundleManifest manifest, Map<String, String> files) {
+    public record Bundle(BundleManifest manifest, Map<String, String> files, Map<String, byte[]> binaries) {
 
         public String json(String path) {
             return files.get(path);
+        }
+
+        public byte[] binary(String path) {
+            return binaries.get(path);
         }
     }
 
     public Bundle parse(byte[] payload) {
         Map<String, String> files = new LinkedHashMap<>();
+        // 修改人:祝奔；时间：2026-11-20T07:23:14.892Z；修改原因/内容：图片条目按二进制分流并使用独立容量限制；代码来源：AI生成
+        Map<String, byte[]> binaries = new HashMap<>();
         long total = 0;
+        long imageTotal = 0;
         int entries = 0;
         try (ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(payload))) {
             ZipEntry entry;
@@ -127,7 +145,19 @@ public class PortabilityImportService {
                     throw new MateClawException("err.portability.too_many_entries", "导入包条目过多");
                 }
                 String name = sanitize(entry.getName());
-                byte[] buf = zis.readNBytes(MAX_ENTRY_BYTES + 1);
+                boolean isImage = name.startsWith(WIKI_IMAGE_PREFIX);
+                byte[] buf = zis.readAllBytes();
+                if (isImage) {
+                    if (buf.length > MAX_IMAGE_BYTES) {
+                        throw new MateClawException("err.portability.entry_too_large", "导入包内图片过大: " + name);
+                    }
+                    imageTotal += buf.length;
+                    if (imageTotal > MAX_IMAGE_TOTAL_BYTES) {
+                        throw new MateClawException("err.portability.bundle_too_large", "导入包内图片总体积过大");
+                    }
+                    binaries.put(name, buf);
+                    continue;
+                }
                 if (buf.length > MAX_ENTRY_BYTES) {
                     throw new MateClawException("err.portability.entry_too_large", "导入包内单个文件过大: " + name);
                 }
@@ -168,7 +198,7 @@ public class PortabilityImportService {
                 throw new MateClawException("err.portability.checksum_mismatch", "文件校验失败: " + path);
             }
         });
-        return new Bundle(manifest, files);
+        return new Bundle(manifest, files, binaries);
     }
 
     /** Rejects zip-slip style paths and keeps the tree flat-shallow. */
@@ -313,6 +343,14 @@ public class PortabilityImportService {
         int renamed = 0;
         List<String> warnings = new ArrayList<>(bundle.manifest().getWarnings());
 
+        // 修改人:祝奔；时间：2026-11-20T07:23:14.892Z；修改原因/内容：按 KB 名称建立图片元数据索引，供 KB 创建后还原；代码来源：AI生成
+        Map<String, List<JsonNode>> imagesByKb = new HashMap<>();
+        for (JsonNode img : array(bundle, "wiki-images.json")) {
+            String imgKbName = text(img, "kbName");
+            if (imgKbName == null) continue;
+            imagesByKb.computeIfAbsent(imgKbName, k -> new ArrayList<>()).add(img);
+        }
+
         Map<String, String> agentHashes = existingAgentHashes(workspaceId);
         Map<String, String> skillHashes = existingSkillHashes(workspaceId);
         boolean bundleHasPages = bundleCarriesPages(bundle);
@@ -406,6 +444,8 @@ public class PortabilityImportService {
                 if (pagesWritten > 0) {
                     log.info("[portability] restored {} wiki pages into KB {}", pagesWritten, target);
                 }
+                // 修改人:祝奔；时间：2026-11-20T07:23:14.892Z；修改原因/内容：还原知识库图片记录与磁盘文件；代码来源：AI生成
+                restoreWikiImages(name, kb.getId(), workspaceId, imagesByKb, bundle, warnings);
                 createdNames.add(target);
                 created++;
             }
@@ -965,6 +1005,61 @@ public class PortabilityImportService {
             }
         }
         return false;
+    }
+
+    // 修改人:祝奔；时间：2026-11-20T07:23:14.892Z；修改原因/内容：还原图片元数据记录与磁盘二进制，保留原 ID 指向正文引用；代码来源：AI生成
+    private void restoreWikiImages(String srcKbName, Long targetKbId, Long workspaceId,
+                                   Map<String, List<JsonNode>> imagesByKb, Bundle bundle,
+                                   List<String> warnings) {
+        List<JsonNode> images = imagesByKb.get(srcKbName);
+        if (images == null || images.isEmpty()) {
+            return;
+        }
+        for (JsonNode img : images) {
+            String idStr = text(img, "id");
+            String ext = text(img, "ext");
+            if (idStr == null || ext == null) {
+                continue;
+            }
+            Long imageId;
+            try {
+                imageId = Long.valueOf(idStr);
+            } catch (NumberFormatException e) {
+                warnings.add("图片 " + idStr + " ID 非法，已跳过");
+                continue;
+            }
+            String binPath = "wiki-images/" + text(img, "kbId") + "/" + imageId + "." + ext;
+            byte[] bytes = bundle.binary(binPath);
+            if (bytes == null) {
+                warnings.add("图片 " + imageId + " 二进制缺失，已跳过");
+                continue;
+            }
+            try {
+                wikiImageService.restoreFile(targetKbId, imageId, ext, bytes);
+                WikiImageEntity entity = new WikiImageEntity();
+                entity.setId(imageId);
+                entity.setKbId(targetKbId);
+                String rawId = text(img, "rawId");
+                if (rawId != null) {
+                    try {
+                        entity.setRawId(Long.valueOf(rawId));
+                    } catch (NumberFormatException ignore) {
+                        // raw 引用无法解析时留空，不影响图片显示
+                    }
+                }
+                entity.setWorkspaceId(workspaceId);
+                entity.setExt(ext);
+                entity.setMimeType(text(img, "mimeType"));
+                entity.setFileSize(img.hasNonNull("fileSize") ? img.get("fileSize").asLong() : (long) bytes.length);
+                entity.setSourceRef(text(img, "sourceRef"));
+                entity.setContentHash(text(img, "contentHash"));
+                entity.setDeleted(0);
+                wikiImageMapper.insert(entity);
+            } catch (RuntimeException e) {
+                warnings.add("图片 " + imageId + " 还原失败：" + e.getMessage());
+                log.warn("[portability] restore wiki image {} failed: {}", imageId, e.getMessage());
+            }
+        }
     }
 
     private Map<String, String> existingWorkflowHashes(Long workspaceId) {
