@@ -10,6 +10,15 @@ import vip.mate.agent.AgentService;
 import vip.mate.agent.binding.service.AgentBindingService;
 import vip.mate.agent.model.AgentEntity;
 import vip.mate.agent.repository.AgentMapper;
+// 修改人:祝奔；时间：2026-11-23T02:15:04.591Z；修改原因/内容：导入数据源相关实体、Mapper 与服务，供专家导出时收集绑定数据源子树；代码来源：AI生成
+import vip.mate.datasource.model.AgentDatasourceRelationEntity;
+import vip.mate.datasource.model.DatasourceEntity;
+import vip.mate.datasource.model.DatasourceTableColEntity;
+import vip.mate.datasource.model.DatasourceTableEntity;
+import vip.mate.datasource.repository.AgentDatasourceRelationMapper;
+import vip.mate.datasource.repository.DatasourceMapper;
+import vip.mate.datasource.repository.DatasourceTableColMapper;
+import vip.mate.datasource.repository.DatasourceTableMapper;
 import vip.mate.portability.model.BundleManifest;
 import vip.mate.skill.model.SkillEntity;
 import vip.mate.skill.model.SkillFileEntity;
@@ -40,7 +49,9 @@ import java.nio.file.Path;
 import java.util.Optional;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+// 修改人:祝奔；时间：2026-11-23T02:15:04.591Z；修改原因/内容：新增 Comparator 导入用于数据源列表稳定排序；代码来源：AI生成
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,6 +105,11 @@ public class PortabilityExportService {
     private final AgentTeamMapper teamMapper;
     private final AgentTeamMemberMapper memberMapper;
     private final TriggerMapper triggerMapper;
+    // 修改人:祝奔；时间：2026-11-23T02:15:04.591Z；修改原因/内容：注入数据源相关依赖以导出专家绑定的数据源配置；代码来源：AI生成
+    private final AgentDatasourceRelationMapper agentDatasourceRelationMapper;
+    private final DatasourceMapper datasourceMapper;
+    private final DatasourceTableMapper datasourceTableMapper;
+    private final DatasourceTableColMapper datasourceTableColMapper;
     private final ObjectMapper objectMapper;
     private final PortabilityFingerprint fingerprint;
 
@@ -123,6 +139,8 @@ public class PortabilityExportService {
         List<Map<String, Object>> workflows = new ArrayList<>();
         List<Map<String, Object>> triggers = new ArrayList<>();
         List<Map<String, Object>> memories = new ArrayList<>();
+        // 修改人:祝奔；时间：2026-11-23T02:15:04.591Z；修改原因/内容：新增按专家分组的数据源导出列表；代码来源：AI生成
+        List<Map<String, Object>> agentDatasources = new ArrayList<>();
         // 修改人:祝奔；时间：2026-11-20T07:23:14.892Z；修改原因/内容：导出知识库图片：元数据列表与二进制条目映射；代码来源：AI生成
         List<Map<String, Object>> wikiImages = new ArrayList<>();
         Map<String, byte[]> imageBinaries = new LinkedHashMap<>();
@@ -163,11 +181,22 @@ public class PortabilityExportService {
             // global default"; treat that as "no explicit tool list exported".
             Set<String> boundTools = bindingService.getBoundToolNames(a.getId());
             List<String> toolRefs = boundTools == null ? new ArrayList<>() : new ArrayList<>(boundTools);
+            // 修改人:祝奔；时间：2026-11-23T02:15:04.591Z；修改原因/内容：随专家收集绑定的数据源、表、字段配置，并将数据源名称纳入专家指纹；代码来源：AI生成
+            List<Map<String, Object>> datasourceDtos = datasourcesOfAgent(a.getId(), warnings);
+            List<String> datasourceRefs = new ArrayList<>();
+            for (Map<String, Object> ds : datasourceDtos) {
+                datasourceRefs.add(String.valueOf(ds.get("name")));
+            }
             Map<String, Object> dto = fingerprint.agent(a.getName(), a.getDescription(), a.getAgentType(),
                     a.getRuntimeType(), a.getSystemPrompt(), a.getIcon(), a.getTags(), a.getMaxIterations(),
-                    a.getEnabled(), a.getDefaultThinkingLevel(), a.getModelName(), skillRefs, kbRefs, toolRefs);
+                    a.getEnabled(), a.getDefaultThinkingLevel(), a.getModelName(), skillRefs, kbRefs, toolRefs,
+                    datasourceRefs);
             dto.put("contentHash", fingerprint.hash(dto));
             agents.add(dto);
+            Map<String, Object> dsEntry = new LinkedHashMap<>();
+            dsEntry.put("agent", a.getName());
+            dsEntry.put("datasources", datasourceDtos);
+            agentDatasources.add(dsEntry);
         }
 
         // ---- Teams (only those whose lead survived the filter) -----------
@@ -397,6 +426,8 @@ public class PortabilityExportService {
         counts.put("workflows", workflows.size());
         counts.put("triggers", triggers.size());
         counts.put("memorySets", memories.size());
+        // 修改人:祝奔；时间：2026-11-23T02:15:04.591Z；修改原因/内容：清单计入专家数据源配置数量；代码来源：AI生成
+        counts.put("agentDatasources", agentDatasources.size());
         // 修改人:祝奔；时间：2026-11-20T07:23:14.892Z；修改原因/内容：清单计入 wiki 图片数量；代码来源：AI生成
         counts.put("wikiImages", wikiImages.size());
         manifest.setCounts(counts);
@@ -410,6 +441,8 @@ public class PortabilityExportService {
         payloads.put("workflows.json", writeJson(workflows));
         payloads.put("triggers.json", writeJson(triggers));
         payloads.put("agent-memory.json", writeJson(memories));
+        // 修改人:祝奔；时间：2026-11-23T02:15:04.591Z；修改原因/内容：新增专家数据源子树 payload；代码来源：AI生成
+        payloads.put("agent-datasources.json", writeJson(agentDatasources));
         // 修改人:祝奔；时间：2026-11-20T07:23:14.892Z；修改原因/内容：图片元数据独立 payload，不进 KB 指纹；代码来源：AI生成
         payloads.put("wiki-images.json", writeJson(wikiImages));
 
@@ -464,6 +497,55 @@ public class PortabilityExportService {
             log.warn("[portability] could not tag write_memory employeeName: {}", e.getMessage());
             return graphJson;
         }
+    }
+
+    // 修改人:祝奔；时间：2026-11-23T02:15:04.591Z；修改原因/内容：新增专家数据源子树收集：仅导出已落库的表/字段配置，密码按源环境密文原样导出；代码来源：AI生成
+    private List<Map<String, Object>> datasourcesOfAgent(Long agentId, List<String> warnings) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (AgentDatasourceRelationEntity rel : agentDatasourceRelationMapper.selectList(
+                new LambdaQueryWrapper<AgentDatasourceRelationEntity>()
+                        .eq(AgentDatasourceRelationEntity::getAgentId, agentId)
+                        .eq(AgentDatasourceRelationEntity::getDeleted, 0)
+                        .orderByAsc(AgentDatasourceRelationEntity::getId))) {
+            DatasourceEntity ds = datasourceMapper.selectById(rel.getDatasourceId());
+            if (ds == null || (ds.getDeleted() != null && ds.getDeleted() != 0)) {
+                continue;
+            }
+            List<Map<String, Object>> tables = new ArrayList<>();
+            for (DatasourceTableEntity table : datasourceTableMapper.selectList(
+                    new LambdaQueryWrapper<DatasourceTableEntity>()
+                            .eq(DatasourceTableEntity::getDatasourceId, ds.getId())
+                            .eq(DatasourceTableEntity::getDeleted, 0)
+                            .orderByAsc(DatasourceTableEntity::getTableName))) {
+                List<Map<String, Object>> columns = new ArrayList<>();
+                for (DatasourceTableColEntity col : datasourceTableColMapper.selectList(
+                        new LambdaQueryWrapper<DatasourceTableColEntity>()
+                                .eq(DatasourceTableColEntity::getTableId, table.getId())
+                                .eq(DatasourceTableColEntity::getDeleted, 0)
+                                .orderByAsc(DatasourceTableColEntity::getColumnName))) {
+                    columns.add(fingerprint.datasourceColumn(col.getColumnName(), col.getColumnType(),
+                            col.getColumnComment(), col.getCustomComment(), col.getEnabled()));
+                }
+                tables.add(fingerprint.datasourceTable(table.getTableName(), table.getTableComment(),
+                        table.getTableSchema(), table.getTableType(), table.getEnabled(), columns));
+            }
+            Map<String, Object> dto = fingerprint.datasource(ds.getName(), ds.getDescription(), ds.getDbType(),
+                    ds.getHost(), ds.getPort(), ds.getDatabaseName(), ds.getUsername(), ds.getExtraParams(),
+                    ds.getSchemaName(), ds.getEnabled(), tables);
+            // 密码密文单独写入 payload，不参与指纹，避免目标环境改密后被误判为内容变化。
+            Map<String, Object> exported = new LinkedHashMap<>(dto);
+            exported.put("password", ds.getPassword());
+            result.add(exported);
+            if (ds.getPassword() != null && !ds.getPassword().isBlank()) {
+                String warn = "数据源「" + ds.getName() + "」导出的是源环境密码密文，若目标环境加密密钥不同需重新配置";
+                if (!warnings.contains(warn)) {
+                    warnings.add(warn);
+                }
+            }
+        }
+        result.sort(Comparator.comparing(d -> String.valueOf(d.getOrDefault("name", "")),
+                String.CASE_INSENSITIVE_ORDER));
+        return result;
     }
 
     private static void put(ZipOutputStream zos, String path, String content) {

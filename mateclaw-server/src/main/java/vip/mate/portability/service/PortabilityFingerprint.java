@@ -7,7 +7,9 @@ import org.springframework.stereotype.Component;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+// 修改人:祝奔；时间：2026-11-23T02:15:04.591Z；修改原因/内容：新增 Comparator 导入用于数据源子树稳定排序；代码来源：AI生成
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,10 +32,12 @@ public class PortabilityFingerprint {
 
     private final ObjectMapper objectMapper;
 
+    // 修改人:祝奔；时间：2026-11-23T02:15:04.591Z；修改原因/内容：扩展专家指纹纳入绑定数据源名称，并新增数据源子树指纹构造器；代码来源：AI生成
     public Map<String, Object> agent(String name, String description, String agentType, String runtimeType,
                                      String systemPrompt, String icon, String tags, Integer maxIterations,
                                      Boolean enabled, String defaultThinkingLevel, String modelName,
-                                     List<String> skills, List<String> knowledgeBases, List<String> tools) {
+                                     List<String> skills, List<String> knowledgeBases, List<String> tools,
+                                     List<String> datasources) {
         Map<String, Object> dto = new LinkedHashMap<>();
         dto.put("name", name);
         dto.put("description", description);
@@ -51,6 +55,58 @@ public class PortabilityFingerprint {
         dto.put("skills", sorted(skills));
         dto.put("knowledgeBases", sorted(knowledgeBases));
         dto.put("tools", sorted(tools));
+        // 仅非空时写入：旧包没有该字段，空值不写入可保持与存量专家的哈希一致。
+        if (datasources != null && !datasources.isEmpty()) {
+            dto.put("datasources", sorted(datasources));
+        }
+        return dto;
+    }
+
+    /**
+     * 可移植的数据源指纹：不含密码。密码密文由导出侧单独写入 payload，
+     * 不参与对账，避免目标环境修改密码后被误判为内容变化。
+     */
+    // 修改人:祝奔；时间：2026-11-23T02:15:04.591Z；修改原因/内容：新增数据源（含表/字段）指纹构造器；代码来源：AI生成
+    public Map<String, Object> datasource(String name, String description, String dbType, String host,
+                                          Integer port, String databaseName, String username, String extraParams,
+                                          String schemaName, Boolean enabled, List<Map<String, Object>> tables) {
+        Map<String, Object> dto = new LinkedHashMap<>();
+        dto.put("name", name);
+        dto.put("description", description);
+        dto.put("dbType", dbType);
+        dto.put("host", host);
+        dto.put("port", port);
+        dto.put("databaseName", databaseName);
+        dto.put("username", username);
+        dto.put("extraParams", extraParams);
+        dto.put("schemaName", schemaName);
+        dto.put("enabled", enabled);
+        dto.put("tables", sortedByName(tables, "tableName"));
+        return dto;
+    }
+
+    // 修改人:祝奔；时间：2026-11-23T02:15:04.591Z；修改原因/内容：新增数据源表配置指纹构造器；代码来源：AI生成
+    public Map<String, Object> datasourceTable(String tableName, String tableComment, String tableSchema,
+                                               String tableType, Boolean enabled, List<Map<String, Object>> columns) {
+        Map<String, Object> dto = new LinkedHashMap<>();
+        dto.put("tableName", tableName);
+        dto.put("tableComment", tableComment);
+        dto.put("tableSchema", tableSchema);
+        dto.put("tableType", tableType);
+        dto.put("enabled", enabled);
+        dto.put("columns", sortedByName(columns, "columnName"));
+        return dto;
+    }
+
+    // 修改人:祝奔；时间：2026-11-23T02:15:04.591Z；修改原因/内容：新增数据源字段配置指纹构造器；代码来源：AI生成
+    public Map<String, Object> datasourceColumn(String columnName, String columnType, String columnComment,
+                                                String customComment, Boolean enabled) {
+        Map<String, Object> dto = new LinkedHashMap<>();
+        dto.put("columnName", columnName);
+        dto.put("columnType", columnType);
+        dto.put("columnComment", columnComment);
+        dto.put("customComment", customComment);
+        dto.put("enabled", enabled);
         return dto;
     }
 
@@ -172,6 +228,13 @@ public class PortabilityFingerprint {
     private static List<String> sorted(List<String> values) {
         List<String> copy = values == null ? new ArrayList<>() : new ArrayList<>(values);
         copy.sort(String::compareTo);
+        return copy;
+    }
+
+    // 修改人:祝奔；时间：2026-11-23T02:15:04.591Z；修改原因/内容：按名称稳定排序数据源表/字段，保证跨 JVM 指纹一致；代码来源：AI生成
+    private static List<Map<String, Object>> sortedByName(List<Map<String, Object>> values, String key) {
+        List<Map<String, Object>> copy = values == null ? new ArrayList<>() : new ArrayList<>(values);
+        copy.sort(Comparator.comparing(m -> String.valueOf(m.getOrDefault(key, "")), String.CASE_INSENSITIVE_ORDER));
         return copy;
     }
 

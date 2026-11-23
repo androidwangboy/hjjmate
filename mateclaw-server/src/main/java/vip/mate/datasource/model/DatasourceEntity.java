@@ -56,6 +56,9 @@ public class DatasourceEntity {
     /** 最近测试结果 */
     private Boolean lastTestOk;
 
+    // 修改人:祝奔；时间：2026-11-23T02:15:04.591Z；修改原因/内容：新增导入批次字段，支持可移植包撤销导入时精准删除本批次创建的数据源；代码来源：AI生成
+    private String importBatch;
+
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 
