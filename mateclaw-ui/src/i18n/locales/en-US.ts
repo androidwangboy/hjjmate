@@ -4589,6 +4589,19 @@ export default {
       title: 'Your Week',
       subtitle: 'How often you and your AI have been working together.',
     },
+    // 修改人:祝奔；时间：2026-11-23T08:14:04.710Z；修改原因/内容：新增用户维度趋势图的英文文案；代码来源：AI生成
+    // 修改人:祝奔；时间：2026-11-23T08:18:54.964Z；修改原因/内容：趋势图筛选维度由模型改为专家，更新对应英文文案；代码来源：AI生成
+    userTrend: {
+      title: 'User Usage Trend',
+      // 修改人:祝奔；时间：2026-11-23T08:32:58.413Z；修改原因/内容：趋势指标由会话数改为消息数，更新副标题；代码来源：AI生成
+      subtitle: 'Daily messages and token usage by date, user and expert.',
+      startDate: 'Start date',
+      endDate: 'End date',
+      allAgents: 'All experts',
+      // 修改人:祝奔；时间：2026-11-23T08:23:34.674Z；修改原因/内容：图表改为接口回显，更新提示文案；代码来源：AI生成
+      // 修改人:祝奔；时间：2026-11-23T08:32:58.413Z；修改原因/内容：趋势指标由会话数改为消息数，更新提示文案；代码来源：AI生成
+      dataHint: 'Live database stats: messages and tokens by message date.',
+    },
     periodComparison: 'Period Comparison',
     periods: {
       today: 'Today',

@@ -1487,6 +1487,9 @@ export const dashboardApi = {
   overview: () => http.get('/dashboard/overview'),
   trend: (days = 30) => http.get('/dashboard/trend', { params: { days } }),
   agentRanking: (days = 7, topN = 10) => http.get('/dashboard/agent-ranking', { params: { days, topN } }),
+  // 修改人:祝奔；时间：2026-11-23T08:23:34.674Z；修改原因/内容：新增用户维度趋势接口调用，按日期范围与专家过滤；代码来源：AI生成
+  userTrend: (params?: { startDate?: string; endDate?: string; agentId?: string | number }) =>
+    http.get('/dashboard/user-trend', { params }),
   cronJobRuns: (cronJobId: string | number, limit = 20) => http.get(`/dashboard/cron-runs/${cronJobId}`, { params: { limit } }),
   recentRuns: (limit = 20) => http.get('/dashboard/cron-runs', { params: { limit } }),
 }

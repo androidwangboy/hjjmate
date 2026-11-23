@@ -500,9 +500,9 @@ mate:
   # Wiki 知识库配置
   wiki:
     enabled: true                       # 是否启用 Wiki 知识库功能
-    max-chunk-size: 30000               # LLM 单次处理最大字符数（超过则分块）
+    max-chunk-size: 15000               # LLM 单次处理最大字符数（超过则分块）
     max-context-chars: 10000            # 注入 Agent prompt 的 Wiki 摘要最大字符数
-    max-pages-per-raw: 15               # 单个原始材料最多生成的 Wiki 页面数
+    max-pages-per-raw: 100               # 单个原始材料最多生成的 Wiki 页面数
     max-parallel-phase-b-pages: 3       # RFC-012 follow-up #3：单 chunk 内 phase B 阶段并行处理的 page 数
     auto-process-on-upload: true        # 上传原始材料后是否自动触发 AI 消化
     upload-dir: ./data/wiki-uploads     # 上传文件存储目录
