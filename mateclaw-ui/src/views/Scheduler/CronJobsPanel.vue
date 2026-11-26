@@ -111,239 +111,241 @@
       </table>
     </div>
 
-    <div v-if="detailJob" class="modal-overlay">
-      <div class="modal">
-        <div class="modal-header">
-          <h2>{{ detailJob.name }}</h2>
-          <button class="modal-close" @click="closeDetailModal">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
-        </div>
-        <div class="modal-body detail-grid">
-          <div class="detail-item" v-if="detailJob.taskType !== 'wiki_process'">
-            <div class="detail-label">{{ t('cronJobs.columns.agent') }}</div>
-            <div class="detail-value">{{ detailJob.agentName || 'Unknown' }}</div>
+    <Teleport to="body">
+      <div v-if="detailJob" class="modal-overlay">
+        <div class="modal">
+          <div class="modal-header">
+            <h2>{{ detailJob.name }}</h2>
+            <button class="modal-close" @click="closeDetailModal">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
           </div>
-          <div class="detail-item">
-            <div class="detail-label">{{ t('cronJobs.columns.taskType') }}</div>
-            <div class="detail-value">{{ t('cronJobs.taskTypes.' + detailJob.taskType) }}</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">{{ t('cronJobs.columns.cron') }}</div>
-            <div class="detail-value mono">{{ detailJob.cronExpression }}</div>
-            <div class="detail-subvalue">{{ cronToHumanReadable(detailJob.cronExpression, detailJob.timezone) }}</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">{{ t('cronJobs.fields.timezone') }}</div>
-            <div class="detail-value">{{ detailJob.timezone || '-' }}</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">{{ t('cronJobs.columns.nextRun') }}</div>
-            <div class="detail-value">{{ detailJob.nextRunTime ? formatTime(detailJob.nextRunTime) : '-' }}</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">{{ t('cronJobs.columns.lastRun') }}</div>
-            <div class="detail-value">{{ detailJob.lastRunTime ? formatTime(detailJob.lastRunTime) : '-' }}</div>
-          </div>
-          <!-- RFC-063r post-deploy: channel binding visibility in detail page -->
-          <div class="detail-item" v-if="detailJob.channelId">
-            <div class="detail-label">{{ t('cronJobs.columns.channel') }}</div>
-            <div class="detail-value">{{ detailJob.channelName || ('#' + detailJob.channelId) }}</div>
-          </div>
-          <div class="detail-item" v-if="detailJob.deliveryConfig?.targetId">
-            <div class="detail-label">{{ t('cronJobs.columns.targetId') }}</div>
-            <div class="detail-value mono">{{ detailJob.deliveryConfig.targetId }}</div>
-          </div>
-          <div class="detail-item" v-if="detailJob.lastDeliveryStatus && detailJob.lastDeliveryStatus !== 'NONE'">
-            <div class="detail-label">{{ t('cronJobs.columns.lastDelivery') }}</div>
-            <div class="detail-value">
-              <span class="delivery-badge" :class="'delivery-' + detailJob.lastDeliveryStatus.toLowerCase()">
-                {{ t('cronJobs.lastDelivery.' + detailJob.lastDeliveryStatus.toLowerCase()) }}
-              </span>
-              <div v-if="detailJob.lastDeliveryError" class="detail-subvalue" style="color: rgb(239,68,68);">
-                {{ detailJob.lastDeliveryError }}
-              </div>
-            </div>
-          </div>
-          <div class="detail-item detail-item-full" v-if="detailJob.taskType === 'text'">
-            <div class="detail-label">{{ t('cronJobs.fields.triggerMessage') }}</div>
-            <div class="detail-value detail-block">{{ detailJob.triggerMessage || '-' }}</div>
-          </div>
-          <div class="detail-item detail-item-full" v-else-if="detailJob.taskType === 'reminder'">
-            <div class="detail-label">{{ t('cronJobs.fields.reminderText') }}</div>
-            <div class="detail-value detail-block">{{ detailJob.triggerMessage || '-' }}</div>
-          </div>
-          <template v-else-if="detailJob.taskType === 'wiki_process'">
-            <div class="detail-item">
-              <div class="detail-label">{{ t('cronJobs.fields.wikiKb') }}</div>
-              <div class="detail-value">{{ wikiProcessSummary(detailJob).kbLabel }}</div>
+          <div class="modal-body detail-grid">
+            <div class="detail-item" v-if="detailJob.taskType !== 'wiki_process'">
+              <div class="detail-label">{{ t('cronJobs.columns.agent') }}</div>
+              <div class="detail-value">{{ detailJob.agentName || 'Unknown' }}</div>
             </div>
             <div class="detail-item">
-              <div class="detail-label">{{ t('cronJobs.fields.wikiForce') }}</div>
+              <div class="detail-label">{{ t('cronJobs.columns.taskType') }}</div>
+              <div class="detail-value">{{ t('cronJobs.taskTypes.' + detailJob.taskType) }}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">{{ t('cronJobs.columns.cron') }}</div>
+              <div class="detail-value mono">{{ detailJob.cronExpression }}</div>
+              <div class="detail-subvalue">{{ cronToHumanReadable(detailJob.cronExpression, detailJob.timezone) }}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">{{ t('cronJobs.fields.timezone') }}</div>
+              <div class="detail-value">{{ detailJob.timezone || '-' }}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">{{ t('cronJobs.columns.nextRun') }}</div>
+              <div class="detail-value">{{ detailJob.nextRunTime ? formatTime(detailJob.nextRunTime) : '-' }}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">{{ t('cronJobs.columns.lastRun') }}</div>
+              <div class="detail-value">{{ detailJob.lastRunTime ? formatTime(detailJob.lastRunTime) : '-' }}</div>
+            </div>
+            <!-- RFC-063r post-deploy: channel binding visibility in detail page -->
+            <div class="detail-item" v-if="detailJob.channelId">
+              <div class="detail-label">{{ t('cronJobs.columns.channel') }}</div>
+              <div class="detail-value">{{ detailJob.channelName || ('#' + detailJob.channelId) }}</div>
+            </div>
+            <div class="detail-item" v-if="detailJob.deliveryConfig?.targetId">
+              <div class="detail-label">{{ t('cronJobs.columns.targetId') }}</div>
+              <div class="detail-value mono">{{ detailJob.deliveryConfig.targetId }}</div>
+            </div>
+            <div class="detail-item" v-if="detailJob.lastDeliveryStatus && detailJob.lastDeliveryStatus !== 'NONE'">
+              <div class="detail-label">{{ t('cronJobs.columns.lastDelivery') }}</div>
               <div class="detail-value">
-                {{ wikiProcessSummary(detailJob).force ? t('common.yes') : t('common.no') }}
+                <span class="delivery-badge" :class="'delivery-' + detailJob.lastDeliveryStatus.toLowerCase()">
+                  {{ t('cronJobs.lastDelivery.' + detailJob.lastDeliveryStatus.toLowerCase()) }}
+                </span>
+                <div v-if="detailJob.lastDeliveryError" class="detail-subvalue" style="color: rgb(239,68,68);">
+                  {{ detailJob.lastDeliveryError }}
+                </div>
               </div>
             </div>
-          </template>
-          <div class="detail-item detail-item-full" v-else>
-            <div class="detail-label">{{ t('cronJobs.fields.requestBody') }}</div>
-            <div class="detail-value detail-block">{{ detailJob.requestBody || '-' }}</div>
+            <div class="detail-item detail-item-full" v-if="detailJob.taskType === 'text'">
+              <div class="detail-label">{{ t('cronJobs.fields.triggerMessage') }}</div>
+              <div class="detail-value detail-block">{{ detailJob.triggerMessage || '-' }}</div>
+            </div>
+            <div class="detail-item detail-item-full" v-else-if="detailJob.taskType === 'reminder'">
+              <div class="detail-label">{{ t('cronJobs.fields.reminderText') }}</div>
+              <div class="detail-value detail-block">{{ detailJob.triggerMessage || '-' }}</div>
+            </div>
+            <template v-else-if="detailJob.taskType === 'wiki_process'">
+              <div class="detail-item">
+                <div class="detail-label">{{ t('cronJobs.fields.wikiKb') }}</div>
+                <div class="detail-value">{{ wikiProcessSummary(detailJob).kbLabel }}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">{{ t('cronJobs.fields.wikiForce') }}</div>
+                <div class="detail-value">
+                  {{ wikiProcessSummary(detailJob).force ? t('common.yes') : t('common.no') }}
+                </div>
+              </div>
+            </template>
+            <div class="detail-item detail-item-full" v-else>
+              <div class="detail-label">{{ t('cronJobs.fields.requestBody') }}</div>
+              <div class="detail-value detail-block">{{ detailJob.requestBody || '-' }}</div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- 新建/编辑弹窗 -->
-    <div v-if="showModal" class="modal-overlay">
-      <div class="modal modal-lg">
-        <div class="modal-header">
-          <h2>{{ editing ? t('cronJobs.editJob') : t('cronJobs.createJob') }}</h2>
-          <button class="modal-close" @click="closeModal">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
-        </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label class="form-label">{{ t('cronJobs.fields.name') }} *</label>
-            <input v-model="form.name" class="form-input" :placeholder="t('cronJobs.fields.namePlaceholder')" />
+      <!-- 新建/编辑弹窗 -->
+      <div v-if="showModal" class="modal-overlay">
+        <div class="modal modal-lg">
+          <div class="modal-header">
+            <h2>{{ editing ? t('cronJobs.editJob') : t('cronJobs.createJob') }}</h2>
+            <button class="modal-close" @click="closeModal">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
           </div>
-
-          <div v-if="form.taskType !== 'wiki_process'" class="form-group">
-            <label class="form-label">{{ t('cronJobs.fields.agent') }} *</label>
-            <select v-model="form.agentId" class="form-input">
-              <option :value="undefined" disabled>{{ t('cronJobs.fields.agentPlaceholder') }}</option>
-              <option v-for="a in agents" :key="a.id" :value="a.id">{{ a.name }}</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">{{ t('cronJobs.fields.taskType') }}</label>
-            <div class="radio-group">
-              <label class="radio-option" :class="{ active: form.taskType === 'text' }">
-                <input type="radio" v-model="form.taskType" value="text" />
-                {{ t('cronJobs.taskTypes.text') }}
-              </label>
-              <label class="radio-option" :class="{ active: form.taskType === 'reminder' }">
-                <input type="radio" v-model="form.taskType" value="reminder" />
-                {{ t('cronJobs.taskTypes.reminder') }}
-              </label>
-              <label class="radio-option" :class="{ active: form.taskType === 'agent' }">
-                <input type="radio" v-model="form.taskType" value="agent" />
-                {{ t('cronJobs.taskTypes.agent') }}
-              </label>
-              <label class="radio-option" :class="{ active: form.taskType === 'wiki_process' }">
-                <input type="radio" v-model="form.taskType" value="wiki_process" />
-                {{ t('cronJobs.taskTypes.wiki_process') }}
-              </label>
-            </div>
-          </div>
-
-          <div v-if="form.taskType === 'text'" class="form-group">
-            <label class="form-label">{{ t('cronJobs.fields.triggerMessage') }} *</label>
-            <textarea v-model="form.triggerMessage" class="form-textarea" rows="3"
-              :placeholder="t('cronJobs.fields.triggerMessagePlaceholder')"></textarea>
-          </div>
-          <div v-else-if="form.taskType === 'reminder'" class="form-group">
-            <label class="form-label">{{ t('cronJobs.fields.reminderText') }} *</label>
-            <textarea v-model="form.triggerMessage" class="form-textarea" rows="3"
-              :placeholder="t('cronJobs.fields.reminderTextPlaceholder')"></textarea>
-          </div>
-          <div v-else-if="form.taskType === 'agent'" class="form-group">
-            <label class="form-label">{{ t('cronJobs.fields.requestBody') }} *</label>
-            <textarea v-model="form.requestBody" class="form-textarea" rows="3"
-              :placeholder="t('cronJobs.fields.requestBodyPlaceholder')"></textarea>
-          </div>
-          <template v-else>
+          <div class="modal-body">
             <div class="form-group">
-              <label class="form-label">{{ t('cronJobs.fields.wikiKb') }} *</label>
-              <select v-model="form.wikiKbId" class="form-input">
-                <option value="" disabled>{{ t('cronJobs.fields.wikiKbPlaceholder') }}</option>
-                <option v-for="kb in wikiKbs" :key="kb.id" :value="kb.id">{{ kb.name }}</option>
-              </select>
-              <p v-if="wikiKbsLoaded && wikiKbs.length === 0" class="form-hint">
-                {{ t('cronJobs.fields.wikiKbEmpty') }}
-              </p>
+              <label class="form-label">{{ t('cronJobs.fields.name') }} *</label>
+              <input v-model="form.name" class="form-input" :placeholder="t('cronJobs.fields.namePlaceholder')" />
             </div>
+
+            <div v-if="form.taskType !== 'wiki_process'" class="form-group">
+              <label class="form-label">{{ t('cronJobs.fields.agent') }} *</label>
+              <select v-model="form.agentId" class="form-input">
+                <option :value="undefined" disabled>{{ t('cronJobs.fields.agentPlaceholder') }}</option>
+                <option v-for="a in agents" :key="a.id" :value="a.id">{{ a.name }}</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">{{ t('cronJobs.fields.taskType') }}</label>
+              <div class="radio-group">
+                <label class="radio-option" :class="{ active: form.taskType === 'text' }">
+                  <input type="radio" v-model="form.taskType" value="text" />
+                  {{ t('cronJobs.taskTypes.text') }}
+                </label>
+                <label class="radio-option" :class="{ active: form.taskType === 'reminder' }">
+                  <input type="radio" v-model="form.taskType" value="reminder" />
+                  {{ t('cronJobs.taskTypes.reminder') }}
+                </label>
+                <label class="radio-option" :class="{ active: form.taskType === 'agent' }">
+                  <input type="radio" v-model="form.taskType" value="agent" />
+                  {{ t('cronJobs.taskTypes.agent') }}
+                </label>
+                <label class="radio-option" :class="{ active: form.taskType === 'wiki_process' }">
+                  <input type="radio" v-model="form.taskType" value="wiki_process" />
+                  {{ t('cronJobs.taskTypes.wiki_process') }}
+                </label>
+              </div>
+            </div>
+
+            <div v-if="form.taskType === 'text'" class="form-group">
+              <label class="form-label">{{ t('cronJobs.fields.triggerMessage') }} *</label>
+              <textarea v-model="form.triggerMessage" class="form-textarea" rows="3"
+                :placeholder="t('cronJobs.fields.triggerMessagePlaceholder')"></textarea>
+            </div>
+            <div v-else-if="form.taskType === 'reminder'" class="form-group">
+              <label class="form-label">{{ t('cronJobs.fields.reminderText') }} *</label>
+              <textarea v-model="form.triggerMessage" class="form-textarea" rows="3"
+                :placeholder="t('cronJobs.fields.reminderTextPlaceholder')"></textarea>
+            </div>
+            <div v-else-if="form.taskType === 'agent'" class="form-group">
+              <label class="form-label">{{ t('cronJobs.fields.requestBody') }} *</label>
+              <textarea v-model="form.requestBody" class="form-textarea" rows="3"
+                :placeholder="t('cronJobs.fields.requestBodyPlaceholder')"></textarea>
+            </div>
+            <template v-else>
+              <div class="form-group">
+                <label class="form-label">{{ t('cronJobs.fields.wikiKb') }} *</label>
+                <select v-model="form.wikiKbId" class="form-input">
+                  <option value="" disabled>{{ t('cronJobs.fields.wikiKbPlaceholder') }}</option>
+                  <option v-for="kb in wikiKbs" :key="kb.id" :value="kb.id">{{ kb.name }}</option>
+                </select>
+                <p v-if="wikiKbsLoaded && wikiKbs.length === 0" class="form-hint">
+                  {{ t('cronJobs.fields.wikiKbEmpty') }}
+                </p>
+              </div>
+              <div class="form-group">
+                <label class="toggle-label">
+                  <label class="toggle-switch">
+                    <input type="checkbox" v-model="form.wikiForce" />
+                    <span class="toggle-slider"></span>
+                  </label>
+                  <span>{{ t('cronJobs.fields.wikiForce') }}</span>
+                </label>
+                <p class="form-hint">{{ t('cronJobs.fields.wikiForceHint') }}</p>
+              </div>
+            </template>
+
+            <!-- Delivery binding: push the final run result to an IM channel
+                 conversation. Writes the existing channelId + deliveryConfig
+                 contract; empty channel = result stays in the task conversation. -->
+            <template v-if="form.taskType !== 'wiki_process'">
+              <div class="form-group">
+                <label class="form-label">{{ t('cronJobs.fields.deliveryChannel') }}</label>
+                <select v-model="form.channelIdStr" class="form-input" @change="onChannelChange">
+                  <option value="">{{ t('cronJobs.fields.deliveryChannelNone') }}</option>
+                  <option v-for="c in deliveryChannels" :key="String(c.id)" :value="String(c.id)">
+                    {{ c.name }} ({{ c.channelType }})
+                  </option>
+                </select>
+                <p class="form-hint">{{ t('cronJobs.fields.deliveryChannelHint') }}</p>
+              </div>
+              <div v-if="form.channelIdStr" class="form-group">
+                <label class="form-label">{{ t('cronJobs.fields.targetSession') }} *</label>
+                <select v-model="form.targetConversationId" class="form-input">
+                  <option value="" disabled>{{ t('cronJobs.fields.targetSessionPlaceholder') }}</option>
+                  <option v-for="s in channelSessions" :key="s.conversationId" :value="s.conversationId">
+                    {{ sessionLabel(s) }}
+                  </option>
+                </select>
+                <p v-if="sessionsLoaded && channelSessions.length === 0" class="form-hint">
+                  {{ t('cronJobs.fields.targetSessionEmpty') }}
+                </p>
+              </div>
+              <div v-if="form.channelIdStr" class="form-group">
+                <label class="form-label">{{ t('cronJobs.fields.deliveryMode') }}</label>
+                <select v-model="form.deliveryMode" class="form-input">
+                  <option value="deliver">{{ t('cronJobs.deliveryModes.deliver') }}</option>
+                  <option value="silent">{{ t('cronJobs.deliveryModes.silent') }}</option>
+                </select>
+                <p class="form-hint">{{ t('cronJobs.fields.deliveryModeHint') }}</p>
+              </div>
+            </template>
+
+            <div class="form-group">
+              <label class="form-label">{{ t('cronJobs.fields.cronExpression') }} *</label>
+              <CronExpressionField v-model="form.cronExpression" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">{{ t('cronJobs.fields.timezone') }}</label>
+              <select v-model="form.timezone" class="form-input">
+                <option v-for="tz in timezones" :key="tz" :value="tz">{{ tz }}</option>
+              </select>
+            </div>
+
             <div class="form-group">
               <label class="toggle-label">
                 <label class="toggle-switch">
-                  <input type="checkbox" v-model="form.wikiForce" />
+                  <input type="checkbox" v-model="form.enabled" />
                   <span class="toggle-slider"></span>
                 </label>
-                <span>{{ t('cronJobs.fields.wikiForce') }}</span>
+                <span>{{ t('cronJobs.fields.enabled') }}</span>
               </label>
-              <p class="form-hint">{{ t('cronJobs.fields.wikiForceHint') }}</p>
             </div>
-          </template>
-
-          <!-- Delivery binding: push the final run result to an IM channel
-               conversation. Writes the existing channelId + deliveryConfig
-               contract; empty channel = result stays in the task conversation. -->
-          <template v-if="form.taskType !== 'wiki_process'">
-            <div class="form-group">
-              <label class="form-label">{{ t('cronJobs.fields.deliveryChannel') }}</label>
-              <select v-model="form.channelIdStr" class="form-input" @change="onChannelChange">
-                <option value="">{{ t('cronJobs.fields.deliveryChannelNone') }}</option>
-                <option v-for="c in deliveryChannels" :key="String(c.id)" :value="String(c.id)">
-                  {{ c.name }} ({{ c.channelType }})
-                </option>
-              </select>
-              <p class="form-hint">{{ t('cronJobs.fields.deliveryChannelHint') }}</p>
-            </div>
-            <div v-if="form.channelIdStr" class="form-group">
-              <label class="form-label">{{ t('cronJobs.fields.targetSession') }} *</label>
-              <select v-model="form.targetConversationId" class="form-input">
-                <option value="" disabled>{{ t('cronJobs.fields.targetSessionPlaceholder') }}</option>
-                <option v-for="s in channelSessions" :key="s.conversationId" :value="s.conversationId">
-                  {{ sessionLabel(s) }}
-                </option>
-              </select>
-              <p v-if="sessionsLoaded && channelSessions.length === 0" class="form-hint">
-                {{ t('cronJobs.fields.targetSessionEmpty') }}
-              </p>
-            </div>
-            <div v-if="form.channelIdStr" class="form-group">
-              <label class="form-label">{{ t('cronJobs.fields.deliveryMode') }}</label>
-              <select v-model="form.deliveryMode" class="form-input">
-                <option value="deliver">{{ t('cronJobs.deliveryModes.deliver') }}</option>
-                <option value="silent">{{ t('cronJobs.deliveryModes.silent') }}</option>
-              </select>
-              <p class="form-hint">{{ t('cronJobs.fields.deliveryModeHint') }}</p>
-            </div>
-          </template>
-
-          <div class="form-group">
-            <label class="form-label">{{ t('cronJobs.fields.cronExpression') }} *</label>
-            <CronExpressionField v-model="form.cronExpression" />
           </div>
-
-          <div class="form-group">
-            <label class="form-label">{{ t('cronJobs.fields.timezone') }}</label>
-            <select v-model="form.timezone" class="form-input">
-              <option v-for="tz in timezones" :key="tz" :value="tz">{{ tz }}</option>
-            </select>
+          <div class="modal-footer">
+            <button class="btn-secondary" @click="closeModal">{{ t('common.cancel') }}</button>
+            <button class="btn-primary" @click="saveJob" :disabled="!canSave">{{ t('common.save') }}</button>
           </div>
-
-          <div class="form-group">
-            <label class="toggle-label">
-              <label class="toggle-switch">
-                <input type="checkbox" v-model="form.enabled" />
-                <span class="toggle-slider"></span>
-              </label>
-              <span>{{ t('cronJobs.fields.enabled') }}</span>
-            </label>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn-secondary" @click="closeModal">{{ t('common.cancel') }}</button>
-          <button class="btn-primary" @click="saveJob" :disabled="!canSave">{{ t('common.save') }}</button>
         </div>
       </div>
-    </div>
+    </Teleport>
   </div>
 </template>
 
@@ -798,12 +800,12 @@ defineExpose({ openCreate: openCreateModal })
 .table-wrap {
   width: 100%;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--mc-bg-elevated) 96%, white 4%) 0%, var(--mc-bg-elevated) 100%);
-  border: 1px solid var(--mc-border);
-  border-radius: 24px;
+    linear-gradient(180deg, rgba(var(--mc-card-rgb), 0.84) 0%, rgba(var(--mc-card-rgb), 0.96) 100%);
+  border: 1px solid var(--mc-border-light);
+  border-radius: var(--mc-radius-xl);
   overflow-x: auto;
   overflow-y: hidden;
-  box-shadow: 0 20px 48px rgba(128, 84, 60, 0.08);
+  box-shadow: var(--mc-shadow-soft);
 }
 
 .data-table { width: 100%; table-layout: fixed; border-collapse: collapse; }
@@ -973,10 +975,10 @@ defineExpose({ openCreate: openCreateModal })
 .form-label { font-size: 13px; font-weight: 500; color: var(--mc-text-secondary); }
 .form-hint { font-size: 12px; color: var(--mc-text-tertiary); margin: 0; line-height: 1.45; }
 .form-input { padding: 8px 12px; border: 1px solid var(--mc-border); border-radius: 8px; font-size: 14px; color: var(--mc-text-primary); outline: none; background: var(--mc-bg-sunken); width: 100%; }
-.form-input:focus { border-color: var(--mc-primary); box-shadow: 0 0 0 2px rgba(217,119,87,0.1); }
+.form-input:focus { border-color: var(--mc-primary); box-shadow: 0 0 0 2px rgba(var(--mc-primary-rgb), 0.14); }
 .form-input.mono { font-family: monospace; }
 .form-textarea { padding: 8px 12px; border: 1px solid var(--mc-border); border-radius: 8px; font-size: 14px; color: var(--mc-text-primary); outline: none; background: var(--mc-bg-sunken); width: 100%; resize: vertical; font-family: inherit; }
-.form-textarea:focus { border-color: var(--mc-primary); box-shadow: 0 0 0 2px rgba(217,119,87,0.1); }
+.form-textarea:focus { border-color: var(--mc-primary); box-shadow: 0 0 0 2px rgba(var(--mc-primary-rgb), 0.14); }
 
 .radio-group { display: flex; gap: 8px; flex-wrap: wrap; }
 .radio-option { display: flex; align-items: center; gap: 4px; padding: 6px 14px; border: 1px solid var(--mc-border); border-radius: 8px; font-size: 13px; color: var(--mc-text-secondary); cursor: pointer; transition: all 0.15s; }

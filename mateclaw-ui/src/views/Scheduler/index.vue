@@ -1,43 +1,47 @@
 <template>
-  <div class="sched-page">
-    <header class="sched-header">
-      <div class="sched-lead">
-        <div class="sched-kicker">{{ t('scheduler.kicker') }}</div>
-        <h1 class="sched-title">{{ t('scheduler.title') }}</h1>
-        <p class="sched-desc">{{ t('scheduler.desc') }}</p>
+  <div class="mc-page-shell">
+    <div class="mc-page-frame">
+      <div class="mc-page-inner sched-page">
+        <header class="mc-page-header sched-header">
+          <div>
+            <div class="mc-page-kicker">{{ t('scheduler.kicker') }}</div>
+            <h1 class="mc-page-title">{{ t('scheduler.title') }}</h1>
+            <p class="mc-page-desc">{{ t('scheduler.desc') }}</p>
+          </div>
+          <button class="sched-action" @click="onAction">
+            <svg v-if="activeTab === 'history'" width="16" height="16" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 4v6h-6" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+            </svg>
+            <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            {{ actionLabel }}
+          </button>
+        </header>
+
+        <nav class="sched-tabs" role="tablist">
+          <button
+            v-for="tab in tabs"
+            :key="tab.id"
+            type="button"
+            role="tab"
+            class="sched-tab"
+            :class="{ active: activeTab === tab.id }"
+            :aria-selected="activeTab === tab.id"
+            @click="activeTab = tab.id"
+          >
+            {{ tab.label }}
+            <span v-if="counts[tab.id]" class="tab-badge">{{ counts[tab.id] }}</span>
+          </button>
+        </nav>
+
+        <div class="sched-body">
+          <CronJobsPanel v-if="activeTab === 'jobs'" ref="jobsPanel" @count="counts.jobs = $event" />
+          <TriggersPanel v-else-if="activeTab === 'triggers'" ref="triggersPanel" @count="counts.triggers = $event" />
+          <RunHistoryPanel v-else ref="historyPanel" @count="counts.history = $event" />
+        </div>
       </div>
-      <button class="sched-action" @click="onAction">
-        <svg v-if="activeTab === 'history'" width="16" height="16" viewBox="0 0 24 24"
-             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M23 4v6h-6" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-        </svg>
-        <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-        {{ actionLabel }}
-      </button>
-    </header>
-
-    <nav class="sched-tabs" role="tablist">
-      <button
-        v-for="tab in tabs"
-        :key="tab.id"
-        type="button"
-        role="tab"
-        class="sched-tab"
-        :class="{ active: activeTab === tab.id }"
-        :aria-selected="activeTab === tab.id"
-        @click="activeTab = tab.id"
-      >
-        {{ tab.label }}
-        <span v-if="counts[tab.id]" class="tab-badge">{{ counts[tab.id] }}</span>
-      </button>
-    </nav>
-
-    <div class="sched-body">
-      <CronJobsPanel v-if="activeTab === 'jobs'" ref="jobsPanel" @count="counts.jobs = $event" />
-      <TriggersPanel v-else-if="activeTab === 'triggers'" ref="triggersPanel" @count="counts.triggers = $event" />
-      <RunHistoryPanel v-else ref="historyPanel" @count="counts.history = $event" />
     </div>
   </div>
 </template>
@@ -115,47 +119,7 @@ function onAction() {
 }
 
 .sched-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.sched-lead {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.sched-kicker {
-  display: inline-flex;
-  align-items: center;
-  width: fit-content;
-  padding: 6px 12px;
-  border: 1px solid color-mix(in srgb, var(--mc-primary) 18%, transparent);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--mc-primary-bg) 72%, var(--mc-bg-elevated) 28%);
-  color: var(--mc-primary-hover);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.sched-title {
-  font-size: clamp(24px, 3vw, 34px);
-  line-height: 1.05;
-  font-weight: 800;
-  color: var(--mc-text-primary);
-  margin: 0;
-}
-
-.sched-desc {
-  max-width: 620px;
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--mc-text-secondary);
-  margin: 0;
+  margin-bottom: 4px;
 }
 
 .sched-action {
@@ -163,15 +127,17 @@ function onAction() {
   align-items: center;
   gap: 6px;
   padding: 10px 16px;
-  background: var(--mc-primary);
+  background: linear-gradient(135deg, var(--mc-primary), var(--mc-primary-hover));
   color: white;
   border: none;
-  border-radius: 10px;
+  border-radius: 14px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
+  box-shadow: var(--mc-shadow-soft);
+  transition: background 0.15s ease, transform 0.15s ease;
 }
 .sched-action:hover { background: var(--mc-primary-hover); }
 
@@ -225,10 +191,6 @@ function onAction() {
 }
 
 @media (max-width: 720px) {
-  .sched-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
   .sched-action {
     justify-content: center;
   }

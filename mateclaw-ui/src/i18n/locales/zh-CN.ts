@@ -1,6 +1,8 @@
 export default {
   app: {
     title: 'HUJIA Mate - AI 助手',
+    // 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：新增侧边栏产品定位文案“医护AI助手”；代码来源：AI生成
+    tagline: '医护AI助手',
   },
   router: {
     chunkLoadFailed: '页面资源加载失败，请检查网络后重试',
@@ -3704,19 +3706,8 @@ export default {
     signIn: '登录',
     hint: '默认账号: {username} / {password}',
     failed: '登录失败，请检查账号密码',
-    brand: {
-      titleRest1: '数智协同',
-      titleLine2: '智能体平台',
-      subtitle: '为医护减负增效，为家庭加护增康',
-      tags: {
-        medical: '医护协同',
-        nursePatient: '护患协同',
-        nurseManage: '护管协同',
-        nurseRehab: '护康协同',
-        performance: '业考协同',
-        quality: '质控协同',
-      },
-    },
+    // 修改人:祝奔；时间：2026-11-26T17:56:28+08:00；修改原因/内容：统一登录框产品定位副标文案为简洁无衬线单行文案；代码来源：AI生成
+    tagline: '专注于为医护赋能的 AI 助手',
   },
   enterprise: {
     eyebrow: '企业场景',
@@ -4997,6 +4988,54 @@ export default {
     },
     forceHuman: {
       banner: '此命令需要人工审批，自动批准策略对其不生效。',
+    },
+  },
+  // 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：新增皮肤与自定义背景词条；代码来源：AI生成
+  appearance: {
+    title: '外观与皮肤',
+    subtitle: '自由切换整体风格与底部背景图，实时生效',
+    close: '关闭外观设置',
+    customizeAction: '自定义皮肤与背景',
+    sectionSkin: '整体风格',
+    sectionMode: '明暗模式',
+    sectionWallpaper: '底部背景图',
+    sectionTuning: '玻璃通透与融合微调',
+    wallpaperNone: '纯色极简',
+    wallpaperCountHint: '已上传 {count}/8 张',
+    deleteWallpaper: '删除此壁纸',
+    uploadTitle: '上传本地背景图',
+    uploadHint: '支持 JPG / PNG / WebP（≤15MB），自动压缩保存',
+    uploading: '正在处理图片…',
+    uploadSuccess: '已应用自定义背景图',
+    errorUnsupportedType: '仅支持 JPG、PNG 或 WebP 格式图片',
+    errorFileTooLarge: '图片大小不能超过 15MB',
+    errorUploadFailed: '图片加载失败，请更换其他图片重试',
+    glassCrystal: '晶透玻璃',
+    glassFrosted: '轻盈磨砂',
+    glassSolid: '经典实底',
+    surfaceOpacity: '面板不透明度',
+    wallpaperBlur: '背景柔化度',
+    scrimOpacity: '背景遮罩浓度',
+    tuningNoWallpaperHint: '选择任意底部背景图后，可调节背景柔化度与遮罩浓度。',
+    resetDefault: '恢复默认',
+    resetSuccess: '已恢复为默认医疗冰蓝皮肤',
+    done: '完成',
+    currentWallpaperBuiltin: '内置壁纸',
+    currentWallpaperCustom: '自定义壁纸',
+    currentWallpaperNone: '无背景图',
+    skins: {
+      medicalIce: { name: '医疗冰蓝', desc: '蓝白通透 · 默认推荐' },
+      warmSand: { name: '暖沙晨光', desc: '温润米白 · 经典样式' },
+      deepOcean: { name: '深海科技', desc: '深海青蓝 · 夜班护眼' },
+      mintClinic: { name: '清风杏林', desc: '柔和青白 · 专注阅览' },
+      slateInk: { name: '松烟墨影', desc: '极简灰黑 · 高对比度' },
+    },
+    wallpapers: {
+      medicalDesk: '医疗桌面',
+      iceAurora: '冰蓝光波',
+      mintBreeze: '杏林晨雾',
+      deepHorizon: '深海地平线',
+      warmSilk: '暖沙丝韵',
     },
   },
 } as const

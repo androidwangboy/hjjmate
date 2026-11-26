@@ -415,11 +415,12 @@ onUnmounted(() => {
   margin-bottom: 20px;
 }
 
+/* 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：将欢迎Logo光晕与回到底部呼吸动效替换为皮肤RGB通道变量；代码来源：AI生成 */
 .welcome-logo__glow {
   position: absolute;
   inset: -20px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(217, 119, 87, 0.12) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(var(--mc-primary-rgb), 0.14) 0%, transparent 70%);
   animation: logo-glow 3s ease-in-out infinite;
 }
 
@@ -434,7 +435,7 @@ onUnmounted(() => {
   height: 64px;
   object-fit: contain;
   display: block;
-  filter: drop-shadow(0 4px 12px rgba(217, 119, 87, 0.2));
+  filter: drop-shadow(0 4px 12px rgba(var(--mc-primary-rgb), 0.22));
 }
 
 .welcome-title {
@@ -482,9 +483,9 @@ onUnmounted(() => {
 
 .suggestion-card:hover {
   border-color: var(--mc-primary, #D97757);
-  background: var(--mc-primary-bg, rgba(217, 119, 87, 0.06));
+  background: var(--mc-primary-bg, rgba(var(--mc-primary-rgb), 0.08));
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(217, 119, 87, 0.08);
+  box-shadow: 0 4px 12px rgba(var(--mc-primary-rgb), 0.10);
 }
 
 .suggestion-card__icon {
@@ -614,8 +615,8 @@ onUnmounted(() => {
 }
 
 @keyframes dock-breathe {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(217, 119, 87, 0); }
-  50%      { box-shadow: 0 0 8px 2px rgba(217, 119, 87, 0.18); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(var(--mc-primary-rgb), 0); }
+  50%      { box-shadow: 0 0 8px 2px rgba(var(--mc-primary-rgb), 0.20); }
 }
 
 /* Restore as soon as the pointer approaches. */

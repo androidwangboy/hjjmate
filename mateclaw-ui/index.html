@@ -22,35 +22,60 @@
         <div class="ail-hint">首次加载可能需要几秒…</div>
       </div>
     </div>
+    <!-- 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：将首屏加载器默认配色同步为医疗冰蓝并提前恢复skinId，防止刷新闪回暖橙；代码来源：AI生成 -->
     <style>
-      #app-initial-loader{position:fixed;inset:0;z-index:9998;display:flex;align-items:center;justify-content:center;background:rgba(252,250,248,.96);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:opacity .35s ease}
+      #app-initial-loader{position:fixed;inset:0;z-index:9998;display:flex;align-items:center;justify-content:center;background:rgba(232,242,252,.96);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:opacity .35s ease}
       #app-initial-loader.ail--hidden{opacity:0;pointer-events:none}
-      .ail-card{display:flex;flex-direction:column;align-items:center;gap:14px;padding:32px 28px;background:#fff;border:1px solid #ebe3db;border-radius:20px;box-shadow:0 18px 48px rgba(58,32,19,.12);min-width:280px}
-      .ail-logo{width:56px;height:56px;border-radius:16px;background:#1d1612;display:grid;place-items:center;box-shadow:0 12px 32px rgba(29,22,18,.18);animation:ail-breathe 2s ease-in-out infinite}
-      .ail-logo img{width:38px;height:38px;object-fit:contain;filter:drop-shadow(0 8px 18px rgba(217,109,70,.22))}
-      .ail-brand{font-family:'Inter',sans-serif;font-size:16px;font-weight:800;letter-spacing:-.02em;color:#1d1612}
-      .ail-brand span{color:#d96d46}
-      .ail-sub{font-family:'Inter',sans-serif;font-size:12px;color:#9b7d6c;letter-spacing:.04em}
-      .ail-orb{width:32px;height:32px;border-radius:50%;border:2.5px solid #ebe3db;border-top-color:#d96d46;animation:ail-spin .9s linear infinite}
-      .ail-track{width:140px;height:3px;background:#ebe3db;border-radius:999px;overflow:hidden}
-      .ail-fill{height:100%;width:42%;background:#d96d46;border-radius:999px;animation:ail-progress 1.1s ease-in-out infinite}
-      .ail-hint{font-family:'Inter',sans-serif;font-size:11px;color:#9b7d6c;letter-spacing:.04em}
+      .ail-card{display:flex;flex-direction:column;align-items:center;gap:14px;padding:32px 28px;background:rgba(248,252,255,.94);border:1px solid #C8DDF0;border-radius:20px;box-shadow:0 18px 48px rgba(23,59,92,.12);min-width:280px}
+      .ail-logo{width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,#e6f3fd,#d6edfc);border:1px solid rgba(22,142,219,.20);display:grid;place-items:center;box-shadow:0 10px 28px rgba(22,142,219,.16);animation:ail-breathe 2s ease-in-out infinite}
+      .ail-logo img{width:38px;height:38px;object-fit:contain;filter:drop-shadow(0 6px 14px rgba(22,142,219,.22))}
+      .ail-brand{font-family:'Inter',sans-serif;font-size:16px;font-weight:800;letter-spacing:-.02em;color:#173B5C}
+      .ail-brand span{color:#079EAA}
+      .ail-sub{font-family:'Inter',sans-serif;font-size:12px;color:#557C98;letter-spacing:.04em}
+      .ail-orb{width:32px;height:32px;border-radius:50%;border:2.5px solid #DCEAF7;border-top-color:#168EDB;animation:ail-spin .9s linear infinite}
+      .ail-track{width:140px;height:3px;background:#DCEAF7;border-radius:999px;overflow:hidden}
+      .ail-fill{height:100%;width:42%;background:#168EDB;border-radius:999px;animation:ail-progress 1.1s ease-in-out infinite}
+      .ail-hint{font-family:'Inter',sans-serif;font-size:11px;color:#7A98B2;letter-spacing:.04em}
       @keyframes ail-breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
       @keyframes ail-spin{to{transform:rotate(360deg)}}
       @keyframes ail-progress{0%{transform:translateX(-100%)}50%{transform:translateX(220%)}100%{transform:translateX(-100%)}}
       @media (prefers-reduced-motion:reduce){.ail-logo,.ail-orb,.ail-fill{animation:none}.ail-orb{opacity:.6}}
-      html.dark #app-initial-loader{background:rgba(23,17,14,.92)}
-      html.dark .ail-card{background:#221a16;border-color:#3D3028}
-      html.dark .ail-brand{color:#F0EAE4}
-      html.dark .ail-orb{border-color:#2a211c;border-top-color:#d96d46}
-      html.dark .ail-track{background:#2a211c}
+      html[data-skin="warm-sand"] #app-initial-loader{background:rgba(252,250,248,.96)}
+      html[data-skin="warm-sand"] .ail-card{background:#fff;border-color:#ebe3db;box-shadow:0 18px 48px rgba(58,32,19,.12)}
+      html[data-skin="warm-sand"] .ail-logo{background:#1d1612;border-color:transparent;box-shadow:0 12px 32px rgba(29,22,18,.18)}
+      html[data-skin="warm-sand"] .ail-brand{color:#1d1612}
+      html[data-skin="warm-sand"] .ail-brand span{color:#d96d46}
+      html[data-skin="warm-sand"] .ail-orb{border-color:#ebe3db;border-top-color:#d96d46}
+      html[data-skin="warm-sand"] .ail-track{background:#ebe3db}
+      html[data-skin="warm-sand"] .ail-fill{background:#d96d46}
+      html.dark #app-initial-loader{background:rgba(10,23,40,.94)}
+      html.dark .ail-card{background:#12243B;border-color:#254060}
+      html.dark .ail-brand{color:#E7F2FC}
+      html.dark .ail-orb{border-color:#1C334E;border-top-color:#38BDF8}
+      html.dark .ail-track{background:#1C334E}
+      html.dark .ail-fill{background:#38BDF8}
+      html[data-skin="warm-sand"].dark #app-initial-loader{background:rgba(23,17,14,.92)}
+      html[data-skin="warm-sand"].dark .ail-card{background:#221a16;border-color:#3D3028}
+      html[data-skin="warm-sand"].dark .ail-brand{color:#F0EAE4}
+      html[data-skin="warm-sand"].dark .ail-orb{border-color:#2a211c;border-top-color:#d96d46}
+      html[data-skin="warm-sand"].dark .ail-track{background:#2a211c}
+      html[data-skin="warm-sand"].dark .ail-fill{background:#d96d46}
     </style>
     <script>
       /* eslint-disable */
       (function(){
         try {
+          var appRaw = localStorage.getItem('mateclaw-appearance');
+          var skinId = 'medical-ice';
+          if (appRaw) {
+            var parsed = JSON.parse(appRaw);
+            if (parsed && typeof parsed.skinId === 'string' && parsed.skinId) {
+              skinId = parsed.skinId;
+            }
+          }
+          document.documentElement.dataset.skin = skinId;
           var m = localStorage.getItem('mateclaw-theme');
-          var isDark = m==='dark' || (m!=='light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          var isDark = m === 'dark' || (m === 'system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
           if(isDark) document.documentElement.classList.add('dark');
         } catch(e){}
         // Safety: if Vue fails to boot, auto-hide after 8s so page is not trapped

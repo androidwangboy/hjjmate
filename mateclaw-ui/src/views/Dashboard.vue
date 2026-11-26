@@ -252,6 +252,8 @@ import { ArrowRight, ChatDotRound, DataLine, Document, Tools } from '@element-pl
 import { dashboardApi, modelApi, http } from '@/api'
 import { getProviderIcon, onProviderIconError } from '@/utils/providerIcons'
 import OperationalExport from '@/components/dashboard/OperationalExport.vue'
+// 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：引入useThemeStore以使Dashboard图表随皮肤与明暗切换实时重绘；代码来源：AI生成
+import { useThemeStore } from '@/stores/useThemeStore'
 import * as echarts from 'echarts/core'
 import { LineChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent, LegendComponent } from 'echarts/components'
@@ -261,6 +263,7 @@ echarts.use([LineChart, GridComponent, TooltipComponent, LegendComponent, Canvas
 
 const { t, locale } = useI18n()
 const router = useRouter()
+const themeStore = useThemeStore()
 
 // Connected database product name (e.g. "MySQL" / "H2" / "PostgreSQL"), shown as
 // a subtle chip in the page header. Empty string hides it when unavailable.
@@ -594,6 +597,13 @@ watch(locale, () => {
   renderUserTrendChart()
 })
 
+// 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：皮肤或明暗模式切换后重绘Dashboard趋势折线图；代码来源：AI生成
+watch(() => [themeStore.skinId, themeStore.isDark], () => {
+  nextTick(() => {
+    if (trendData.value.length) renderChart()
+  })
+})
+
 function formatTokens(n: number): string {
   if (!n) return '0'
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M'
@@ -744,7 +754,8 @@ function calcDuration(run: any): string {
   align-items: center;
   justify-content: center;
   border-radius: 16px;
-  background: linear-gradient(135deg, rgba(217, 109, 70, 0.12), rgba(24, 74, 69, 0.08));
+  /* 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：替换为皮肤RGB通道变量；代码来源：AI生成 */
+  background: linear-gradient(135deg, rgba(var(--mc-primary-rgb), 0.12), rgba(var(--mc-accent-rgb), 0.08));
   font-size: 24px;
   color: var(--mc-primary);
 }
@@ -785,7 +796,7 @@ function calcDuration(run: any): string {
   background: none; border: none; cursor: pointer;
   padding: 4px 6px; border-radius: 6px; transition: background 0.15s ease;
 }
-.models-manage:hover { background: rgba(217, 109, 70, 0.08); }
+.models-manage:hover { background: rgba(var(--mc-primary-rgb), 0.08); }
 
 .provider-chips {
   display: flex; flex-wrap: wrap; gap: 8px;
@@ -877,7 +888,7 @@ function calcDuration(run: any): string {
 }
 .runs-table td { padding: 9px 14px; border-bottom: 1px solid var(--mc-border-light); color: var(--mc-text-primary); }
 .runs-table tr:last-child td { border-bottom: none; }
-.runs-table tbody tr:hover { background: rgba(217, 109, 70, 0.04); }
+.runs-table tbody tr:hover { background: rgba(var(--mc-primary-rgb), 0.04); }
 
 .cell-time { font-size: 12px; color: var(--mc-text-tertiary); white-space: nowrap; }
 .cell-job { font-family: 'SF Mono', monospace; font-size: 12px; color: var(--mc-text-secondary); }

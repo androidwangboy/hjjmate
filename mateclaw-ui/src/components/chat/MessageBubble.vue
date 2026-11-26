@@ -2002,10 +2002,11 @@ watch(isGenerating, (generating) => {
   transform: rotate(180deg);
 }
 
+/* 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：将执行面板边框与运行底色替换为皮肤RGB通道变量；代码来源：AI生成 */
 .execution-content {
   padding: 10px 14px 6px;
   margin-top: 8px;
-  border-left: 2px solid rgba(217, 119, 87, 0.2);
+  border-left: 2px solid var(--mc-thinking-border, rgba(var(--mc-primary-rgb), 0.22));
   margin-left: 12px;
 }
 
@@ -2026,7 +2027,7 @@ watch(isGenerating, (generating) => {
 }
 
 .tool-call--running {
-  background: rgba(217, 119, 87, 0.06);
+  background: var(--mc-thinking-bg, rgba(var(--mc-primary-rgb), 0.08));
 }
 
 .tool-call--awaiting {
