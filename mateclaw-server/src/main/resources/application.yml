@@ -14,7 +14,7 @@ spring:
     encoding: UTF-8
   servlet:
     multipart:
-      max-file-size: 100MB
+      max-file-size: 1024MB
       max-request-size: 200MB
   threads:
     virtual:
