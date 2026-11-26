@@ -49,7 +49,7 @@ import java.util.Set;
 @Tag(name = "可移植性（导出/导入）")
 public class PortabilityController {
 
-    private static final long MAX_UPLOAD_BYTES = 64L * 1024 * 1024;
+    private static final long MAX_UPLOAD_BYTES = 1024L * 1024 * 1024;
 
     private final PortabilityExportService exportService;
     private final PortabilityImportService importService;

@@ -89,7 +89,7 @@ public class PortabilityImportService {
     private static final Set<String> MEMORY_FILE_WHITELIST =
             Set.of("AGENTS.md", "MEMORY.md", "PROFILE.md", "KNOWLEDGE.md");
 
-    private static final long MAX_UNCOMPRESSED_BYTES = 64L * 1024 * 1024;
+    private static final long MAX_UNCOMPRESSED_BYTES = 500L * 1024 * 1024;
     private static final int MAX_ENTRIES = 500;
     private static final int MAX_ENTRY_BYTES = 16 * 1024 * 1024;
     // 修改人:祝奔；时间：2026-11-20T07:23:14.892Z；修改原因/内容：图片二进制条目的容量上限与前缀；代码来源：AI生成
