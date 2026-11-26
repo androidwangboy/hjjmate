@@ -1,5 +1,11 @@
 <template>
-  <div class="app-layout">
+  <div class="app-layout" :class="{ 'has-wallpaper': themeStore.hasWallpaper }">
+    <!-- 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：在主布局底层插入壁纸与自适应对比遮罩层；代码来源：AI生成 -->
+    <div v-if="themeStore.hasWallpaper" class="app-wallpaper-layer" aria-hidden="true">
+      <div class="app-wallpaper-img" :style="{ backgroundImage: `url('${themeStore.resolvedWallpaperUrl}')` }"></div>
+      <div class="app-wallpaper-scrim"></div>
+    </div>
+
     <!-- 移动端背景遮罩 -->
     <Transition name="fade">
       <div v-if="isMobile && mobileMenuOpen" class="sidebar-backdrop" @click="mobileMenuOpen = false"></div>
@@ -14,8 +20,9 @@
         </div>
         <transition name="fade">
           <div v-if="!effectiveCollapsed" class="logo-text">
-            <span class="logo-name">HUJIA&nbsp;<span class="logo-name-highlight"> Mate</span></span>
-            <span class="logo-tagline">AI数智协同</span>
+            <span class="logo-name">HUJIA&nbsp;<span class="logo-name-highlight">Mate</span></span>
+            <!-- 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：将侧边栏副标由AI数智协同改为医护AI助手；代码来源：AI生成 -->
+            <span class="logo-tagline">{{ t('app.tagline') }}</span>
           </div>
         </transition>
         <button
@@ -122,6 +129,22 @@
               <div class="user-name">{{ username }}</div>
               <div class="user-role">{{ roleLabel }}</div>
             </div>
+            <!-- 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：在左侧边栏底部用户区新增快捷换肤抽屉入口按钮；代码来源：AI生成 -->
+            <button
+              class="appearance-btn"
+              :class="{ active: themeStore.drawerOpen }"
+              :title="t('appearance.title')"
+              :aria-label="t('appearance.title')"
+              @click="themeStore.openDrawer()"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+                <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+                <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+                <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
+              </svg>
+            </button>
             <button class="change-password-btn" @click="showChangePassword = true" :title="t('auth.changePassword')">
               <el-icon :size="16"><Key /></el-icon>
             </button>
@@ -134,6 +157,21 @@
 
         <template v-else>
           <div class="collapsed-footer-actions">
+            <button
+              class="footer-icon-btn"
+              :class="{ 'footer-icon-btn--accent': themeStore.drawerOpen }"
+              :title="t('appearance.title')"
+              :aria-label="t('appearance.title')"
+              @click="themeStore.openDrawer()"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+                <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+                <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+                <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
+              </svg>
+            </button>
             <button class="footer-icon-btn" :class="healthStatus" @click="showDoctor = true" :title="t('doctor.title')">
               <span class="health-dot"></span>
             </button>
@@ -156,7 +194,8 @@
             <line x1="3" y1="18" x2="21" y2="18"/>
           </svg>
         </button>
-        <span class="mobile-topbar-title">Mate<span class="logo-name-highlight">Claw</span></span>
+        <!-- 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：修正移动端顶栏品牌名称为HUJIA Mate；代码来源：AI生成 -->
+        <span class="mobile-topbar-title">HUJIA&nbsp;<span class="logo-name-highlight">Mate</span></span>
       </div>
       <div class="main-content__body">
         <Transition name="route-loading-fade">
@@ -179,6 +218,8 @@
     <DoctorDrawer :visible="showDoctor" @close="showDoctor = false" @status="onHealthStatus" />
 
     <ChangePasswordDialog v-model:visible="showChangePassword" />
+    <!-- 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：挂载全局外观与皮肤设置抽屉组件；代码来源：AI生成 -->
+    <AppearanceDrawer />
   </div>
 </template>
 
@@ -204,6 +245,8 @@ import { useWorkspaceStore } from '@/stores/useWorkspaceStore'
 import { SwitchButton, Key, Unlock } from '@element-plus/icons-vue'
 import ChangePasswordDialog from '@/components/ChangePasswordDialog.vue'
 import RouteSkeleton from '@/components/common/RouteSkeleton.vue'
+// 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：引入AppearanceDrawer并接入themeStore管理壁纸与外观抽屉状态；代码来源：AI生成
+import AppearanceDrawer from '@/components/common/AppearanceDrawer.vue'
 import { useGlobalLoadingStore } from '@/stores/useGlobalLoadingStore'
 
 const router = useRouter()
@@ -211,6 +254,7 @@ const route = useRoute()
 const { t } = useI18n()
 const workspaceStore = useWorkspaceStore()
 const globalLoading = useGlobalLoadingStore()
+const themeStore = useThemeStore()
 const sidebarCollapsed = ref(localStorage.getItem('mc-sidebar-collapsed') === 'true')
 const footerPanelOpen = ref(false)
 
@@ -278,6 +322,8 @@ watch(compactViewport, (compact) => {
 }, { immediate: true })
 
 onMounted(async () => {
+  // 异步恢复 IndexedDB 中存储的自定义壁纸
+  themeStore.initWallpaper()
   // Check onboarding status
   if (!localStorage.getItem('mc-onboarding-done')) {
     try {
@@ -519,6 +565,7 @@ watch(() => workspaceStore.currentWorkspaceId, () => {
 </script>
 
 <style scoped>
+/* 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：新增底层壁纸渲染图层、适配磨砂玻璃侧边栏并替换硬编码暖橙RGBA为皮肤RGB通道变量；代码来源：AI生成 */
 .app-layout {
   display: flex;
   height: 100vh;
@@ -527,20 +574,48 @@ watch(() => workspaceStore.currentWorkspaceId, () => {
   position: relative;
 }
 
+.app-wallpaper-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.app-wallpaper-img {
+  position: absolute;
+  inset: -24px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(var(--mc-wallpaper-blur, 2px));
+  transform: scale(1.03);
+  transition: background-image 0.3s ease, filter 0.2s ease;
+}
+
+.app-wallpaper-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(var(--mc-scrim-rgb, 230, 242, 252), var(--mc-wallpaper-scrim-alpha, 0.18));
+  transition: background-color 0.2s ease;
+}
+
+.app-layout.has-wallpaper {
+  background: transparent;
+}
+
 .app-layout::before {
   content: '';
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at top left, rgba(217, 109, 70, 0.12), transparent 22%),
-    radial-gradient(circle at bottom right, rgba(24, 74, 69, 0.08), transparent 18%);
+    radial-gradient(circle at top left, rgba(var(--mc-primary-rgb), 0.12), transparent 22%),
+    radial-gradient(circle at bottom right, rgba(var(--mc-accent-rgb), 0.08), transparent 18%);
   pointer-events: none;
 }
 
-:global(html.dark) .app-layout::before {
-  background:
-    radial-gradient(circle at top left, rgba(235, 143, 101, 0.14), transparent 24%),
-    radial-gradient(circle at bottom right, rgba(92, 166, 157, 0.08), transparent 20%);
+.app-layout.has-wallpaper::before {
+  display: none;
 }
 
 /* ===== 侧边栏 ===== */
@@ -550,6 +625,8 @@ watch(() => workspaceStore.currentWorkspaceId, () => {
   margin: 14px 0 14px 14px;
   background:
     linear-gradient(180deg, var(--mc-panel-top), var(--mc-panel-bottom));
+  backdrop-filter: blur(var(--mc-glass-blur, 16px)) saturate(125%);
+  -webkit-backdrop-filter: blur(var(--mc-glass-blur, 16px)) saturate(125%);
   border: 1px solid var(--mc-sidebar-border);
   border-radius: 28px;
   box-shadow: var(--mc-shadow-soft);
@@ -600,15 +677,15 @@ watch(() => workspaceStore.currentWorkspaceId, () => {
   justify-content: center;
   flex-shrink: 0;
   overflow: hidden;
-  background: linear-gradient(135deg, rgba(217, 109, 70, 0.18), rgba(24, 74, 69, 0.08));
-  border: 1px solid rgba(217, 109, 70, 0.14);
+  background: linear-gradient(135deg, rgba(var(--mc-primary-rgb), 0.16), rgba(var(--mc-accent-rgb), 0.08));
+  border: 1px solid rgba(var(--mc-primary-rgb), 0.14);
 }
 
 .logo-img {
   width: 34px;
   height: 34px;
   object-fit: contain;
-  filter: drop-shadow(0 8px 18px rgba(217, 109, 70, 0.22));
+  filter: drop-shadow(0 8px 18px rgba(var(--mc-primary-rgb), 0.22));
 }
 
 .logo-emoji { font-size: 16px; }
@@ -720,7 +797,7 @@ watch(() => workspaceStore.currentWorkspaceId, () => {
   background: var(--mc-sidebar-active);
   color: var(--mc-sidebar-text-active);
   font-weight: 600;
-  box-shadow: inset 0 0 0 1px rgba(217, 109, 70, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(var(--mc-primary-rgb), 0.10);
 }
 
 /* Active indicator bar removed — active state uses bg color + font weight only */
@@ -874,6 +951,7 @@ watch(() => workspaceStore.currentWorkspaceId, () => {
 
 .user-role { font-size: 10px; color: var(--mc-text-tertiary); }
 
+.appearance-btn,
 .change-password-btn,
 .logout-btn {
   width: 26px;
@@ -885,11 +963,14 @@ watch(() => workspaceStore.currentWorkspaceId, () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  border-radius: 6px;
   padding: 0;
   flex-shrink: 0;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
+.appearance-btn:hover,
+.appearance-btn.active,
 .change-password-btn:hover {
   background: var(--mc-primary-bg);
   color: var(--mc-primary);
@@ -934,7 +1015,7 @@ watch(() => workspaceStore.currentWorkspaceId, () => {
 .footer-icon-btn--accent {
   color: var(--mc-primary);
   background: var(--mc-primary-bg);
-  border-color: rgba(217, 109, 70, 0.18);
+  border-color: rgba(var(--mc-primary-rgb), 0.22);
 }
 
 /* ===== 主内容区 ===== */

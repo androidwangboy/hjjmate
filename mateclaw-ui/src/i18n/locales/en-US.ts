@@ -1,6 +1,8 @@
 export default {
   app: {
     title: 'HUJIA Mate - AI Assistant',
+    // 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：新增侧边栏英文产品定位文案；代码来源：AI生成
+    tagline: 'Medical AI Assistant',
   },
   router: {
     chunkLoadFailed: 'Failed to load page resources. Check your network and try again.',
@@ -3694,19 +3696,8 @@ export default {
     signIn: 'Sign In',
     hint: 'Default: {username} / {password}',
     failed: 'Login failed. Please check your credentials.',
-    brand: {
-      titleRest1: '-Powered Synergy',
-      titleLine2: 'Agent Platform',
-      subtitle: 'Less burden for caregivers, more care for families',
-      tags: {
-        medical: 'Care-Team Synergy',
-        nursePatient: 'Nurse-Patient Synergy',
-        nurseManage: 'Nurse-Management Synergy',
-        nurseRehab: 'Nurse-Rehab Synergy',
-        performance: 'Performance Synergy',
-        quality: 'Quality-Control Synergy',
-      },
-    },
+    // 修改人:祝奔；时间：2026-11-26T17:56:28+08:00；修改原因/内容：统一登录框产品定位英文副标文案；代码来源：AI生成
+    tagline: 'An AI Assistant Empowering Healthcare',
   },
   enterprise: {
     eyebrow: 'Enterprise',
@@ -4894,6 +4885,54 @@ export default {
     },
     forceHuman: {
       banner: 'This command requires manual approval; auto-approve rules do not apply.',
+    },
+  },
+  // 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：新增皮肤与自定义背景英文词条；代码来源：AI生成
+  appearance: {
+    title: 'Appearance & Skins',
+    subtitle: 'Customize overall color theme and workspace wallpaper live',
+    close: 'Close appearance drawer',
+    customizeAction: 'Customize Skin & Wallpaper',
+    sectionSkin: 'Theme Skin',
+    sectionMode: 'Color Mode',
+    sectionWallpaper: 'Workspace Wallpaper',
+    sectionTuning: 'Glass & Surface Tuning',
+    wallpaperNone: 'Minimal Solid',
+    wallpaperCountHint: '{count}/8 uploaded',
+    deleteWallpaper: 'Delete wallpaper',
+    uploadTitle: 'Upload Local Image',
+    uploadHint: 'JPG / PNG / WebP up to 15MB, compressed locally',
+    uploading: 'Processing image…',
+    uploadSuccess: 'Custom wallpaper applied',
+    errorUnsupportedType: 'Only JPG, PNG, or WebP images are supported',
+    errorFileTooLarge: 'Image file size must not exceed 15MB',
+    errorUploadFailed: 'Failed to load image, please try another file',
+    glassCrystal: 'Crystal',
+    glassFrosted: 'Frosted',
+    glassSolid: 'Solid',
+    surfaceOpacity: 'Panel Opacity',
+    wallpaperBlur: 'Wallpaper Blur',
+    scrimOpacity: 'Scrim Overlay',
+    tuningNoWallpaperHint: 'Pick a wallpaper above to tune backdrop blur and scrim contrast.',
+    resetDefault: 'Reset Default',
+    resetSuccess: 'Restored default Medical Ice skin',
+    done: 'Done',
+    currentWallpaperBuiltin: 'Built-in Wallpaper',
+    currentWallpaperCustom: 'Custom Wallpaper',
+    currentWallpaperNone: 'No Wallpaper',
+    skins: {
+      medicalIce: { name: 'Medical Ice', desc: 'Ice-blue glass · Default' },
+      warmSand: { name: 'Warm Sand', desc: 'Warm ivory · Classic' },
+      deepOcean: { name: 'Deep Ocean', desc: 'Deep navy · Night shift' },
+      mintClinic: { name: 'Mint Clinic', desc: 'Soft teal · Reading focus' },
+      slateInk: { name: 'Slate Ink', desc: 'Minimal dark · High contrast' },
+    },
+    wallpapers: {
+      medicalDesk: 'Medical Desk',
+      iceAurora: 'Ice Aurora',
+      mintBreeze: 'Mint Breeze',
+      deepHorizon: 'Deep Horizon',
+      warmSilk: 'Warm Silk',
     },
   },
 } as const

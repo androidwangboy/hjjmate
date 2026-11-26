@@ -1,17 +1,17 @@
 <template>
   <div class="history-panel">
-    <div v-if="loading" class="state-block">
+    <div v-if="loading" class="state-block mc-surface-card">
       <span class="state-spinner" aria-hidden="true" />
       <span>{{ t('common.loading') }}</span>
     </div>
 
-    <div v-else-if="loadError" class="state-block state-block--error">
+    <div v-else-if="loadError" class="state-block state-block--error mc-surface-card">
       <span class="state-icon">!</span>
       <p>{{ loadError }}</p>
       <button class="btn-secondary" @click="refresh">{{ t('common.retry') }}</button>
     </div>
 
-    <div v-else-if="!runs.length" class="state-block">
+    <div v-else-if="!runs.length" class="state-block mc-surface-card">
       <span class="state-icon empty">&#9203;</span>
       <p class="state-title">{{ t('scheduler.history.empty') }}</p>
       <p class="state-desc">{{ t('scheduler.history.emptyDesc') }}</p>
@@ -221,12 +221,12 @@ defineExpose({ refresh })
 .table-wrap {
   width: 100%;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--mc-bg-elevated) 96%, white 4%) 0%, var(--mc-bg-elevated) 100%);
-  border: 1px solid var(--mc-border);
-  border-radius: 24px;
+    linear-gradient(180deg, rgba(var(--mc-card-rgb), 0.84) 0%, rgba(var(--mc-card-rgb), 0.96) 100%);
+  border: 1px solid var(--mc-border-light);
+  border-radius: var(--mc-radius-xl);
   overflow-x: auto;
   overflow-y: hidden;
-  box-shadow: 0 20px 48px rgba(128, 84, 60, 0.08);
+  box-shadow: var(--mc-shadow-soft);
 }
 
 .data-table { width: 100%; table-layout: fixed; border-collapse: collapse; }

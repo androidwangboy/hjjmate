@@ -2619,7 +2619,8 @@ function handleCodeCopy(e: MouseEvent) {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(217, 119, 87, 0.06);
+  /* 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：替换为皮肤RGB通道变量并支持壁纸模式下聊天区域半透明磨砂；代码来源：AI生成 */
+  background: rgba(var(--mc-primary-rgb), 0.08);
   backdrop-filter: blur(2px);
 }
 

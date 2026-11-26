@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EAF4FE"/>
+      <stop offset="52%" stop-color="#DCEEFB"/>
+      <stop offset="100%" stop-color="#CEE7F9"/>
+    </linearGradient>
+    <radialGradient id="glow1" cx="22%" cy="18%" r="55%">
+      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.28"/>
+      <stop offset="65%" stop-color="#60A5FA" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#38BDF8" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="82%" cy="78%" r="50%">
+      <stop offset="0%" stop-color="#14B8A6" stop-opacity="0.22"/>
+      <stop offset="60%" stop-color="#06B6D4" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#14B8A6" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="wave1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.05"/>
+      <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#93C5FD" stop-opacity="0.18"/>
+    </linearGradient>
+    <linearGradient id="wave2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.10"/>
+      <stop offset="50%" stop-color="#14B8A6" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.05"/>
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+  <rect width="1920" height="1080" fill="url(#glow1)"/>
+  <rect width="1920" height="1080" fill="url(#glow2)"/>
+  <path d="M0 720 C420 560, 860 880, 1340 690 C1620 580, 1790 610, 1920 670 L1920 1080 L0 1080 Z" fill="url(#wave1)"/>
+  <path d="M0 840 C480 710, 960 960, 1480 800 C1700 730, 1830 760, 1920 810 L1920 1080 L0 1080 Z" fill="url(#wave2)"/>
+  <path d="M0 240 C360 120, 740 310, 1220 180 C1540 95, 1770 150, 1920 220" fill="none" stroke="#FFFFFF" stroke-opacity="0.45" stroke-width="2"/>
+  <path d="M0 700 C420 540, 860 860, 1340 670 C1620 560, 1790 590, 1920 650" fill="none" stroke="#7DD3FC" stroke-opacity="0.42" stroke-width="1.5"/>
+</svg>
