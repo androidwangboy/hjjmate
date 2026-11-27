@@ -1,25 +1,25 @@
 <template>
-  <div class="login-page">
-      <div class="login-brand">
-        <h1 class="brand-title"><span class="brand-ai">AI</span>{{ t('login.brand.titleRest1') }}<br>{{ t('login.brand.titleLine2') }}</h1>
-        <p class="brand-subtitle">{{ t('login.brand.subtitle') }}</p>
-        <div class="brand-rule"><span class="brand-rule__core"></span></div>
-        <div class="brand-tags">
-          <span v-for="tag in brandTags" :key="tag" class="brand-tag">{{ t(tag) }}</span>
-        </div>
-      </div>
+  <!-- 修改人:祝奔；时间：2026-11-26T17:56:28+08:00；修改原因/内容：将登录页精修改版为冰蓝磨砂玻璃风格，统一品牌区样式并补充输入框线性图标；代码来源：AI生成 -->
+  <div class="login-page" :style="loginPageStyle">
     <div class="login-center">
       <div class="login-logo">
         <img :src="appLogo" alt="HUJIA Mate" class="logo-image" />
         <h1 class="logo-title">HUJIA&nbsp;<span class="logo-title-highlight">Mate</span></h1>
+        <p class="logo-tagline">{{ t('login.tagline') }}</p>
       </div>
 
       <form class="login-form" @submit.prevent="handleLogin">
         <div class="input-wrap">
+          <span class="input-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </span>
           <input
             v-model="form.username"
             type="text"
-            class="form-input"
+            class="form-input form-input--with-icon"
             :placeholder="t('login.placeholders.username')"
             :aria-label="t('login.fields.username')"
             autocomplete="username"
@@ -28,23 +28,34 @@
         </div>
 
         <div class="input-wrap">
+          <span class="input-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="11" width="16" height="10" rx="2" />
+              <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+            </svg>
+          </span>
           <input
             v-model="form.password"
             :type="showPassword ? 'text' : 'password'"
-            class="form-input form-input--has-eye"
+            class="form-input form-input--with-icon form-input--has-eye"
             :placeholder="t('login.placeholders.password')"
             :aria-label="t('login.fields.password')"
             autocomplete="current-password"
             required
           />
-          <button type="button" class="eye-btn" @click="showPassword = !showPassword">
-            <svg v-if="!showPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-              <circle cx="12" cy="12" r="3"/>
+          <button
+            type="button"
+            class="eye-btn"
+            :aria-label="showPassword ? 'Hide password' : 'Show password'"
+            @click="showPassword = !showPassword"
+          >
+            <svg v-if="!showPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+              <circle cx="12" cy="12" r="3" />
             </svg>
-            <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
-              <line x1="1" y1="1" x2="23" y2="23"/>
+            <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+              <line x1="1" y1="1" x2="23" y2="23" />
             </svg>
           </button>
         </div>
@@ -52,7 +63,7 @@
         <div v-if="errorMsg" class="error-msg">{{ errorMsg }}</div>
 
         <button type="submit" class="login-btn" :disabled="loading">
-          <span v-if="!loading">{{ t('login.signIn') }}</span>
+          <span v-if="!loading" class="login-btn-label">{{ t('login.signIn') }}</span>
           <span v-else class="loading-dots">
             <span></span><span></span><span></span>
           </span>
@@ -104,7 +115,8 @@ import { useI18n } from 'vue-i18n'
 import { authApi, ssoApi } from '@/api/index'
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore'
 import { useSystemSettingsStore } from '@/stores/useSystemSettingsStore'
-import { appLogo } from '@/utils/appPaths'
+// 修改人:祝奔；时间：2026-11-26T17:47:28+08:00；修改原因/内容：引入withCtx以兼容部署前缀加载新登录背景图，并移除原brandTags；代码来源：AI生成
+import { appLogo, withCtx } from '@/utils/appPaths'
 
 interface SsoProvider { id: string; displayName: string }
 
@@ -133,15 +145,10 @@ const bindDialog = reactive({
   error: '',
 })
 
-// Left brand panel tags (i18n keys, rendered in order).
-const brandTags = [
-  'login.brand.tags.medical',
-  'login.brand.tags.nursePatient',
-  'login.brand.tags.nurseManage',
-  'login.brand.tags.nurseRehab',
-  'login.brand.tags.performance',
-  'login.brand.tags.quality',
-] as const
+// 修改人:祝奔；时间：2026-11-26T17:47:28+08:00；修改原因/内容：注入新登录页背景图片CSS变量并移除原AI数智协同标签配置；代码来源：AI生成
+const loginPageStyle = {
+  '--login-bg-url': `url('${withCtx('/images/login/hujiamate-login-bg-pc-new.png')}')`,
+}
 
 // Load enabled SSO providers on mount so the button only shows when configured.
 onMounted(async () => {
@@ -261,9 +268,59 @@ function cancelBind() {
 </script>
 
 <style scoped>
+/* 修改人:祝奔；时间：2026-11-26T17:56:28+08:00；修改原因/内容：重构登录页为冰蓝磨砂玻璃设计体系，提取统一CSS变量并移除全局深色遮罩与冗余动画；代码来源：AI生成 */
 .login-page {
+  --login-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --login-page-bg: #e6f2fc;
+  --login-page-pad-right: 6%;
+  --login-card-width: 400px;
+  --login-card-bg: rgba(242, 248, 255, 0.82);
+  --login-card-blur: blur(24px) saturate(130%);
+  --login-card-border: rgba(255, 255, 255, 0.85);
+  --login-card-radius: 24px;
+  --login-card-padding: 40px 36px;
+  --login-card-shadow:
+    0 16px 48px rgba(35, 102, 156, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+
+  --login-brand-primary: #173b5c;
+  --login-brand-accent: #079eaa;
+  --login-tagline-color: #557c98;
+
+  --login-input-height: 48px;
+  --login-input-radius: 10px;
+  --login-input-bg: rgba(255, 255, 255, 0.65);
+  --login-input-bg-focus: rgba(255, 255, 255, 0.95);
+  --login-input-border: #c9dceb;
+  --login-input-border-focus: #168edb;
+  --login-input-focus-ring: 0 0 0 3px rgba(22, 142, 219, 0.12);
+  --login-input-text: #173b5c;
+  --login-input-placeholder: #8099ac;
+  --login-input-icon: #6c8da5;
+  --login-input-gap: 14px;
+  --login-transition: 200ms ease;
+
+  --login-btn-height: 48px;
+  --login-btn-radius: 10px;
+  --login-btn-bg: linear-gradient(110deg, #168edb 0%, #08b5a5 100%);
+  --login-btn-text: #ffffff;
+  --login-btn-letter-spacing: 4px;
+  --login-btn-shadow: 0 6px 18px rgba(22, 142, 219, 0.22);
+
+  --login-error-bg: rgba(239, 68, 68, 0.08);
+  --login-error-border: rgba(220, 38, 38, 0.26);
+  --login-error-text: #b91c1c;
+
+  --login-divider-text: #6c8da5;
+  --login-divider-line: rgba(148, 184, 212, 0.45);
+  --login-secondary-bg: rgba(255, 255, 255, 0.65);
+  --login-secondary-hover-bg: rgba(255, 255, 255, 0.92);
+  --login-hint-text: #557c98;
+  --login-hint-code-bg: rgba(22, 142, 219, 0.10);
+  --login-hint-code-text: #173b5c;
+  --login-scrollbar: rgba(108, 141, 165, 0.32);
+
   position: relative;
-  isolation: isolate;
   width: 100%;
   height: 100dvh;
   min-height: 100vh;
@@ -271,171 +328,38 @@ function cancelBind() {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  padding: clamp(16px, 4vh, 48px) clamp(20px, 6vw, 112px);
+  padding: clamp(16px, 4vh, 48px) var(--login-page-pad-right) clamp(16px, 4vh, 48px) clamp(20px, 4vw, 48px);
   overflow: hidden;
-  background-color: #071f24;
-  background-image:
-    linear-gradient(
-      90deg,
-      rgba(4, 31, 34, 0.06) 0%,
-      rgba(4, 31, 34, 0.08) 46%,
-      rgba(3, 22, 27, 0.25) 64%,
-      rgba(2, 15, 21, 0.70) 100%
-    ),
-    url('/images/login/hujiamate-login-bg-pc.png');
+  font-family: var(--login-font-sans);
+  background-color: var(--login-page-bg);
+  background-image: var(--login-bg-url, url('/images/login/hujiamate-login-bg-pc-new.png'));
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
 }
 
-/* A quiet vignette keeps the image atmospheric while preserving form contrast. */
-.login-page::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    180deg,
-    rgba(1, 16, 20, 0.16) 0%,
-    transparent 28%,
-    transparent 72%,
-    rgba(1, 14, 18, 0.24) 100%
-  );
-}
-
-/* Left brand panel */
-.login-brand {
-  position: relative;
-  z-index: 1;
-  max-width: 520px;
-  color: #fff;
-  /* Hug the login card: margin-left:auto pushes this block all the way
-     right, so the gap to .login-center is exactly margin-right (50px).
-     space-between was wrong here — it dumps ALL leftover space into the
-     middle, making the margin meaningless. */
-  margin-left: auto;
-  margin-right: 50px;
-}
-
-.brand-title {
-  font-family: 'Source Han Sans SC', 'MiSans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  font-size: clamp(38px, 3.6vw, 46px);
-  font-weight: 800;
-  line-height: 1.35;
-  letter-spacing: 3px;
-  margin: 0;
-  background: linear-gradient(180deg, #ffffff 20%, #d9faf3 55%, #9fd8e8 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter:
-    drop-shadow(0 0 12px rgba(140, 240, 225, 0.45))
-    drop-shadow(0 0 32px rgba(80, 200, 220, 0.25));
-}
-
-/* Metallic italic "AI" prefix, glowing stronger than the rest. */
-.brand-ai {
-  font-style: italic;
-  margin-right: 0.12em;
-  background: linear-gradient(180deg, #ffffff 10%, #eafcff 45%, #8fd0e8 90%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter:
-    drop-shadow(0 0 14px rgba(180, 250, 255, 0.65))
-    drop-shadow(0 0 36px rgba(120, 220, 255, 0.35));
-}
-
-.brand-subtitle {
-  margin: 18px 0 0;
-  font-size: 15px;
-  letter-spacing: 6px;
-  color: rgba(178, 235, 220, 0.7);
-}
-
-/* Tech underline: thin light-beam with a bright core flare. */
-.brand-rule {
-  position: relative;
-  margin-top: 20px;
-  height: 20px;
-}
-
-.brand-rule::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 9px;
-  height: 1px;
-  background: linear-gradient(90deg, rgba(150, 240, 230, 0.7), rgba(150, 240, 230, 0.15) 60%, transparent);
-  box-shadow: 0 0 8px rgba(120, 230, 220, 0.6);
-}
-
-.brand-rule__core {
-  position: absolute;
-  left: 34%;
-  top: 0;
-  width: 72px;
-  height: 20px;
-  background: radial-gradient(ellipse at center, rgba(210, 255, 252, 0.9), transparent 70%);
-  filter: blur(1px);
-}
-
-.brand-tags {
-  margin-top: 22px;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.brand-tag {
-  text-align: center;
-  font-size: 13px;
-  padding: 9px 0;
-  border-radius: 999px;
-  color: rgba(210, 245, 235, 0.9);
-  border: 1px solid rgba(0, 255, 200, 0.25);
-  background: rgba(0, 255, 200, 0.06);
-}
-
 .login-center {
   position: relative;
   z-index: 1;
-  width: min(100%, 420px);
-  max-width: 420px;
+  width: min(100%, var(--login-card-width));
+  max-width: var(--login-card-width);
   max-height: calc(100dvh - 32px);
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 24px;
-  padding: clamp(24px, 4vh, 42px) clamp(24px, 3vw, 40px);
-  border: 1px solid rgba(224, 244, 236, 0.18);
-  border-radius: 24px;
-  background: linear-gradient(145deg, rgba(15, 61, 64, 0.80), rgba(3, 25, 30, 0.91));
-  box-shadow:
-    0 28px 80px rgba(0, 10, 14, 0.42),
-    0 8px 24px rgba(0, 16, 20, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.10);
-  backdrop-filter: blur(18px) saturate(120%);
-  -webkit-backdrop-filter: blur(18px) saturate(120%);
+  gap: 28px;
+  padding: var(--login-card-padding);
+  border: 1px solid var(--login-card-border);
+  border-radius: var(--login-card-radius);
+  background: var(--login-card-bg);
+  box-shadow: var(--login-card-shadow);
+  backdrop-filter: var(--login-card-blur);
+  -webkit-backdrop-filter: var(--login-card-blur);
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  scrollbar-color: rgba(190, 225, 215, 0.30) transparent;
-  animation: fadeUp 0.6s ease-out both;
-}
-
-.login-center::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 28px;
-  right: 28px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(244, 184, 145, 0.75), transparent);
-  pointer-events: none;
+  scrollbar-color: var(--login-scrollbar) transparent;
 }
 
 .login-center::-webkit-scrollbar {
@@ -444,10 +368,10 @@ function cancelBind() {
 
 .login-center::-webkit-scrollbar-thumb {
   border-radius: 999px;
-  background: rgba(190, 225, 215, 0.30);
+  background: var(--login-scrollbar);
 }
 
-/* Logo */
+/* Brand */
 .login-logo {
   text-align: center;
 }
@@ -455,23 +379,33 @@ function cancelBind() {
 .logo-image {
   display: block;
   margin: 0 auto 14px;
-  width: 88px;
-  height: 88px;
+  width: 76px;
+  height: 76px;
   object-fit: contain;
-  filter: drop-shadow(0 8px 24px rgba(238, 153, 111, 0.34));
-  animation: breathe 3.5s ease-in-out infinite;
 }
 
 .logo-title {
-  font-size: 36px;
-  font-weight: 800;
-  color: #f3f8f5;
+  font-family: var(--login-font-sans);
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--login-brand-primary);
   margin: 0;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.8px;
 }
 
 .logo-title-highlight {
-  color: #f0a17d;
+  color: var(--login-brand-accent);
+}
+
+.logo-tagline {
+  margin: 10px 0 0;
+  font-family: var(--login-font-sans);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 1px;
+  color: var(--login-tagline-color);
 }
 
 /* Form */
@@ -479,7 +413,7 @@ function cancelBind() {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--login-input-gap);
 }
 
 .input-wrap {
@@ -488,87 +422,139 @@ function cancelBind() {
   align-items: center;
 }
 
-.form-input {
-  width: 100%;
-  padding: 14px 16px;
-  border: 1.5px solid rgba(214, 239, 231, 0.20);
-  border-radius: 12px;
-  font-size: 15px;
-  color: #f2f8f5;
-  background: rgba(1, 20, 24, 0.34);
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+.input-icon {
+  position: absolute;
+  left: 14px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--login-input-icon);
+  pointer-events: none;
+  transition: color var(--login-transition);
 }
 
-.form-input::placeholder {
-  color: rgba(214, 233, 226, 0.54);
+.input-wrap:focus-within .input-icon {
+  color: var(--login-input-border-focus);
+}
+
+.form-input {
+  width: 100%;
+  height: var(--login-input-height);
+  padding: 0 14px;
+  border: 1px solid var(--login-input-border);
+  border-radius: var(--login-input-radius);
+  font-family: var(--login-font-sans);
+  font-size: 14px;
+  color: var(--login-input-text);
+  background: var(--login-input-bg);
+  outline: none;
+  box-sizing: border-box;
+  transition:
+    border-color var(--login-transition),
+    background-color var(--login-transition),
+    box-shadow var(--login-transition);
+}
+
+.form-input--with-icon {
+  padding-left: 42px;
 }
 
 .form-input--has-eye {
-  padding-right: 44px;
+  padding-right: 42px;
+}
+
+.form-input::placeholder {
+  color: var(--login-input-placeholder);
 }
 
 .form-input:focus {
-  border-color: #eea17c;
-  background: rgba(2, 25, 29, 0.56);
-  box-shadow: 0 0 0 3px rgba(217, 109, 70, 0.20), 0 10px 24px rgba(0, 12, 15, 0.16);
+  border-color: var(--login-input-border-focus);
+  background: var(--login-input-bg-focus);
+  box-shadow: var(--login-input-focus-ring);
+}
+
+.form-input:-webkit-autofill,
+.form-input:-webkit-autofill:hover,
+.form-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--login-input-text);
+  box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.92) inset;
+  transition: background-color 9999s ease-in-out 0s;
 }
 
 .eye-btn {
   position: absolute;
-  right: 12px;
-  width: 28px;
-  height: 28px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
   border: none;
   background: none;
   cursor: pointer;
-  color: rgba(207, 229, 222, 0.64);
+  color: var(--login-input-icon);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  border-radius: 6px;
+  transition: color var(--login-transition), background-color var(--login-transition);
 }
 
 .eye-btn:hover {
-  color: #f0a17d;
+  color: var(--login-input-border-focus);
+  background: rgba(22, 142, 219, 0.08);
 }
 
 /* Error */
 .error-msg {
   padding: 10px 14px;
-  background: rgba(128, 40, 34, 0.34);
-  border: 1px solid rgba(255, 166, 150, 0.48);
-  border-radius: 10px;
+  background: var(--login-error-bg);
+  border: 1px solid var(--login-error-border);
+  border-radius: var(--login-input-radius);
   font-size: 13px;
-  color: #ffd9d0;
+  color: var(--login-error-text);
 }
 
-/* Button */
+/* Primary submit button */
 .login-btn {
   width: 100%;
-  padding: 12px;
-  background: linear-gradient(135deg, var(--mc-primary), var(--mc-primary-hover));
-  color: white;
+  height: var(--login-btn-height);
+  padding: 0 16px;
+  margin-top: 8px;
+  background: var(--login-btn-bg);
+  color: var(--login-btn-text);
   border: none;
-  border-radius: 12px;
-  font-size: 15px;
+  border-radius: var(--login-btn-radius);
+  font-family: var(--login-font-sans);
+  font-size: 16px;
   font-weight: 600;
+  letter-spacing: var(--login-btn-letter-spacing);
+  box-shadow: var(--login-btn-shadow);
   cursor: pointer;
-  transition: all 0.15s;
-  margin-top: 4px;
-  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition:
+    transform var(--login-transition),
+    filter var(--login-transition),
+    box-shadow var(--login-transition),
+    opacity var(--login-transition);
+}
+
+.login-btn-label {
+  padding-left: var(--login-btn-letter-spacing);
 }
 
 .login-btn:hover:not(:disabled) {
+  filter: brightness(1.06);
   transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(217, 119, 87, 0.3);
+}
+
+.login-btn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .login-btn:disabled {
-  opacity: 0.7;
+  opacity: 0.72;
   cursor: not-allowed;
 }
 
@@ -576,44 +562,52 @@ function cancelBind() {
 .sso-divider {
   text-align: center;
   font-size: 12px;
-  color: rgba(207, 229, 222, 0.62);
-  margin: 4px 0;
+  color: var(--login-divider-text);
+  margin: 0;
   position: relative;
 }
+
 .sso-divider::before,
 .sso-divider::after {
   content: '';
   display: inline-block;
-  width: 30%;
+  width: 28%;
   height: 1px;
-  background: rgba(207, 229, 222, 0.20);
+  background: var(--login-divider-line);
   vertical-align: middle;
-  margin: 0 8px;
+  margin: 0 10px;
 }
+
 .sso-buttons {
   display: flex;
   flex-direction: column;
   gap: 10px;
   width: 100%;
 }
+
 .sso-btn {
   width: 100%;
-  padding: 11px;
-  background: rgba(255, 255, 255, 0.06);
-  color: #edf6f1;
-  border: 1.5px solid rgba(214, 239, 231, 0.20);
-  border-radius: 12px;
+  height: 44px;
+  padding: 0 14px;
+  background: var(--login-secondary-bg);
+  color: var(--login-brand-primary);
+  border: 1px solid var(--login-input-border);
+  border-radius: var(--login-input-radius);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s;
-  height: 44px;
+  transition:
+    border-color var(--login-transition),
+    background-color var(--login-transition),
+    color var(--login-transition);
 }
+
 .sso-btn:hover:not(:disabled) {
-  border-color: rgba(240, 161, 125, 0.82);
-  color: #f0a17d;
-  background: rgba(217, 109, 70, 0.12);
+  border-color: var(--login-input-border-focus);
+  color: var(--login-input-border-focus);
+  background: var(--login-secondary-hover-bg);
 }
+
 .sso-btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
@@ -623,30 +617,39 @@ function cancelBind() {
 .bind-dialog {
   width: 100%;
 }
+
 .bind-dialog-content {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
+
 .bind-title {
   font-size: 16px;
   font-weight: 600;
-  color: #f3f8f5;
+  color: var(--login-brand-primary);
   margin: 0;
 }
+
 .bind-desc {
   font-size: 13px;
-  color: rgba(207, 229, 222, 0.68);
+  color: var(--login-tagline-color);
   margin: 0;
 }
+
 .bind-cancel {
   width: 100%;
   padding: 8px;
   background: none;
-  color: rgba(207, 229, 222, 0.68);
+  color: var(--login-tagline-color);
   border: none;
   font-size: 13px;
   cursor: pointer;
+  transition: color var(--login-transition);
+}
+
+.bind-cancel:hover {
+  color: var(--login-brand-primary);
 }
 
 /* Loading */
@@ -659,7 +662,7 @@ function cancelBind() {
 .loading-dots span {
   width: 6px;
   height: 6px;
-  background: white;
+  background: var(--login-btn-text);
   border-radius: 50%;
   animation: bounce 1.2s infinite;
 }
@@ -672,115 +675,79 @@ function cancelBind() {
   30% { transform: translateY(-5px); }
 }
 
-/* Hint */
+/* Local dev hint (hidden in production) */
 .login-hint {
   text-align: center;
   font-size: 12px;
-  color: rgba(207, 229, 222, 0.62);
-  margin: 0;
-  opacity: 0.9;
+  color: var(--login-hint-text);
+  margin: -6px 0 0;
 }
 
 .login-hint :deep(code) {
-  background: rgba(217, 109, 70, 0.16);
-  padding: 1px 6px;
-  border-radius: 4px;
-  color: #f3b08e;
+  background: var(--login-hint-code-bg);
+  padding: 2px 6px;
+  border-radius: 5px;
+  color: var(--login-hint-code-text);
   font-size: 12px;
 }
 
-/* Breathing animation */
-@keyframes breathe {
-  0%, 100% {
-    transform: scale(1);
-    filter: drop-shadow(0 6px 20px rgba(217, 119, 87, 0.3));
-  }
-  50% {
-    transform: scale(1.06);
-    filter: drop-shadow(0 8px 28px rgba(217, 119, 87, 0.45));
+/* Desktop wide screens (2560×1440) and compact laptops (1366×768) */
+@media (max-width: 1440px) {
+  .login-page {
+    background-position: 36% center;
   }
 }
 
-/* Entrance animation */
-@keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Tablet and below: hide the brand panel and center the card. */
+/* Tablet and below: center the glass card. */
 @media (max-width: 900px) {
   .login-page {
     justify-content: center;
-    padding-right: clamp(20px, 4vw, 48px);
-  }
-
-  .login-brand {
-    display: none;
+    padding: clamp(16px, 4vh, 32px) clamp(20px, 4vw, 48px);
   }
 }
 
-/* Mobile: center the card so the desktop artwork is not over-cropped. */
+/* Mobile: center the card cleanly. */
 @media (max-width: 767px) {
   .login-page {
     justify-content: center;
     padding: 16px;
-    background-position: 32% center;
-  }
-
-  .login-page::after {
-    background: linear-gradient(
-      180deg,
-      rgba(1, 16, 20, 0.26) 0%,
-      rgba(1, 16, 20, 0.10) 40%,
-      rgba(1, 14, 18, 0.54) 100%
-    );
+    background-position: 30% center;
   }
 
   .login-center {
-    width: min(100%, 420px);
-    padding: 28px 22px;
+    width: min(100%, var(--login-card-width));
+    padding: 32px 24px;
     border-radius: 20px;
   }
 }
 
-/* Short screens: keep the normal desktop view scroll-free and make the
-   card compact before falling back to its internal overflow as a last resort. */
-@media (max-height: 720px) {
+/* Short desktop viewports (e.g. 1366×768 with browser chrome) */
+@media (max-height: 700px) {
   .login-page {
     padding-block: 12px;
   }
 
   .login-center {
-    gap: 18px;
-    padding-block: 20px;
+    gap: 20px;
+    padding: 28px 32px;
   }
 
   .logo-image {
-    width: 70px;
-    height: 70px;
-    margin-bottom: 8px;
+    width: 64px;
+    height: 64px;
+    margin-bottom: 10px;
   }
 
   .logo-title {
-    font-size: 30px;
+    font-size: 28px;
   }
 
-  .login-form {
-    gap: 10px;
-  }
-
-  .form-input {
-    padding-block: 11px;
+  .logo-tagline {
+    margin-top: 8px;
   }
 
   .login-btn {
-    height: 44px;
+    margin-top: 4px;
   }
 }
 
@@ -790,14 +757,18 @@ function cancelBind() {
   }
 
   .login-center {
-    padding-inline: 20px;
+    padding: 28px 20px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .login-center,
-  .logo-image {
-    animation: none;
+  .form-input,
+  .input-icon,
+  .eye-btn,
+  .login-btn,
+  .sso-btn,
+  .bind-cancel {
+    transition: none;
   }
 }
 </style>

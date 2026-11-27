@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class DashboardServiceToolCallCountTest {
 
     private final DashboardService service =
-            new DashboardService(null, null, new ObjectMapper());
+            new DashboardService(null, null, new ObjectMapper(), null);
 
     @Test
     @DisplayName("Counts entries from metadata.toolCalls.")

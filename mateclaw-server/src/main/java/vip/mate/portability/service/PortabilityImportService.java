@@ -14,6 +14,15 @@ import vip.mate.agent.AgentService;
 import vip.mate.agent.binding.service.AgentBindingService;
 import vip.mate.agent.model.AgentEntity;
 import vip.mate.agent.repository.AgentMapper;
+// 修改人:祝奔；时间：2026-11-23T02:15:04.591Z；修改原因/内容：导入数据源相关实体与 Mapper，随专家还原数据源配置；代码来源：AI生成
+import vip.mate.datasource.model.AgentDatasourceRelationEntity;
+import vip.mate.datasource.model.DatasourceEntity;
+import vip.mate.datasource.model.DatasourceTableColEntity;
+import vip.mate.datasource.model.DatasourceTableEntity;
+import vip.mate.datasource.repository.AgentDatasourceRelationMapper;
+import vip.mate.datasource.repository.DatasourceMapper;
+import vip.mate.datasource.repository.DatasourceTableColMapper;
+import vip.mate.datasource.repository.DatasourceTableMapper;
 import vip.mate.exception.MateClawException;
 import vip.mate.portability.model.BundleManifest;
 import vip.mate.skill.model.SkillEntity;
@@ -28,7 +37,10 @@ import vip.mate.team.service.TeamService;
 import vip.mate.trigger.model.TriggerEntity;
 import vip.mate.trigger.repository.TriggerMapper;
 import vip.mate.trigger.service.TriggerService;
+import vip.mate.wiki.model.WikiImageEntity;
 import vip.mate.wiki.model.WikiKnowledgeBaseEntity;
+import vip.mate.wiki.repository.WikiImageMapper;
+import vip.mate.wiki.service.WikiImageService;
 import vip.mate.wiki.service.WikiKnowledgeBaseService;
 import vip.mate.wiki.service.WikiRawMaterialService;
 import vip.mate.workflow.compiler.PublishContext;
@@ -48,6 +60,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.HashMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -76,9 +89,13 @@ public class PortabilityImportService {
     private static final Set<String> MEMORY_FILE_WHITELIST =
             Set.of("AGENTS.md", "MEMORY.md", "PROFILE.md", "KNOWLEDGE.md");
 
-    private static final long MAX_UNCOMPRESSED_BYTES = 64L * 1024 * 1024;
+    private static final long MAX_UNCOMPRESSED_BYTES = 500L * 1024 * 1024;
     private static final int MAX_ENTRIES = 500;
     private static final int MAX_ENTRY_BYTES = 16 * 1024 * 1024;
+    // 修改人:祝奔；时间：2026-11-20T07:23:14.892Z；修改原因/内容：图片二进制条目的容量上限与前缀；代码来源：AI生成
+    private static final String WIKI_IMAGE_PREFIX = "wiki-images/";
+    private static final long MAX_IMAGE_BYTES = 50L * 1024 * 1024;
+    private static final long MAX_IMAGE_TOTAL_BYTES = 512L * 1024 * 1024;
 
     private final ObjectMapper objectMapper;
     private final PortabilityFingerprint fingerprint;
@@ -91,6 +108,8 @@ public class PortabilityImportService {
     private final WikiKnowledgeBaseService kbService;
     private final vip.mate.wiki.repository.WikiKnowledgeBaseMapper kbMapper;
     private final WikiRawMaterialService rawService;
+    private final WikiImageMapper wikiImageMapper;
+    private final WikiImageService wikiImageService;
     private final vip.mate.wiki.service.WikiPageService wikiPageService;
     private final vip.mate.workflow.repository.WorkflowRevisionMapper workflowRevisionMapper;
     private final vip.mate.workspace.document.WorkspaceFileService workspaceFileService;
@@ -102,20 +121,33 @@ public class PortabilityImportService {
     private final TeamService teamService;
     private final AgentTeamMapper teamMapper;
     private final AgentTeamMemberMapper memberMapper;
+    // 修改人:祝奔；时间：2026-11-23T02:15:04.591Z；修改原因/内容：注入数据源相关 Mapper 以还原专家绑定数据源子树；代码来源：AI生成
+    private final AgentDatasourceRelationMapper agentDatasourceRelationMapper;
+    private final DatasourceMapper datasourceMapper;
+    private final DatasourceTableMapper datasourceTableMapper;
+    private final DatasourceTableColMapper datasourceTableColMapper;
 
     // ===================== bundle reading =====================
 
+    // 修改人:祝奔；时间：2026-11-20T07:23:14.892Z；修改原因/内容：Bundle 增加图片二进制条目容器；代码来源：AI生成
     /** Parsed bundle held in memory between the preview and the apply call. */
-    public record Bundle(BundleManifest manifest, Map<String, String> files) {
+    public record Bundle(BundleManifest manifest, Map<String, String> files, Map<String, byte[]> binaries) {
 
         public String json(String path) {
             return files.get(path);
+        }
+
+        public byte[] binary(String path) {
+            return binaries.get(path);
         }
     }
 
     public Bundle parse(byte[] payload) {
         Map<String, String> files = new LinkedHashMap<>();
+        // 修改人:祝奔；时间：2026-11-20T07:23:14.892Z；修改原因/内容：图片条目按二进制分流并使用独立容量限制；代码来源：AI生成
+        Map<String, byte[]> binaries = new HashMap<>();
         long total = 0;
+        long imageTotal = 0;
         int entries = 0;
         try (ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(payload))) {
             ZipEntry entry;
@@ -127,7 +159,19 @@ public class PortabilityImportService {
                     throw new MateClawException("err.portability.too_many_entries", "导入包条目过多");
                 }
                 String name = sanitize(entry.getName());
-                byte[] buf = zis.readNBytes(MAX_ENTRY_BYTES + 1);
+                boolean isImage = name.startsWith(WIKI_IMAGE_PREFIX);
+                byte[] buf = zis.readAllBytes();
+                if (isImage) {
+                    if (buf.length > MAX_IMAGE_BYTES) {
+                        throw new MateClawException("err.portability.entry_too_large", "导入包内图片过大: " + name);
+                    }
+                    imageTotal += buf.length;
+                    if (imageTotal > MAX_IMAGE_TOTAL_BYTES) {
+                        throw new MateClawException("err.portability.bundle_too_large", "导入包内图片总体积过大");
+                    }
+                    binaries.put(name, buf);
+                    continue;
+                }
                 if (buf.length > MAX_ENTRY_BYTES) {
                     throw new MateClawException("err.portability.entry_too_large", "导入包内单个文件过大: " + name);
                 }
@@ -168,7 +212,7 @@ public class PortabilityImportService {
                 throw new MateClawException("err.portability.checksum_mismatch", "文件校验失败: " + path);
             }
         });
-        return new Bundle(manifest, files);
+        return new Bundle(manifest, files, binaries);
     }
 
     /** Rejects zip-slip style paths and keeps the tree flat-shallow. */
@@ -210,6 +254,9 @@ public class PortabilityImportService {
         Map<String, String> wfHashes = existingWorkflowHashes(workspaceId);
         Map<String, String> triggerHashes = existingTriggerHashes(workspaceId);
         Map<String, String> teamHashes = existingTeamHashes(workspaceId);
+        // 修改人:祝奔；时间：2026-11-23T02:15:04.591Z；修改原因/内容：预览阶段检查专家的数据源引用是否可解析；代码来源：AI生成
+        Map<String, String> datasourceHashes = existingDatasourceHashes();
+        Set<String> bundleDatasourceNames = bundleDatasourceNames(bundle);
 
         if (wants(modules, "skills")) {
             for (JsonNode n : array(bundle, "skills.json")) {
@@ -235,6 +282,13 @@ public class PortabilityImportService {
                     String refName = ref.asText();
                     if (!kbHashes.containsKey(refName) && !inBundle(bundle, "knowledge-bases.json", refName)) {
                         warnings.add("专家「" + n.path("name").asText() + "」引用了不存在的知识库：" + refName);
+                    }
+                }
+                // 修改人:祝奔；时间：2026-11-23T02:15:04.591Z；修改原因/内容：新增专家数据源引用的可用性检查；代码来源：AI生成
+                for (JsonNode ref : n.path("datasources")) {
+                    String refName = ref.asText();
+                    if (!datasourceHashes.containsKey(refName) && !bundleDatasourceNames.contains(refName)) {
+                        warnings.add("专家「" + n.path("name").asText() + "」引用了包内与环境中都不存在的数据源：" + refName);
                     }
                 }
             }
@@ -313,6 +367,14 @@ public class PortabilityImportService {
         int renamed = 0;
         List<String> warnings = new ArrayList<>(bundle.manifest().getWarnings());
 
+        // 修改人:祝奔；时间：2026-11-20T07:23:14.892Z；修改原因/内容：按 KB 名称建立图片元数据索引，供 KB 创建后还原；代码来源：AI生成
+        Map<String, List<JsonNode>> imagesByKb = new HashMap<>();
+        for (JsonNode img : array(bundle, "wiki-images.json")) {
+            String imgKbName = text(img, "kbName");
+            if (imgKbName == null) continue;
+            imagesByKb.computeIfAbsent(imgKbName, k -> new ArrayList<>()).add(img);
+        }
+
         Map<String, String> agentHashes = existingAgentHashes(workspaceId);
         Map<String, String> skillHashes = existingSkillHashes(workspaceId);
         boolean bundleHasPages = bundleCarriesPages(bundle);
@@ -320,6 +382,11 @@ public class PortabilityImportService {
         Map<String, String> wfHashes = existingWorkflowHashes(workspaceId);
         Map<String, String> triggerHashes = existingTriggerHashes(workspaceId);
         Map<String, String> teamHashes = existingTeamHashes(workspaceId);
+        // 修改人:祝奔；时间：2026-11-23T02:15:04.591Z；修改原因/内容：建立专家数据源子树索引与目标环境数据源指纹索引；代码来源：AI生成
+        Map<String, JsonNode> datasourcesByAgent = datasourcesByAgent(bundle);
+        Map<String, String> datasourceHashes = existingDatasourceHashes();
+        // 修改人:祝奔；时间：2026-11-23T02:15:04.591Z；修改原因/内容：记录数据源原名到目标名的映射，供多个专家共享重命名数据源时复用；代码来源：AI生成
+        Map<String, String> datasourceNameMap = new LinkedHashMap<>();
 
         // 1. Skills --------------------------------------------------------
         if (wants(modules, "skills")) {
@@ -406,6 +473,8 @@ public class PortabilityImportService {
                 if (pagesWritten > 0) {
                     log.info("[portability] restored {} wiki pages into KB {}", pagesWritten, target);
                 }
+                // 修改人:祝奔；时间：2026-11-20T07:23:14.892Z；修改原因/内容：还原知识库图片记录与磁盘文件；代码来源：AI生成
+                restoreWikiImages(name, kb.getId(), workspaceId, imagesByKb, bundle, warnings);
                 createdNames.add(target);
                 created++;
             }
@@ -476,6 +545,9 @@ public class PortabilityImportService {
                         warnings.add("专家「" + target + "」的部分工具未解析（目标环境无同名工具）");
                     }
                 }
+                // 修改人:祝奔；时间：2026-11-23T02:15:04.591Z；修改原因/内容：专家创建后还原其绑定数据源、表、字段配置及绑定关系；代码来源：AI生成
+                restoreAgentDatasources(name, saved.getId(), batchId, onConflict, datasourcesByAgent,
+                        datasourceHashes, datasourceNameMap, createdNames, warnings);
                 nameMap.put(name, target);
                 createdNames.add(target);
                 created++;
@@ -669,6 +741,8 @@ public class PortabilityImportService {
                 .eq(TriggerEntity::getImportBatch, batchId)
                 .eq(TriggerEntity::getWorkspaceId, workspaceId));
         removed += deleteWorkflowsByBatch(workspaceId, batchId);
+        // 修改人:祝奔；时间：2026-11-23T02:15:04.591Z；修改原因/内容：撤销导入时级联清理本批次创建的数据源绑定、字段、表与数据源；代码来源：AI生成
+        removed += deleteImportedDatasources(batchId);
         removed += deleteAgentsByBatch(workspaceId, batchId);
         removed += deleteSkillsByBatch(workspaceId, batchId);
         removed += deleteKbsByBatch(workspaceId, batchId);
@@ -771,6 +845,11 @@ public class PortabilityImportService {
         return node.hasNonNull(field) ? node.get(field).asText() : null;
     }
 
+    // 修改人:祝奔；时间：2026-11-23T02:15:04.591Z；修改原因/内容：布尔字段按缺失原样返回默认值，避免指纹对账时 null 与 false/true 不一致；代码来源：AI生成
+    private static Boolean bool(JsonNode node, String field, Boolean defaultValue) {
+        return node.hasNonNull(field) ? node.get(field).asBoolean() : defaultValue;
+    }
+
     /**
      * Resolves {@code mode.employeeName} (portable) back into a local
      * {@code mode.employeeId}. Blanks the id when the name can't be resolved so
@@ -861,11 +940,12 @@ public class PortabilityImportService {
         for (AgentEntity a : agentMapper.selectList(new LambdaQueryWrapper<AgentEntity>()
                 .eq(AgentEntity::getWorkspaceId, workspaceId)
                 .eq(AgentEntity::getDeleted, 0))) {
+            // 修改人:祝奔；时间：2026-11-23T02:15:04.591Z；修改原因/内容：存量专家指纹纳入绑定数据源名称；代码来源：AI生成
             map.put(a.getName(), fingerprint.hash(fingerprint.agent(
                     a.getName(), a.getDescription(), a.getAgentType(), a.getRuntimeType(), a.getSystemPrompt(),
                     a.getIcon(), a.getTags(), a.getMaxIterations(), a.getEnabled(), a.getDefaultThinkingLevel(),
                     a.getModelName(), skillNamesOf(a.getId(), workspaceId), kbNamesOf(a.getId(), workspaceId),
-                    toolNamesOf(a.getId()))));
+                    toolNamesOf(a.getId()), datasourceNamesOf(a.getId()))));
         }
         return map;
     }
@@ -895,6 +975,188 @@ public class PortabilityImportService {
     private List<String> toolNamesOf(Long agentId) {
         Set<String> bound = bindingService.getBoundToolNames(agentId);
         return bound == null ? new ArrayList<>() : new ArrayList<>(bound);
+    }
+
+    // 修改人:祝奔；时间：2026-11-23T02:15:04.591Z；修改原因/内容：新增专家数据源还原辅助方法集合；代码来源：AI生成
+    private List<String> datasourceNamesOf(Long agentId) {
+        List<String> names = new ArrayList<>();
+        for (AgentDatasourceRelationEntity rel : agentDatasourceRelationMapper.selectList(
+                new LambdaQueryWrapper<AgentDatasourceRelationEntity>()
+                        .eq(AgentDatasourceRelationEntity::getAgentId, agentId)
+                        .eq(AgentDatasourceRelationEntity::getDeleted, 0)
+                        .orderByAsc(AgentDatasourceRelationEntity::getId))) {
+            DatasourceEntity ds = datasourceMapper.selectById(rel.getDatasourceId());
+            if (ds != null && (ds.getDeleted() == null || ds.getDeleted() == 0)) {
+                names.add(ds.getName());
+            }
+        }
+        return names;
+    }
+
+    private Map<String, JsonNode> datasourcesByAgent(Bundle bundle) {
+        Map<String, JsonNode> map = new LinkedHashMap<>();
+        for (JsonNode entry : array(bundle, "agent-datasources.json")) {
+            String agentName = text(entry, "agent");
+            if (agentName != null) {
+                map.put(agentName, entry);
+            }
+        }
+        return map;
+    }
+
+    private Set<String> bundleDatasourceNames(Bundle bundle) {
+        Set<String> names = new java.util.HashSet<>();
+        for (JsonNode entry : array(bundle, "agent-datasources.json")) {
+            for (JsonNode ds : entry.path("datasources")) {
+                String name = text(ds, "name");
+                if (name != null) {
+                    names.add(name);
+                }
+            }
+        }
+        return names;
+    }
+
+    private Map<String, String> existingDatasourceHashes() {
+        Map<String, String> map = new LinkedHashMap<>();
+        for (DatasourceEntity ds : datasourceMapper.selectList(
+                new LambdaQueryWrapper<DatasourceEntity>().eq(DatasourceEntity::getDeleted, 0))) {
+            if (ds.getName() == null) {
+                continue;
+            }
+            map.put(ds.getName(), fingerprint.hash(datasourceDto(ds)));
+        }
+        return map;
+    }
+
+    private Map<String, Object> datasourceDto(DatasourceEntity ds) {
+        List<Map<String, Object>> tables = new ArrayList<>();
+        for (DatasourceTableEntity table : datasourceTableMapper.selectList(
+                new LambdaQueryWrapper<DatasourceTableEntity>()
+                        .eq(DatasourceTableEntity::getDatasourceId, ds.getId())
+                        .eq(DatasourceTableEntity::getDeleted, 0))) {
+            List<Map<String, Object>> columns = new ArrayList<>();
+            for (DatasourceTableColEntity col : datasourceTableColMapper.selectList(
+                    new LambdaQueryWrapper<DatasourceTableColEntity>()
+                            .eq(DatasourceTableColEntity::getTableId, table.getId())
+                            .eq(DatasourceTableColEntity::getDeleted, 0))) {
+                columns.add(fingerprint.datasourceColumn(col.getColumnName(), col.getColumnType(),
+                        col.getColumnComment(), col.getCustomComment(), col.getEnabled()));
+            }
+            tables.add(fingerprint.datasourceTable(table.getTableName(), table.getTableComment(),
+                    table.getTableSchema(), table.getTableType(), table.getEnabled(), columns));
+        }
+        return fingerprint.datasource(ds.getName(), ds.getDescription(), ds.getDbType(), ds.getHost(),
+                ds.getPort(), ds.getDatabaseName(), ds.getUsername(), ds.getExtraParams(), ds.getSchemaName(),
+                ds.getEnabled(), tables);
+    }
+
+    private Map<String, Object> datasourceDto(JsonNode ds) {
+        List<Map<String, Object>> tables = new ArrayList<>();
+        for (JsonNode table : ds.path("tables")) {
+            List<Map<String, Object>> columns = new ArrayList<>();
+            for (JsonNode col : table.path("columns")) {
+                columns.add(fingerprint.datasourceColumn(text(col, "columnName"), text(col, "columnType"),
+                        text(col, "columnComment"), text(col, "customComment"), bool(col, "enabled", null)));
+            }
+            tables.add(fingerprint.datasourceTable(text(table, "tableName"), text(table, "tableComment"),
+                    text(table, "tableSchema"), text(table, "tableType"), bool(table, "enabled", null), columns));
+        }
+        return fingerprint.datasource(text(ds, "name"), text(ds, "description"), text(ds, "dbType"),
+                text(ds, "host"), ds.hasNonNull("port") ? ds.get("port").asInt() : null,
+                text(ds, "databaseName"), text(ds, "username"), text(ds, "extraParams"),
+                text(ds, "schemaName"), bool(ds, "enabled", null), tables);
+    }
+
+    private void restoreAgentDatasources(String srcAgentName, Long agentId, String batchId, String onConflict,
+                                         Map<String, JsonNode> datasourcesByAgent,
+                                         Map<String, String> datasourceHashes, Map<String, String> datasourceNameMap,
+                                         Set<String> createdNames, List<String> warnings) {
+        JsonNode entry = datasourcesByAgent.get(srcAgentName);
+        if (entry == null) {
+            return;
+        }
+        for (JsonNode ds : entry.path("datasources")) {
+            String srcName = text(ds, "name");
+            if (srcName == null || srcName.isBlank()) {
+                continue;
+            }
+            String hash = fingerprint.hash(datasourceDto(ds));
+            String targetName = resolveName(srcName, hash, datasourceHashes, onConflict, createdNames);
+            if (targetName == null) {
+                // 内容一致：复用目标环境已有数据源，只补绑定，不新建、不打批次。
+                DatasourceEntity existing = findDatasourceByName(datasourceNameMap.getOrDefault(srcName, srcName));
+                if (existing == null) {
+                    warnings.add("专家数据源「" + srcName + "」未解析，已跳过绑定");
+                    continue;
+                }
+                insertRelation(agentId, existing.getId(), batchId);
+                continue;
+            }
+            DatasourceEntity created = new DatasourceEntity();
+            created.setName(targetName);
+            created.setDescription(text(ds, "description"));
+            created.setDbType(text(ds, "dbType"));
+            created.setHost(text(ds, "host"));
+            created.setPort(ds.hasNonNull("port") ? ds.get("port").asInt() : null);
+            created.setDatabaseName(text(ds, "databaseName"));
+            created.setUsername(text(ds, "username"));
+            // 密码是源环境密文，原样写入，不经过 DatasourceService.create() 的二次加密。
+            created.setPassword(text(ds, "password"));
+            created.setExtraParams(text(ds, "extraParams"));
+            created.setSchemaName(text(ds, "schemaName"));
+            created.setEnabled(ds.path("enabled").asBoolean(true));
+            created.setImportBatch(batchId);
+            created.setDeleted(0);
+            datasourceMapper.insert(created);
+            for (JsonNode table : ds.path("tables")) {
+                DatasourceTableEntity t = new DatasourceTableEntity();
+                t.setDatasourceId(created.getId());
+                t.setTableName(text(table, "tableName"));
+                t.setTableComment(text(table, "tableComment"));
+                t.setTableSchema(text(table, "tableSchema"));
+                t.setTableType(text(table, "tableType"));
+                t.setEnabled(table.path("enabled").asBoolean(true));
+                t.setImportBatch(batchId);
+                t.setDeleted(0);
+                datasourceTableMapper.insert(t);
+                for (JsonNode col : table.path("columns")) {
+                    DatasourceTableColEntity c = new DatasourceTableColEntity();
+                    c.setDatasourceId(created.getId());
+                    c.setTableId(t.getId());
+                    c.setTableName(text(table, "tableName"));
+                    c.setColumnName(text(col, "columnName"));
+                    c.setColumnType(text(col, "columnType"));
+                    c.setColumnComment(text(col, "columnComment"));
+                    c.setCustomComment(text(col, "customComment"));
+                    c.setEnabled(col.path("enabled").asBoolean(false));
+                    c.setImportBatch(batchId);
+                    c.setDeleted(0);
+                    datasourceTableColMapper.insert(c);
+                }
+            }
+            // 共享数据源第二次出现时能被识别为“内容一致”，避免重复创建。
+            datasourceHashes.put(targetName, hash);
+            datasourceNameMap.put(srcName, targetName);
+            createdNames.add(targetName);
+            insertRelation(agentId, created.getId(), batchId);
+        }
+    }
+
+    private DatasourceEntity findDatasourceByName(String name) {
+        List<DatasourceEntity> rows = datasourceMapper.selectList(new LambdaQueryWrapper<DatasourceEntity>()
+                .eq(DatasourceEntity::getName, name)
+                .eq(DatasourceEntity::getDeleted, 0));
+        return rows.isEmpty() ? null : rows.get(0);
+    }
+
+    private void insertRelation(Long agentId, Long datasourceId, String batchId) {
+        AgentDatasourceRelationEntity rel = new AgentDatasourceRelationEntity();
+        rel.setAgentId(agentId);
+        rel.setDatasourceId(datasourceId);
+        rel.setImportBatch(batchId);
+        rel.setDeleted(0);
+        agentDatasourceRelationMapper.insert(rel);
     }
 
     private Map<String, String> existingSkillHashes(Long workspaceId) {
@@ -965,6 +1227,61 @@ public class PortabilityImportService {
             }
         }
         return false;
+    }
+
+    // 修改人:祝奔；时间：2026-11-20T07:23:14.892Z；修改原因/内容：还原图片元数据记录与磁盘二进制，保留原 ID 指向正文引用；代码来源：AI生成
+    private void restoreWikiImages(String srcKbName, Long targetKbId, Long workspaceId,
+                                   Map<String, List<JsonNode>> imagesByKb, Bundle bundle,
+                                   List<String> warnings) {
+        List<JsonNode> images = imagesByKb.get(srcKbName);
+        if (images == null || images.isEmpty()) {
+            return;
+        }
+        for (JsonNode img : images) {
+            String idStr = text(img, "id");
+            String ext = text(img, "ext");
+            if (idStr == null || ext == null) {
+                continue;
+            }
+            Long imageId;
+            try {
+                imageId = Long.valueOf(idStr);
+            } catch (NumberFormatException e) {
+                warnings.add("图片 " + idStr + " ID 非法，已跳过");
+                continue;
+            }
+            String binPath = "wiki-images/" + text(img, "kbId") + "/" + imageId + "." + ext;
+            byte[] bytes = bundle.binary(binPath);
+            if (bytes == null) {
+                warnings.add("图片 " + imageId + " 二进制缺失，已跳过");
+                continue;
+            }
+            try {
+                wikiImageService.restoreFile(targetKbId, imageId, ext, bytes);
+                WikiImageEntity entity = new WikiImageEntity();
+                entity.setId(imageId);
+                entity.setKbId(targetKbId);
+                String rawId = text(img, "rawId");
+                if (rawId != null) {
+                    try {
+                        entity.setRawId(Long.valueOf(rawId));
+                    } catch (NumberFormatException ignore) {
+                        // raw 引用无法解析时留空，不影响图片显示
+                    }
+                }
+                entity.setWorkspaceId(workspaceId);
+                entity.setExt(ext);
+                entity.setMimeType(text(img, "mimeType"));
+                entity.setFileSize(img.hasNonNull("fileSize") ? img.get("fileSize").asLong() : (long) bytes.length);
+                entity.setSourceRef(text(img, "sourceRef"));
+                entity.setContentHash(text(img, "contentHash"));
+                entity.setDeleted(0);
+                wikiImageMapper.insert(entity);
+            } catch (RuntimeException e) {
+                warnings.add("图片 " + imageId + " 还原失败：" + e.getMessage());
+                log.warn("[portability] restore wiki image {} failed: {}", imageId, e.getMessage());
+            }
+        }
     }
 
     private Map<String, String> existingWorkflowHashes(Long workspaceId) {
@@ -1064,6 +1381,20 @@ public class PortabilityImportService {
         teamMapper.update(null, new LambdaUpdateWrapper<AgentTeamEntity>()
                 .eq(AgentTeamEntity::getId, teamId)
                 .set(AgentTeamEntity::getImportBatch, batchId));
+    }
+
+    // 修改人:祝奔；时间：2026-11-23T02:15:04.591Z；修改原因/内容：按批次删除导入创建的数据源子树；四张表无 workspace_id，仅按批次精确匹配；代码来源：AI生成
+    private int deleteImportedDatasources(String batchId) {
+        int removed = 0;
+        removed += agentDatasourceRelationMapper.delete(new LambdaQueryWrapper<AgentDatasourceRelationEntity>()
+                .eq(AgentDatasourceRelationEntity::getImportBatch, batchId));
+        removed += datasourceTableColMapper.delete(new LambdaQueryWrapper<DatasourceTableColEntity>()
+                .eq(DatasourceTableColEntity::getImportBatch, batchId));
+        removed += datasourceTableMapper.delete(new LambdaQueryWrapper<DatasourceTableEntity>()
+                .eq(DatasourceTableEntity::getImportBatch, batchId));
+        removed += datasourceMapper.delete(new LambdaQueryWrapper<DatasourceEntity>()
+                .eq(DatasourceEntity::getImportBatch, batchId));
+        return removed;
     }
 
     private int deleteAgentsByBatch(Long workspaceId, String batchId) {

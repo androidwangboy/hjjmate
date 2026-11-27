@@ -1,7 +1,11 @@
 package vip.mate.tool.document;
 
+import io.minio.GetObjectArgs;
+import io.minio.GetObjectResponse;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ToolContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -10,6 +14,8 @@ import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import vip.mate.agent.context.ChatOrigin;
+import vip.mate.config.MinioProperties;
+import vip.mate.plugin.api.minio.CustomMinioClient;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -62,6 +68,11 @@ public class GeneratedFileCache {
      */
     @Value("${mateclaw.server.public-base-url:}")
     private String publicBaseUrl;
+    @Resource
+    private MinioProperties minioProperties;
+    @Autowired(required = false)
+    @Nullable
+    private CustomMinioClient minioClient;
 
     /** How often the expired-file sweep runs (6 hours). Must be a compile-time
      *  constant for use in {@link Scheduled#fixedDelay()}. */
@@ -255,6 +266,9 @@ public class GeneratedFileCache {
         Entry entry = entries.get(id);
         if (entry == null) {
             entry = loadFromDisk(id);
+            if (entry == null){
+                entry = loadFromMinio(id);
+            }
             if (entry != null) {
                 entries.put(id, entry);
             }
@@ -267,6 +281,26 @@ public class GeneratedFileCache {
             return Optional.empty();
         }
         return Optional.of(entry);
+    }
+
+    private Entry loadFromMinio(String id) {
+        if (!minioProperties.isEnabled() || minioClient == null){
+            return null;
+        }
+        try {
+            GetObjectResponse object = minioClient.getObject(GetObjectArgs.builder().bucket(minioProperties.getBucket())
+                    .object(id).build());
+            byte[] bytes = object.readAllBytes();
+            GetObjectResponse objectMeta = minioClient.getObject(GetObjectArgs.builder().bucket(minioProperties.getBucket())
+                    .object(id+META_SUFFIX).build());
+            byte[] bytesMeta = objectMeta.readAllBytes();
+            Metadata parsed = parseMeta(new String(bytesMeta), id);
+            return new Entry(bytes, parsed.filename(), parsed.mimeType(), parsed.expireAt(),
+                    parsed.workspaceId(), parsed.ownerUserId(), parsed.conversationId());
+        } catch (Exception e) {
+            log.warn("Could not load generated file from minio id={}: {}", id, e.toString());
+            return null;
+        }
     }
 
     public Optional<Entry> getForWorkspace(String id, @Nullable Long workspaceId) {
@@ -362,6 +396,11 @@ public class GeneratedFileCache {
                     + "\t" + (entry.ownerUserId() == null ? "" : entry.ownerUserId())
                     + "\t" + b64(entry.conversationId());
             Files.writeString(storageDir.resolve(id + META_SUFFIX), meta);
+
+            if (minioProperties.isEnabled() && minioClient != null){
+                minioClient.put(minioProperties.getBucket(), id, entry.bytes(), entry.mimeType());
+                minioClient.put(minioProperties.getBucket(), id + META_SUFFIX, meta.getBytes(StandardCharsets.UTF_8), "text/plain");
+            }
         } catch (IOException e) {
             // Best-effort: an in-memory entry still serves the current process.
             log.warn("Could not persist generated file id={}: {}", id, e.toString());
@@ -381,7 +420,7 @@ public class GeneratedFileCache {
             return new Entry(bytes, parsed.filename(), parsed.mimeType(), parsed.expireAt(),
                     parsed.workspaceId(), parsed.ownerUserId(), parsed.conversationId());
         } catch (Exception e) {
-            log.warn("Could not load generated file id={}: {}", id, e.toString());
+            log.warn("Could not load generated file from disk id={}: {}", id, e.toString());
             return null;
         }
     }

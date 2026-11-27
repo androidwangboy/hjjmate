@@ -128,6 +128,52 @@
             </div>
           </div>
 
+          <!-- 修改人:祝奔；时间：2026-11-23T08:18:54.964Z；修改原因/内容：将用户趋势图的筛选维度由模型改为专家；代码来源：AI生成 -->
+          <div class="user-trend-section">
+            <div class="section-head">
+              <h2 class="section-title">{{ t('dashboard.userTrend.title') }}</h2>
+              <p class="section-subtitle">{{ t('dashboard.userTrend.subtitle') }}</p>
+            </div>
+            <div class="user-trend-card mc-surface-card">
+              <div class="user-trend-toolbar">
+                <el-date-picker
+                  v-model="userTrendDateRange"
+                  type="daterange"
+                  range-separator="–"
+                  :start-placeholder="t('dashboard.userTrend.startDate')"
+                  :end-placeholder="t('dashboard.userTrend.endDate')"
+                  format="YYYY-MM-DD"
+                  value-format="YYYY-MM-DD"
+                  :clearable="false"
+                  size="default"
+                />
+                <!-- 修改人:祝奔；时间：2026-11-23T08:32:58.413Z；修改原因/内容：专家下拉框开启可过滤，支持按名称模糊查询；代码来源：AI生成 -->
+                <el-select v-model="userTrendAgent" class="user-trend-select" filterable>
+                  <el-option :label="t('dashboard.userTrend.allAgents')" value="ALL" />
+                  <el-option
+                    v-for="a in userTrendAgents"
+                    :key="a.id"
+                    :label="a.name"
+                    :value="String(a.id)"
+                  />
+                </el-select>
+                <div class="metric-switch">
+                  <button
+                    v-for="option in userTrendMetricOptions"
+                    :key="option.value"
+                    class="metric-switch__btn"
+                    :class="{ 'is-active': userTrendMetric === option.value }"
+                    @click="userTrendMetric = option.value"
+                  >
+                    {{ option.label }}
+                  </button>
+                </div>
+              </div>
+              <div ref="userTrendChartRef" class="user-trend-chart"></div>
+              <div class="user-trend-hint">{{ t('dashboard.userTrend.dataHint') }}</div>
+            </div>
+          </div>
+
           <div class="comparison-section">
             <div class="section-head">
               <h2 class="section-title">{{ t('dashboard.periodComparison') }}</h2>
@@ -197,13 +243,17 @@
 </template>
 
 <script setup lang="ts">
+// 修改人:祝奔；时间：2026-11-23T08:14:04.710Z；修改原因/内容：引入 dayjs 用于生成用户趋势图的日期序列；代码来源：AI生成
 import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
+import dayjs from 'dayjs'
 import { ArrowRight, ChatDotRound, DataLine, Document, Tools } from '@element-plus/icons-vue'
 import { dashboardApi, modelApi, http } from '@/api'
 import { getProviderIcon, onProviderIconError } from '@/utils/providerIcons'
 import OperationalExport from '@/components/dashboard/OperationalExport.vue'
+// 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：引入useThemeStore以使Dashboard图表随皮肤与明暗切换实时重绘；代码来源：AI生成
+import { useThemeStore } from '@/stores/useThemeStore'
 import * as echarts from 'echarts/core'
 import { LineChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent, LegendComponent } from 'echarts/components'
@@ -213,6 +263,7 @@ echarts.use([LineChart, GridComponent, TooltipComponent, LegendComponent, Canvas
 
 const { t, locale } = useI18n()
 const router = useRouter()
+const themeStore = useThemeStore()
 
 // Connected database product name (e.g. "MySQL" / "H2" / "PostgreSQL"), shown as
 // a subtle chip in the page header. Empty string hides it when unavailable.
@@ -224,6 +275,27 @@ const trendData = ref<any[]>([])
 const chartRef = ref<HTMLElement | null>(null)
 let chartInstance: echarts.ECharts | null = null
 let chartResizeObserver: ResizeObserver | null = null
+
+// 修改人:祝奔；时间：2026-11-23T08:14:04.710Z；修改原因/内容：新增用户维度趋势图的状态、模拟用户列表与指标选项；代码来源：AI生成
+// 修改人:祝奔；时间：2026-11-23T08:18:54.964Z；修改原因/内容：将趋势图的模型维度状态替换为专家维度状态与专家列表；代码来源：AI生成
+// 修改人:祝奔；时间：2026-11-23T08:23:34.674Z；修改原因/内容：用户趋势图状态改为接收后端接口返回的日期、专家与用户统计数据；代码来源：AI生成
+// 修改人:祝奔；时间：2026-11-23T08:32:58.413Z；修改原因/内容：趋势指标由对话数改为消息数；代码来源：AI生成
+const userTrendChartRef = ref<HTMLElement | null>(null)
+let userTrendChartInstance: echarts.ECharts | null = null
+let userTrendResizeObserver: ResizeObserver | null = null
+const userTrendDateRange = ref<[string, string]>([
+  dayjs().subtract(6, 'day').format('YYYY-MM-DD'),
+  dayjs().format('YYYY-MM-DD'),
+])
+const userTrendAgent = ref('ALL')
+const userTrendMetric = ref<'messages' | 'tokens'>('messages')
+const userTrendAgents = ref<Array<{ id: number | string; name: string }>>([])
+const userTrendDates = ref<string[]>([])
+const userTrendRows = ref<Array<{ name: string; messages: number[]; tokens: number[] }>>([])
+const userTrendMetricOptions = computed(() => [
+  { value: 'messages' as const, label: t('dashboard.messages') },
+  { value: 'tokens' as const, label: t('dashboard.tokens') },
+])
 
 const todayStats = reactive({
   conversations: 0,
@@ -271,6 +343,10 @@ function goToModels() {
 }
 
 onMounted(async () => {
+  // 修改人:祝奔；时间：2026-11-23T08:23:34.674Z；修改原因/内容：挂载后从后端接口加载用户趋势数据并渲染；代码来源：AI生成
+  await nextTick()
+  await loadUserTrendData()
+
   try {
     const [overviewRes, runsRes, trendRes] = await Promise.all([
       dashboardApi.overview(),
@@ -315,6 +391,8 @@ onMounted(async () => {
 
 onUnmounted(() => {
   disposeChart()
+  // 修改人:祝奔；时间：2026-11-23T08:14:04.710Z；修改原因/内容：卸载时同步释放用户趋势图实例与尺寸监听；代码来源：AI生成
+  disposeUserTrendChart()
 })
 
 function disposeChart() {
@@ -405,8 +483,125 @@ function renderChart() {
   }
 }
 
+// 修改人:祝奔；时间：2026-11-23T08:14:04.710Z；修改原因/内容：新增用户维度趋势图的日期序列、模拟数据生成与 ECharts 渲染逻辑；代码来源：AI生成
+function disposeUserTrendChart() {
+  userTrendResizeObserver?.disconnect()
+  userTrendResizeObserver = null
+  if (userTrendChartInstance && !userTrendChartInstance.isDisposed()) {
+    userTrendChartInstance.dispose()
+  }
+  userTrendChartInstance = null
+}
+
+// 修改人:祝奔；时间：2026-11-23T08:23:34.674Z；修改原因/内容：移除前端模拟数据生成，改由后端接口回显用户趋势数据；代码来源：AI生成
+async function loadUserTrendData() {
+  const [startDate, endDate] = userTrendDateRange.value || []
+  if (!startDate || !endDate) return
+  try {
+    const res: any = await dashboardApi.userTrend({
+      startDate,
+      endDate,
+      agentId: userTrendAgent.value === 'ALL' ? undefined : userTrendAgent.value,
+    })
+    const data = res?.data || {}
+    userTrendDates.value = Array.isArray(data.dates) ? data.dates : []
+    userTrendAgents.value = Array.isArray(data.agents) ? data.agents : []
+    userTrendRows.value = Array.isArray(data.users) ? data.users : []
+  } catch {
+    userTrendDates.value = []
+    userTrendAgents.value = []
+    userTrendRows.value = []
+  }
+  renderUserTrendChart()
+}
+
+function renderUserTrendChart() {
+  if (!userTrendChartRef.value) return
+  const dates = userTrendDates.value
+  if (!dates.length) {
+    if (userTrendChartInstance && !userTrendChartInstance.isDisposed()) {
+      userTrendChartInstance.clear()
+    }
+    return
+  }
+
+  userTrendChartInstance = echarts.getInstanceByDom(userTrendChartRef.value) || echarts.init(userTrendChartRef.value)
+  const metric = userTrendMetric.value
+  const names = userTrendRows.value.map((row) => row.name)
+  const palette = ['#D97757', '#60a5fa', '#10b981', '#8b5cf6', '#f59e0b']
+  const style = getComputedStyle(document.documentElement)
+  const textColor = style.getPropertyValue('--mc-text-secondary').trim() || '#999'
+  const borderColor = style.getPropertyValue('--mc-border-light').trim() || '#eee'
+
+  const series = userTrendRows.value.map((row, index) => ({
+    name: row.name,
+    type: 'line' as const,
+    smooth: true,
+    symbol: 'circle',
+    symbolSize: 6,
+    lineStyle: { width: 2.2, color: palette[index % palette.length] },
+    itemStyle: { color: palette[index % palette.length] },
+    data: metric === 'messages' ? row.messages : row.tokens,
+  }))
+
+  userTrendChartInstance.setOption({
+    color: palette,
+    tooltip: {
+      trigger: 'axis',
+      valueFormatter: (value: any) => metric === 'tokens' ? formatTokens(Number(value)) : String(value),
+    },
+    legend: {
+      data: names,
+      textStyle: { color: textColor, fontSize: 12 },
+      bottom: 0,
+    },
+    grid: { top: 16, right: 16, bottom: 40, left: 16, containLabel: true },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: dates.map((d) => d.slice(5)),
+      axisLabel: { color: textColor, fontSize: 11 },
+      axisLine: { lineStyle: { color: borderColor } },
+    },
+    yAxis: {
+      type: 'value',
+      minInterval: 1,
+      axisLabel: {
+        color: textColor,
+        fontSize: 11,
+        formatter: (v: number) => metric === 'tokens' ? formatTokens(v) : v,
+      },
+      splitLine: { lineStyle: { color: borderColor, type: 'dashed' } },
+    },
+    series,
+  }, true)
+
+  if (!userTrendResizeObserver) {
+    userTrendResizeObserver = new ResizeObserver(() => {
+      if (userTrendChartInstance && !userTrendChartInstance.isDisposed()) {
+        userTrendChartInstance.resize()
+      }
+    })
+    userTrendResizeObserver.observe(userTrendChartRef.value)
+  }
+}
+
+watch([userTrendDateRange, userTrendAgent], async () => {
+  await nextTick()
+  await loadUserTrendData()
+})
+watch(userTrendMetric, () => renderUserTrendChart())
+
 watch(locale, () => {
   if (trendData.value.length) renderChart()
+  renderUserTrendChart()
+})
+
+// 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：皮肤或明暗模式切换后重绘Dashboard趋势折线图；代码来源：AI生成
+watch(() => [themeStore.skinId, themeStore.isDark], () => {
+  nextTick(() => {
+    if (trendData.value.length) renderChart()
+  })
 })
 
 function formatTokens(n: number): string {
@@ -559,7 +754,8 @@ function calcDuration(run: any): string {
   align-items: center;
   justify-content: center;
   border-radius: 16px;
-  background: linear-gradient(135deg, rgba(217, 109, 70, 0.12), rgba(24, 74, 69, 0.08));
+  /* 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：替换为皮肤RGB通道变量；代码来源：AI生成 */
+  background: linear-gradient(135deg, rgba(var(--mc-primary-rgb), 0.12), rgba(var(--mc-accent-rgb), 0.08));
   font-size: 24px;
   color: var(--mc-primary);
 }
@@ -600,7 +796,7 @@ function calcDuration(run: any): string {
   background: none; border: none; cursor: pointer;
   padding: 4px 6px; border-radius: 6px; transition: background 0.15s ease;
 }
-.models-manage:hover { background: rgba(217, 109, 70, 0.08); }
+.models-manage:hover { background: rgba(var(--mc-primary-rgb), 0.08); }
 
 .provider-chips {
   display: flex; flex-wrap: wrap; gap: 8px;
@@ -644,6 +840,29 @@ function calcDuration(run: any): string {
 .trend-chart { padding: 18px; }
 .chart-container { width: 100%; height: 240px; }
 
+/* 修改人:祝奔；时间：2026-11-23T08:14:04.710Z；修改原因/内容：新增用户趋势图的工具栏、指标切换按钮与图表容器样式；代码来源：AI生成 */
+.user-trend-section { margin-bottom: 22px; }
+.user-trend-card { padding: 18px; }
+.user-trend-toolbar {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.user-trend-select { width: 190px; }
+.metric-switch {
+  display: inline-flex; align-items: center; gap: 2px;
+  padding: 3px; border-radius: 8px;
+  background: var(--mc-bg-muted); border: 1px solid var(--mc-border-light);
+}
+.metric-switch__btn {
+  padding: 5px 12px; border: none; border-radius: 6px;
+  background: transparent; color: var(--mc-text-secondary);
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.metric-switch__btn.is-active { background: var(--mc-primary); color: #fff; }
+.user-trend-chart { width: 100%; height: 280px; }
+.user-trend-hint { margin-top: 6px; font-size: 12px; color: var(--mc-text-tertiary); }
+
 .comparison-section { margin-bottom: 22px; }
 .comparison-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .comparison-card {
@@ -669,7 +888,7 @@ function calcDuration(run: any): string {
 }
 .runs-table td { padding: 9px 14px; border-bottom: 1px solid var(--mc-border-light); color: var(--mc-text-primary); }
 .runs-table tr:last-child td { border-bottom: none; }
-.runs-table tbody tr:hover { background: rgba(217, 109, 70, 0.04); }
+.runs-table tbody tr:hover { background: rgba(var(--mc-primary-rgb), 0.04); }
 
 .cell-time { font-size: 12px; color: var(--mc-text-tertiary); white-space: nowrap; }
 .cell-job { font-family: 'SF Mono', monospace; font-size: 12px; color: var(--mc-text-secondary); }
@@ -701,6 +920,8 @@ function calcDuration(run: any): string {
   }
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
   .comparison-grid { grid-template-columns: 1fr; }
+  /* 修改人:祝奔；时间：2026-11-23T08:14:04.710Z；修改原因/内容：窄屏下让趋势图模型选择器占满宽度；代码来源：AI生成 */
+  .user-trend-select { width: 100%; }
 }
 
 @media (max-width: 480px) {

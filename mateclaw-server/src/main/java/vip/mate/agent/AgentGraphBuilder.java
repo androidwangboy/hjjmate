@@ -35,6 +35,7 @@ import vip.mate.agent.model.AgentEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import vip.mate.config.GraphObservationProperties;
 import vip.mate.config.ReasoningRetentionProperties;
+import vip.mate.datasource.service.AgentDatasourceRelationService;
 import vip.mate.exception.MateClawException;
 import vip.mate.llm.chatmodel.HttpTimeouts;
 import vip.mate.llm.chatmodel.OpenAiCompatibleChatModelBuilder;
@@ -153,7 +154,7 @@ public class AgentGraphBuilder {
     private final vip.mate.goal.config.GoalProperties goalProperties;
     /** C4: per-conversation environment notification registry, injected into ReasoningNode. */
     private final vip.mate.agent.runtime.RunningConversationRegistry runningConversationRegistry;
-
+    private final AgentDatasourceRelationService agentDatasourceRelationService;
     /**
      * Auto-grant resolver wired into the executor so an active
      * {@code mate_approval_grant} row can skip {@code createPending()} for matching
@@ -1831,7 +1832,9 @@ public class AgentGraphBuilder {
         // prefix; TeamChangedEvent evicts the cached agent on composition changes.
         String teamContext = teamContextBuilder.buildTeamContext(entity.getId());
 
-        return basePrompt + ABOUT_YOU_BLOCK + toolGuidance + searchGuidance + wikiContext + teamContext;
+        // 修改人:祝奔；时间：2026-11-16T14:09:29.021Z；修改原因/内容：专家绑定数据源系统提示词；代码来源：AI生成
+        String datasourceContext = agentDatasourceRelationService.buildDatasourceContext(entity.getId());
+        return basePrompt + ABOUT_YOU_BLOCK + toolGuidance + searchGuidance + wikiContext + teamContext + datasourceContext;
     }
 
     /**

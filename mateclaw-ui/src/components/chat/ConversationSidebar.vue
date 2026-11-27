@@ -49,10 +49,10 @@
       v-if="(!collapsed || isMobile) && agentFilterOptions.length > 1"
       class="conv-filter"
     >
-      <select v-model="convAgentFilter" class="conv-filter-select">
+<!--      <select v-model="convAgentFilter" class="conv-filter-select">
         <option value="">{{ t('chat.allAgents') }}</option>
         <option v-for="opt in agentFilterOptions" :key="opt.id" :value="opt.id">{{ opt.name }}</option>
-      </select>
+      </select>-->
     </div>
 
     <div class="conversation-list">
@@ -271,7 +271,7 @@ const groupedConversations = computed(() => {
     { label: t('chat.dateEarlier'), items: [] },
   ]
 
-  const agentFilter = convAgentFilter.value
+  const agentFilter = props.selectedAgentId//convAgentFilter.value
   for (const conv of sidebarConversations.value) {
     if (agentFilter && String(conv.agentId ?? '') !== agentFilter) continue
     if ((conv.conversationId && conv.conversationId.startsWith('tasks_')) || conv.pinned) {
@@ -806,7 +806,8 @@ function onMenuSelect(item: DropdownMenuItem) {
   border-radius: 6px;
   padding: 2px 6px;
   outline: none;
-  box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.15);
+  /* 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：将会话标题输入框聚焦光晕替换为皮肤RGB通道变量；代码来源：AI生成 */
+  box-shadow: 0 0 0 2px rgba(var(--mc-primary-rgb), 0.18);
 }
 
 /* The kebab overlays the right edge of the row so it reserves no layout

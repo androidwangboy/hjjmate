@@ -26,113 +26,120 @@
   --mc-radius-xl: 20px;
   --mc-radius-full: 9999px;
 
+  /* 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：将基础默认Token切换为医疗冰蓝并补充RGB通道变量以适配多皮肤与壁纸通透度；代码来源：AI生成 */
   /* brand */
-  --mc-primary: #d96d46;
-  --mc-primary-light: #ebb08f;
-  --mc-primary-hover: #bb4f27;
-  --mc-primary-bg: #f6e2d7;
-  --mc-accent: #184a45;
-  --mc-accent-soft: #dce8e4;
+  --mc-primary: #168EDB;
+  --mc-primary-rgb: 22, 142, 219;
+  --mc-primary-light: #7CC4F4;
+  --mc-primary-hover: #0F75BA;
+  --mc-primary-bg: rgba(22, 142, 219, 0.10);
+  --mc-accent: #079EAA;
+  --mc-accent-rgb: 7, 158, 170;
+  --mc-accent-soft: #DCEFF5;
 
   /* surfaces */
-  --mc-bg: #f6f1ea;
+  --mc-surface-rgb: 244, 249, 255;
+  --mc-panel-rgb: 246, 251, 255;
+  --mc-card-rgb: 255, 255, 255;
+  --mc-scrim-rgb: 230, 242, 252;
+  --mc-bg: #E8F2FC;
   --mc-bg-elevated: #ffffff;
-  --mc-bg-sunken: #ebe3db;
-  --mc-bg-muted: #f1e8df;
+  --mc-bg-sunken: #DCEBFA;
+  --mc-bg-muted: #EAF3FC;
   /* Hover wash for icon buttons and list rows. Consumers write
      `background: var(--mc-bg-hover)` with no literal fallback, and an
      undefined custom property makes the whole declaration compute to the
      property's initial value — transparent — so a missing definition here
      silently erases the element's background instead of leaving it alone. */
-  --mc-bg-hover: #ebe3db;
-  --mc-surface-strong: #fdfaf6;
-  --mc-surface-overlay: rgba(255, 255, 255, 0.72);
-  --mc-panel-top: rgba(255, 255, 255, 0.94);
-  --mc-panel-bottom: rgba(255, 252, 248, 0.9);
-  --mc-panel-raised: rgba(255, 255, 255, 0.86);
+  --mc-bg-hover: #DFEEFA;
+  --mc-surface-strong: #F7FBFF;
+  --mc-surface-overlay: rgba(244, 249, 255, 0.84);
+  --mc-panel-top: rgba(248, 252, 255, 0.94);
+  --mc-panel-bottom: rgba(239, 247, 255, 0.90);
+  --mc-panel-raised: rgba(255, 255, 255, 0.88);
 
   /* borders */
-  --mc-border: #d9cec2;
-  --mc-border-light: #ebe3db;
-  --mc-border-strong: #cdbdad;
+  --mc-border: #C8DDF0;
+  --mc-border-light: #DCEAF7;
+  --mc-border-strong: #ACCBE6;
 
   /* text */
-  --mc-text-primary: #1d1612;
-  --mc-text-secondary: #665245;
-  --mc-text-tertiary: #9b7d6c;
+  --mc-text-primary: #173B5C;
+  --mc-text-secondary: #4C6E8C;
+  --mc-text-tertiary: #7A98B2;
   --mc-text-inverse: #ffffff;
 
   /* shadows */
-  --mc-shadow-soft: 0 10px 30px rgba(58, 32, 19, 0.08);
-  --mc-shadow-medium: 0 18px 48px rgba(58, 32, 19, 0.12);
-  --mc-shadow-strong: 0 24px 70px rgba(58, 32, 19, 0.16);
-  --mc-glow: radial-gradient(circle at top, rgba(217, 109, 70, 0.18), transparent 55%);
+  --mc-shadow-soft: 0 12px 32px rgba(23, 59, 92, 0.08);
+  --mc-shadow-medium: 0 18px 48px rgba(23, 59, 92, 0.12);
+  --mc-shadow-strong: 0 24px 70px rgba(23, 59, 92, 0.16);
+  --mc-glow: radial-gradient(circle at top, rgba(22, 142, 219, 0.12), transparent 55%);
 
   /* sidebar */
-  --mc-sidebar-bg: #ffffff;
-  --mc-sidebar-border: #DDD5CC;
-  --mc-sidebar-hover: #F5F0EB;
-  --mc-sidebar-active: #F5E4D8;
-  --mc-sidebar-text: #6B5344;
-  --mc-sidebar-text-active: #D97757;
-  --mc-sidebar-group-title: #A08070;
-  --mc-sidebar-logo-name: #1C1410;
-  --mc-sidebar-footer-bg: rgba(245, 238, 230, 0.82);
-  --mc-sidebar-floating-bg: rgba(255, 252, 248, 0.95);
+  --mc-sidebar-bg: #F6FAFF;
+  --mc-sidebar-border: rgba(200, 221, 240, 0.85);
+  --mc-sidebar-hover: #E7F2FC;
+  --mc-sidebar-active: rgba(22, 142, 219, 0.12);
+  --mc-sidebar-text: #456785;
+  --mc-sidebar-text-active: #0F75BA;
+  --mc-sidebar-group-title: #7D99B2;
+  --mc-sidebar-logo-name: #173B5C;
+  --mc-sidebar-footer-bg: rgba(234, 244, 253, 0.84);
+  --mc-sidebar-floating-bg: rgba(248, 252, 255, 0.96);
 
   /* chat */
-  --mc-chat-bg: #FAFAF8;
+  --mc-chat-bg: #F6FAFF;
   --mc-chat-header-bg: #ffffff;
   --mc-assistant-bubble-bg: #ffffff;
-  --mc-assistant-bubble-border: #DDD5CC;
-  --mc-assistant-bubble-color: #1C1410;
-  --mc-user-bubble-bg: #D97757;
+  --mc-assistant-bubble-border: #D2E3F2;
+  --mc-assistant-bubble-color: #173B5C;
+  --mc-user-bubble-bg: #168EDB;
   --mc-user-bubble-color: #ffffff;
-  --mc-input-bg: #FAFAF8;
-  --mc-input-border: #DDD5CC;
-  --mc-input-text: #1C1410;
+  --mc-input-bg: #F9FCFF;
+  --mc-input-border: #C9DCEB;
+  --mc-input-text: #173B5C;
 
-  /* code blocks — light mode: warm beige bg, dark text */
-  --mc-code-bg: #FAF6F1;
-  --mc-code-header-bg: #EFE8DE;
-  --mc-code-header-border: rgba(28, 20, 16, 0.08);
-  --mc-code-lang-color: #6B5344;
-  --mc-code-copy-color: #6B5344;
-  --mc-code-copy-hover-bg: rgba(28, 20, 16, 0.06);
-  --mc-code-copy-hover-color: #1C1410;
-  --mc-code-text: #1C1410;
-  --mc-code-shadow: rgba(0, 0, 0, 0.08);
+  /* code blocks — light mode */
+  --mc-code-bg: #F3F8FD;
+  --mc-code-header-bg: #E5EFF8;
+  --mc-code-header-border: rgba(23, 59, 92, 0.08);
+  --mc-code-lang-color: #4C6E8C;
+  --mc-code-copy-color: #4C6E8C;
+  --mc-code-copy-hover-bg: rgba(23, 59, 92, 0.06);
+  --mc-code-copy-hover-color: #173B5C;
+  --mc-code-text: #173B5C;
+  --mc-code-shadow: rgba(23, 59, 92, 0.08);
 
   /* inline code */
-  --mc-inline-code-bg: rgba(217, 119, 87, 0.1);
-  --mc-inline-code-color: #7B3F1E;
+  --mc-inline-code-bg: rgba(22, 142, 219, 0.10);
+  --mc-inline-code-color: #0F5E96;
 
   /* markdown */
-  --mc-table-header-bg: #F5F0EB;
-  --mc-table-border: #DDD5CC;
-  --mc-blockquote-bg: rgba(217, 119, 87, 0.05);
-  --mc-blockquote-border: #E0B8A0;
-  --mc-blockquote-color: #6B5344;
-  --mc-link-color: #C1572B;
-  --mc-hr-color: #DDD5CC;
+  --mc-table-header-bg: #ECF4FC;
+  --mc-table-border: #CFE1F0;
+  --mc-blockquote-bg: rgba(22, 142, 219, 0.06);
+  --mc-blockquote-border: #7CC4F4;
+  --mc-blockquote-color: #4C6E8C;
+  --mc-link-color: #0F75BA;
+  --mc-hr-color: #D2E3F2;
 
   /* misc */
   --mc-tool-call-bg: #fef9c3;
   --mc-tool-call-border: #fde68a;
   --mc-tool-call-color: #92400e;
-  --mc-attachment-bg: #F5E4D8;
-  --mc-attachment-border: #E0B8A0;
-  --mc-attachment-color: #7B3F1E;
-  --mc-thinking-bg: #F5F0EB;
-  --mc-thinking-text: #5A4030;
-  --mc-mermaid-bg: #FAFAF8;
-  --mc-mermaid-border: #DDD5CC;
+  --mc-attachment-bg: #E6F2FC;
+  --mc-attachment-border: #BBD8F0;
+  --mc-attachment-color: #135488;
+  --mc-thinking-bg: #EDF5FC;
+  --mc-thinking-text: #3A5D7C;
+  --mc-mermaid-bg: #F7FBFF;
+  --mc-mermaid-border: #CFE1F0;
   /* Code block gutter: now theme-aware along with --mc-code-bg.
      Light mode = darker gutter on light bg; dark fork below flips it. */
-  --mc-code-line-number: rgba(28, 20, 16, 0.38);
-  --mc-thinking-hover: rgba(217, 119, 87, 0.1);
-  --mc-thinking-icon-bg: rgba(217, 119, 87, 0.12);
-  --mc-thinking-border: rgba(217, 119, 87, 0.2);
+  --mc-code-line-number: rgba(23, 59, 92, 0.38);
+  --mc-thinking-hover: rgba(22, 142, 219, 0.10);
+  --mc-thinking-icon-bg: rgba(22, 142, 219, 0.12);
+  --mc-thinking-border: rgba(22, 142, 219, 0.22);
   --mc-danger: #C0392B;
   --mc-danger-bg: #fee2e2;
   --mc-danger-border: #fca5a5;
@@ -143,16 +150,16 @@
   --mc-info: #3b82f6;
 
   /* scrollbar */
-  --mc-scrollbar-thumb: #C4B5A8;
-  --mc-scrollbar-thumb-hover: #A08070;
+  --mc-scrollbar-thumb: #B2CBE0;
+  --mc-scrollbar-thumb-hover: #8BB0CF;
 
   /* workflow canvas — vue-flow surfaces */
-  --mc-canvas-dot: rgba(0, 0, 0, 0.18);
-  --mc-edge: #c2b3a5;
-  --mc-edge-strong: #8a7261;
+  --mc-canvas-dot: rgba(23, 59, 92, 0.16);
+  --mc-edge: #A9C4DC;
+  --mc-edge-strong: #5E87AB;
 
   /* Element Plus light override */
-  --el-color-primary: #D97757;
+  --el-color-primary: #168EDB;
   --el-font-family: var(--mc-font-body);
 
   color-scheme: light;
@@ -160,105 +167,111 @@
 
 html.dark {
   /* brand (lighter in dark bg context) */
-  --mc-primary: #eb8f65;
-  --mc-primary-light: #f1c3ab;
-  --mc-primary-hover: #d96d46;
-  --mc-primary-bg: rgba(224, 136, 96, 0.15);
-  --mc-accent: #5ca69d;
-  --mc-accent-soft: rgba(92, 166, 157, 0.12);
+  --mc-primary: #38BDF8;
+  --mc-primary-rgb: 56, 189, 248;
+  --mc-primary-light: #7DD3FC;
+  --mc-primary-hover: #0EA5E9;
+  --mc-primary-bg: rgba(56, 189, 248, 0.16);
+  --mc-accent: #2DD4BF;
+  --mc-accent-rgb: 45, 212, 191;
+  --mc-accent-soft: rgba(45, 212, 191, 0.14);
 
   /* surfaces */
-  --mc-bg: #17110e;
-  --mc-bg-elevated: #221a16;
-  --mc-bg-sunken: #2a211c;
-  --mc-bg-muted: #201813;
-  --mc-bg-hover: #2a211c;
-  --mc-surface-strong: #2a201a;
-  --mc-surface-overlay: rgba(34, 26, 22, 0.78);
-  --mc-panel-top: rgba(36, 28, 24, 0.96);
-  --mc-panel-bottom: rgba(27, 21, 18, 0.94);
-  --mc-panel-raised: rgba(42, 32, 26, 0.9);
+  --mc-surface-rgb: 14, 29, 48;
+  --mc-panel-rgb: 16, 33, 54;
+  --mc-card-rgb: 21, 42, 68;
+  --mc-scrim-rgb: 7, 17, 30;
+  --mc-bg: #0A1728;
+  --mc-bg-elevated: #12243B;
+  --mc-bg-sunken: #172D49;
+  --mc-bg-muted: #102035;
+  --mc-bg-hover: #1A3352;
+  --mc-surface-strong: #172E4A;
+  --mc-surface-overlay: rgba(14, 29, 48, 0.84);
+  --mc-panel-top: rgba(18, 36, 59, 0.94);
+  --mc-panel-bottom: rgba(13, 27, 45, 0.92);
+  --mc-panel-raised: rgba(21, 42, 68, 0.90);
 
   /* borders */
-  --mc-border: #3D3028;
-  --mc-border-light: #2E2420;
-  --mc-border-strong: #4a392f;
+  --mc-border: #254060;
+  --mc-border-light: #1C334E;
+  --mc-border-strong: #32547B;
 
   /* text */
-  --mc-text-primary: #F0EAE4;
-  --mc-text-secondary: #C4A898;
-  --mc-text-tertiary: #8A7060;
-  --mc-text-inverse: #1C1410;
+  --mc-text-primary: #E7F2FC;
+  --mc-text-secondary: #A4C0DA;
+  --mc-text-tertiary: #6C8AA8;
+  --mc-text-inverse: #0B1829;
 
   /* shadows */
-  --mc-shadow-soft: 0 14px 32px rgba(0, 0, 0, 0.22);
-  --mc-shadow-medium: 0 20px 60px rgba(0, 0, 0, 0.28);
-  --mc-shadow-strong: 0 28px 90px rgba(0, 0, 0, 0.35);
-  --mc-glow: radial-gradient(circle at top, rgba(235, 143, 101, 0.12), transparent 55%);
+  --mc-shadow-soft: 0 14px 32px rgba(2, 10, 20, 0.34);
+  --mc-shadow-medium: 0 20px 60px rgba(2, 10, 20, 0.42);
+  --mc-shadow-strong: 0 28px 90px rgba(2, 10, 20, 0.50);
+  --mc-glow: radial-gradient(circle at top, rgba(56, 189, 248, 0.14), transparent 55%);
 
   /* sidebar */
-  --mc-sidebar-bg: #1A1410;
-  --mc-sidebar-border: #3D3028;
-  --mc-sidebar-hover: #2E2420;
-  --mc-sidebar-active: rgba(224, 136, 96, 0.15);
-  --mc-sidebar-text: #C4A898;
-  --mc-sidebar-text-active: #E08860;
-  --mc-sidebar-group-title: #8A7060;
-  --mc-sidebar-logo-name: #F0EAE4;
-  --mc-sidebar-footer-bg: rgba(34, 26, 22, 0.9);
-  --mc-sidebar-floating-bg: rgba(36, 28, 24, 0.96);
+  --mc-sidebar-bg: #0F2036;
+  --mc-sidebar-border: #243F5E;
+  --mc-sidebar-hover: #18304F;
+  --mc-sidebar-active: rgba(56, 189, 248, 0.16);
+  --mc-sidebar-text: #A4C0DA;
+  --mc-sidebar-text-active: #56CCF8;
+  --mc-sidebar-group-title: #6E8BA8;
+  --mc-sidebar-logo-name: #E7F2FC;
+  --mc-sidebar-footer-bg: rgba(14, 29, 48, 0.90);
+  --mc-sidebar-floating-bg: rgba(18, 36, 59, 0.96);
 
   /* chat */
-  --mc-chat-bg: #1A1410;
-  --mc-chat-header-bg: #231C17;
-  --mc-assistant-bubble-bg: #231C17;
-  --mc-assistant-bubble-border: #3D3028;
-  --mc-assistant-bubble-color: #F0EAE4;
-  --mc-user-bubble-bg: #D97757;
-  --mc-user-bubble-color: #ffffff;
-  --mc-input-bg: #1A1410;
-  --mc-input-border: #3D3028;
-  --mc-input-text: #F0EAE4;
+  --mc-chat-bg: #0E1F34;
+  --mc-chat-header-bg: #132842;
+  --mc-assistant-bubble-bg: #132842;
+  --mc-assistant-bubble-border: #254060;
+  --mc-assistant-bubble-color: #E7F2FC;
+  --mc-user-bubble-bg: #0E82C9;
+  --mc-user-bubble-color: #FFFFFF;
+  --mc-input-bg: #0E1F34;
+  --mc-input-border: #254060;
+  --mc-input-text: #E7F2FC;
 
-  /* code blocks — dark mode: deep brown bg, soft text */
-  --mc-code-bg: #161210;
-  --mc-code-header-bg: #1E1814;
-  --mc-code-header-border: rgba(255, 255, 255, 0.06);
-  --mc-code-lang-color: #8A7060;
-  --mc-code-copy-color: #8A7060;
+  /* code blocks — dark mode */
+  --mc-code-bg: #0B1829;
+  --mc-code-header-bg: #112238;
+  --mc-code-header-border: rgba(255, 255, 255, 0.08);
+  --mc-code-lang-color: #82A0BE;
+  --mc-code-copy-color: #82A0BE;
   --mc-code-copy-hover-bg: rgba(255, 255, 255, 0.08);
-  --mc-code-copy-hover-color: #F0EAE4;
-  --mc-code-text: #abb2bf;
-  --mc-code-shadow: rgba(0, 0, 0, 0.2);
+  --mc-code-copy-hover-color: #E7F2FC;
+  --mc-code-text: #C4D8EC;
+  --mc-code-shadow: rgba(0, 0, 0, 0.25);
 
   /* inline code */
-  --mc-inline-code-bg: rgba(224, 136, 96, 0.15);
-  --mc-inline-code-color: #F0C4A0;
+  --mc-inline-code-bg: rgba(56, 189, 248, 0.16);
+  --mc-inline-code-color: #93DDFD;
 
   /* markdown */
-  --mc-table-header-bg: #2E2420;
-  --mc-table-border: #3D3028;
-  --mc-blockquote-bg: rgba(224, 136, 96, 0.08);
-  --mc-blockquote-border: #D97757;
-  --mc-blockquote-color: #C4A898;
-  --mc-link-color: #E08860;
-  --mc-hr-color: #3D3028;
+  --mc-table-header-bg: #18304D;
+  --mc-table-border: #254060;
+  --mc-blockquote-bg: rgba(56, 189, 248, 0.08);
+  --mc-blockquote-border: #38BDF8;
+  --mc-blockquote-color: #A4C0DA;
+  --mc-link-color: #56CCF8;
+  --mc-hr-color: #254060;
 
   /* misc */
   --mc-tool-call-bg: rgba(250, 204, 21, 0.1);
   --mc-tool-call-border: rgba(250, 204, 21, 0.2);
   --mc-tool-call-color: #fbbf24;
-  --mc-attachment-bg: rgba(224, 136, 96, 0.12);
-  --mc-attachment-border: rgba(224, 136, 96, 0.25);
-  --mc-attachment-color: #F0C4A0;
-  --mc-thinking-bg: #231C17;
-  --mc-thinking-text: #C4A898;
-  --mc-mermaid-bg: #1A1410;
-  --mc-mermaid-border: #3D3028;
-  --mc-code-line-number: rgba(138, 112, 96, 0.95);
-  --mc-thinking-hover: rgba(224, 136, 96, 0.1);
-  --mc-thinking-icon-bg: rgba(224, 136, 96, 0.12);
-  --mc-thinking-border: rgba(224, 136, 96, 0.2);
+  --mc-attachment-bg: rgba(56, 189, 248, 0.14);
+  --mc-attachment-border: rgba(56, 189, 248, 0.28);
+  --mc-attachment-color: #93DDFD;
+  --mc-thinking-bg: #132842;
+  --mc-thinking-text: #A4C0DA;
+  --mc-mermaid-bg: #0E1F34;
+  --mc-mermaid-border: #254060;
+  --mc-code-line-number: rgba(130, 160, 190, 0.85);
+  --mc-thinking-hover: rgba(56, 189, 248, 0.12);
+  --mc-thinking-icon-bg: rgba(56, 189, 248, 0.14);
+  --mc-thinking-border: rgba(56, 189, 248, 0.24);
   --mc-danger: #E05A4A;
   --mc-danger-bg: rgba(224, 90, 74, 0.15);
   --mc-danger-border: rgba(224, 90, 74, 0.4);
@@ -269,14 +282,14 @@ html.dark {
   --mc-info: #60a5fa;
 
   /* scrollbar */
-  --mc-scrollbar-thumb: #5A4438;
-  --mc-scrollbar-thumb-hover: #7A6050;
+  --mc-scrollbar-thumb: #2E4B6E;
+  --mc-scrollbar-thumb-hover: #3F638E;
 
   /* workflow canvas — darker dots + softer edge color so they read on
      the dark background without overpowering the node card. */
-  --mc-canvas-dot: rgba(255, 255, 255, 0.14);
-  --mc-edge: #5a4a3e;
-  --mc-edge-strong: #8c7361;
+  --mc-canvas-dot: rgba(190, 225, 255, 0.14);
+  --mc-edge: #355478;
+  --mc-edge-strong: #5882B0;
 
   color-scheme: dark;
 }
@@ -362,14 +375,14 @@ body {
   font-feature-settings: "kern" on;
   transition: background-color 0.2s ease, color 0.2s ease;
   background-image:
-    radial-gradient(circle at top left, rgba(217, 109, 70, 0.1), transparent 26%),
-    radial-gradient(circle at bottom right, rgba(24, 74, 69, 0.08), transparent 24%);
+    radial-gradient(circle at top left, rgba(var(--mc-primary-rgb), 0.10), transparent 26%),
+    radial-gradient(circle at bottom right, rgba(var(--mc-accent-rgb), 0.08), transparent 24%);
 }
 
 html.dark body {
   background-image:
-    radial-gradient(circle at top left, rgba(235, 143, 101, 0.14), transparent 28%),
-    radial-gradient(circle at bottom right, rgba(92, 166, 157, 0.08), transparent 26%);
+    radial-gradient(circle at top left, rgba(var(--mc-primary-rgb), 0.14), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(var(--mc-accent-rgb), 0.08), transparent 26%);
 }
 
 body::before {
@@ -423,6 +436,22 @@ html.dark body::before {
   object-fit: contain;
   cursor: zoom-in;
 }
+
+/* 修改人:祝奔；时间：2026-11-18T12:05:00.000Z；修改原因/内容：会话回答内嵌的知识库图片单独成块展示，点击由 ImageLightbox 放大缩小；代码来源：AI生成 */
+.markdown-body img.markdown-wiki-image {
+  display: block;
+  max-width: min(560px, 100%);
+  max-height: 640px;
+  height: auto;
+  margin: 12px 0;
+  border-radius: 10px;
+  border: 1px solid var(--mc-code-header-border);
+  object-fit: contain;
+  cursor: zoom-in;
+  min-height: 40px;
+  background: var(--mc-bg-muted);
+}
+.markdown-body img.markdown-wiki-image[data-wiki-image-loading='1'] { opacity: 0.5; }
 
 /* headings */
 .markdown-body h1,
@@ -890,14 +919,14 @@ body.workflow-canvas-fullscreen .mc-page-frame::before {
 
 .mc-surface-card {
   border: 1px solid var(--mc-border-light);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.92));
+  background: linear-gradient(180deg, rgba(var(--mc-card-rgb), 0.78), rgba(var(--mc-card-rgb), 0.94));
   border-radius: var(--mc-radius-xl);
   box-shadow: var(--mc-shadow-soft);
   transition: box-shadow 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 html.dark .mc-surface-card {
-  background: linear-gradient(180deg, rgba(42, 32, 26, 0.86), rgba(34, 26, 22, 0.96));
+  background: linear-gradient(180deg, rgba(var(--mc-card-rgb), 0.86), rgba(var(--mc-card-rgb), 0.96));
 }
 
 @media (max-width: 768px) {

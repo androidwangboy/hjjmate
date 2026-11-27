@@ -15,14 +15,19 @@ import vip.mate.tool.image.vision.VisionRequest;
 import vip.mate.tool.image.vision.VisionResult;
 import vip.mate.wiki.WikiProperties;
 import vip.mate.wiki.event.WikiProcessingEvent;
+// 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：引入知识库实体以解析图片归属工作区；代码来源：AI生成
+import vip.mate.wiki.model.WikiKnowledgeBaseEntity;
 import vip.mate.wiki.model.WikiRawMaterialEntity;
 import vip.mate.wiki.repository.WikiRawMaterialMapper;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
+// 修改人:祝奔；时间：2026-11-18T11:29:06.231Z；修改原因/内容：引入 Map/ArrayList 用于 PDF 图片按页内联；代码来源：AI生成
+import java.util.Map;
 import vip.mate.wiki.dto.WikiFailureItem;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -787,7 +792,9 @@ public class WikiRawMaterialService {
                 // Server-managed path (staged under the wiki upload dir): use the
                 // sandbox-exempt entry so the workspace boundary guard does not
                 // reject the upload dir as "outside workspace boundary".
-                String result = documentExtractTool.extractTrustedDocument(entity.getSourcePath(), null);
+                // 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：传入图片落盘上下文，使 DOCX 内嵌图片落盘并写入鉴权 URL；代码来源：AI生成
+                String extractOptions = buildImageOptions(entity);
+                String result = documentExtractTool.extractTrustedDocument(entity.getSourcePath(), extractOptions);
                 JSONObject json = JSONUtil.parseObj(result);
                 if (json.getBool("success", false)) {
                     String text = json.getStr("text");
@@ -821,6 +828,31 @@ public class WikiRawMaterialService {
     }
 
     /**
+     * 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：构造图片落盘上下文 option（kbId/rawId/workspaceId）传给文档提取器；代码来源：AI生成
+     */
+    private String buildImageOptions(WikiRawMaterialEntity entity) {
+        try {
+            JSONObject context = new JSONObject();
+            context.set("kbId", entity.getKbId());
+            context.set("rawId", entity.getId());
+            Long workspaceId = 1L;
+            if (kbService != null && entity.getKbId() != null) {
+                WikiKnowledgeBaseEntity kb = kbService.getById(entity.getKbId());
+                if (kb != null && kb.getWorkspaceId() != null) {
+                    workspaceId = kb.getWorkspaceId();
+                }
+            }
+            context.set("workspaceId", workspaceId);
+            JSONObject options = new JSONObject();
+            options.set("wikiContext", context);
+            return options.toString();
+        } catch (Exception e) {
+            log.warn("[Wiki] build image options failed for raw={}: {}", entity.getId(), e.getMessage());
+            return null;
+        }
+    }
+
+    /**
      * For PDF raw materials, walks the inline images and appends a section of
      * {@code [图 P{n}#{m}]: <caption>} markers so downstream chunking and
      * search can index image contents.
@@ -834,27 +866,79 @@ public class WikiRawMaterialService {
         if (!"pdf".equals(entity.getSourceType()) || pdfImageExtractor == null) {
             return body;
         }
-        if (featureFlagService == null || !featureFlagService.isEnabled(VISION_FLAG_KEY)) {
-            return body;
+        // 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：图片 URL 落盘始终执行，不再受 vision caption 开关限制；caption 开关仅影响文字描述生成；代码来源：AI生成
+        boolean captionEnabled = featureFlagService != null && featureFlagService.isEnabled(VISION_FLAG_KEY);
+
+        Long kbId = entity.getKbId();
+        Long workspaceId = 1L;
+        if (kbService != null && kbId != null) {
+            WikiKnowledgeBaseEntity kb = kbService.getById(kbId);
+            if (kb != null && kb.getWorkspaceId() != null) {
+                workspaceId = kb.getWorkspaceId();
+            }
         }
 
         java.nio.file.Path pdfPath = java.nio.file.Paths.get(entity.getSourcePath());
         try {
-            List<String> snippets = pdfImageExtractor.captionInlineImages(pdfPath);
-            if (snippets.isEmpty()) {
+            // 修改人:祝奔；时间：2026-11-18T11:29:06.231Z；修改原因/内容：PDF 图片引用与 caption 按页就地内联到 "--- Page N ---" 之后，
+            // 使切片时图片只跟随对应页文本，图文交错；无页标记时退化为追加到末尾；代码来源：AI生成
+            Map<Integer, List<String>> byPage = pdfImageExtractor.captionImagesByPage(
+                    pdfPath, kbId, entity.getId(), workspaceId, captionEnabled);
+            if (byPage.isEmpty()) {
                 return body;
             }
-            StringBuilder sb = new StringBuilder(body);
-            sb.append("\n\n--- Inline images ---\n");
-            for (String snippet : snippets) {
-                sb.append(snippet).append('\n');
-            }
-            return sb.toString();
+            return inlineImagesByPage(body, byPage);
         } catch (Exception e) {
             log.warn("[Wiki] PDF inline-image captioning failed for id={}: {}",
                     entity.getId(), e.getMessage());
             return body;
         }
+    }
+
+    /**
+     * 修改人:祝奔；时间：2026-11-18T11:29:06.231Z；修改原因/内容：把每页的图片/ caption 片段插入正文中对应 "--- Page N ---" 段落之后；
+     * 找不到页标记则统一追加到末尾，保证图片信息不丢失；代码来源：AI生成
+     */
+    private String inlineImagesByPage(String body, Map<Integer, List<String>> byPage) {
+        java.util.regex.Pattern pageMarker = java.util.regex.Pattern.compile("(?m)^--- Page (\\d+) ---\\s*$");
+        java.util.regex.Matcher matcher = pageMarker.matcher(body);
+        StringBuilder result = new StringBuilder();
+        Set<Integer> inserted = new java.util.HashSet<>();
+        int cursor = 0;
+        while (matcher.find()) {
+            result.append(body, cursor, matcher.end());
+            int pageNo;
+            try {
+                pageNo = Integer.parseInt(matcher.group(1));
+            } catch (NumberFormatException e) {
+                pageNo = -1;
+            }
+            List<String> snippets = byPage.get(pageNo);
+            if (snippets != null && !snippets.isEmpty()) {
+                result.append('\n');
+                for (String snippet : snippets) {
+                    result.append(snippet).append('\n');
+                }
+                inserted.add(pageNo);
+            }
+            cursor = matcher.end();
+        }
+        result.append(body, cursor, body.length());
+
+        // 没有对应页标记的图片（如 pdftotext 不带页标记）统一追加到末尾
+        List<String> leftover = new ArrayList<>();
+        for (Map.Entry<Integer, List<String>> e : byPage.entrySet()) {
+            if (!inserted.contains(e.getKey())) {
+                leftover.addAll(e.getValue());
+            }
+        }
+        if (!leftover.isEmpty()) {
+            result.append("\n\n--- 附图 ---\n");
+            for (String snippet : leftover) {
+                result.append(snippet).append('\n');
+            }
+        }
+        return result.toString();
     }
 
     /**

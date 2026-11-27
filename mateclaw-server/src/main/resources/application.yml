@@ -14,7 +14,7 @@ spring:
     encoding: UTF-8
   servlet:
     multipart:
-      max-file-size: 100MB
+      max-file-size: 1024MB
       max-request-size: 200MB
   threads:
     virtual:
@@ -131,7 +131,16 @@ springdoc:
     path: /swagger-ui.html
   # 把单个嵌套 query 参数对象（如分页 wrapper）拍平成独立字段，减少 schema 噪音
   default-flat-param-object: true
-
+# minio
+minio:
+  enabled: true
+  ip: 171.16.101.13
+  port: 9000
+  accessKey: KMilDmYl8Wyf7rddbTz6
+  secretKey: CApOLFqvdboEjYQ8SuOB7ybMSdIRl0DFrbzM4OVc
+  bucket: hjj-mate
+  urlExpireTime: 5
+  maxParts: 10000
 # MateClaw 自定义配置
 mateclaw:
   a2a:
@@ -501,12 +510,14 @@ mate:
   # Wiki 知识库配置
   wiki:
     enabled: true                       # 是否启用 Wiki 知识库功能
-    max-chunk-size: 30000               # LLM 单次处理最大字符数（超过则分块）
+    max-chunk-size: 15000               # LLM 单次处理最大字符数（超过则分块）
     max-context-chars: 10000            # 注入 Agent prompt 的 Wiki 摘要最大字符数
-    max-pages-per-raw: 15               # 单个原始材料最多生成的 Wiki 页面数
+    max-pages-per-raw: 100               # 单个原始材料最多生成的 Wiki 页面数
     max-parallel-phase-b-pages: 3       # RFC-012 follow-up #3：单 chunk 内 phase B 阶段并行处理的 page 数
     auto-process-on-upload: true        # 上传原始材料后是否自动触发 AI 消化
     upload-dir: ./data/wiki-uploads     # 上传文件存储目录
+    # 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：新增 Wiki 素材内嵌图片落盘目录配置；代码来源：AI生成
+    image-dir: ./data/wiki-images       # 素材内嵌图片落盘目录（通过 /api/v1/wiki/images 鉴权访问）
     max-scan-files: 500                 # 目录扫描最大文件数
     max-scan-file-size: 52428800        # 扫描时跳过大于此大小的文件（字节，默认 50MB）
   # Dream v2 feature flags — production defaults after GA validation

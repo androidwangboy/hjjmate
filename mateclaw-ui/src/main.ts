@@ -11,6 +11,8 @@ import 'element-plus/dist/index.css'
 import App from './App.vue'
 import router from './router'
 import './assets/main.css'
+// 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：引入多皮肤CSS Token表；代码来源：AI生成
+import './assets/skins.css'
 import { i18n, initializeLocale } from './i18n'
 
 // Note: the heavy <model-viewer> Web Component is no longer imported here. It is

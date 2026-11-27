@@ -411,6 +411,39 @@ CREATE TABLE IF NOT EXISTS mate_datasource (
     deleted         INT          NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 修改人:祝奔；时间：2026-11-19T08:20:28.733Z；修改原因/内容：新增数据源表元数据表 mate_datasource_table；代码来源：AI生成
+CREATE TABLE IF NOT EXISTS mate_datasource_table (
+    id              BIGINT       NOT NULL PRIMARY KEY,
+    datasource_id   BIGINT       NOT NULL,
+    table_name      VARCHAR(128) NOT NULL,
+    table_comment   VARCHAR(512),
+    -- 修改人:祝奔；时间：2026-11-19T08:49:01.621Z；修改原因/内容：新增 table_schema 与 table_type 字段；代码来源：AI生成
+    table_schema    VARCHAR(128),
+    table_type      VARCHAR(32),
+    enabled         TINYINT(1)   NOT NULL DEFAULT 1,
+    create_time     DATETIME     NOT NULL,
+    update_time     DATETIME     NOT NULL,
+    deleted         INT          NOT NULL DEFAULT 0,
+    INDEX idx_datasource_table_ds (datasource_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 修改人:祝奔；时间：2026-11-19T09:02:06.584Z；修改原因/内容：新增数据源表字段配置表 mate_datasource_table_col；代码来源：AI生成
+CREATE TABLE IF NOT EXISTS mate_datasource_table_col (
+    id              BIGINT       NOT NULL PRIMARY KEY,
+    datasource_id   BIGINT       NOT NULL,
+    table_id        BIGINT       NOT NULL,
+    table_name      VARCHAR(128) NOT NULL,
+    column_name     VARCHAR(128) NOT NULL,
+    column_type     VARCHAR(64),
+    column_comment  VARCHAR(512),
+    custom_comment  VARCHAR(512),
+    enabled         TINYINT(1)   NOT NULL DEFAULT 0,
+    create_time     DATETIME     NOT NULL,
+    update_time     DATETIME     NOT NULL,
+    deleted         INT          NOT NULL DEFAULT 0,
+    INDEX idx_dts_col_ds_table (datasource_id, table_name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ==================== 异步任务（视频/图片生成等长耗时操作） ====================
 
 CREATE TABLE IF NOT EXISTS mate_async_task (
@@ -512,6 +545,26 @@ CREATE TABLE IF NOT EXISTS mate_wiki_page (
     deleted         INT          NOT NULL DEFAULT 0,
     UNIQUE KEY uk_wiki_page_kb_slug (kb_id, slug),
     INDEX idx_wiki_page_kb (kb_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：新增 Wiki 素材内嵌图片元数据表；代码来源：AI生成
+CREATE TABLE IF NOT EXISTS mate_wiki_image (
+    id              BIGINT       NOT NULL PRIMARY KEY,
+    kb_id           BIGINT       NOT NULL,
+    raw_id          BIGINT,
+    workspace_id    BIGINT       NOT NULL DEFAULT 1,
+    ext             VARCHAR(16)  NOT NULL,
+    mime_type       VARCHAR(64),
+    file_size       BIGINT       NOT NULL DEFAULT 0,
+    source_ref      VARCHAR(256),
+    -- 修改人:祝奔；时间：2026-11-20T06:14:14.191Z；修改原因/内容：wiki 图片新增 content_hash 字段与唯一索引；代码来源：AI生成
+    content_hash    VARCHAR(64),
+    create_time     DATETIME     NOT NULL,
+    update_time     DATETIME     NOT NULL,
+    deleted         INT          NOT NULL DEFAULT 0,
+    INDEX idx_wiki_image_raw (raw_id),
+    INDEX idx_wiki_image_kb (kb_id),
+    UNIQUE KEY uk_wiki_image_ws_kb_hash (workspace_id, kb_id, content_hash)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================

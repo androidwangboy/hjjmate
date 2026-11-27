@@ -1,6 +1,8 @@
 export default {
   app: {
     title: 'HUJIA Mate - AI Assistant',
+    // 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：新增侧边栏英文产品定位文案；代码来源：AI生成
+    tagline: 'Medical AI Assistant',
   },
   router: {
     chunkLoadFailed: 'Failed to load page resources. Check your network and try again.',
@@ -1654,6 +1656,8 @@ export default {
       wiki: 'Knowledge Base',
       context: 'Context',
       api: 'API',
+      // 修改人:祝奔；时间：2026-11-16T14:09:29.021Z；修改原因/内容：新增专家编辑页数据源 Tab 文案；代码来源：AI生成
+      datasource: 'Datasources',
     },
     api: {
       open: 'API Management',
@@ -1844,6 +1848,16 @@ export default {
       wikiLoadFailed: 'Failed to load knowledge bases',
       contextHint: 'Manage context files (e.g. AGENT.md) that define this agent\'s behavior, knowledge, and instructions.',
       goToContext: 'Edit Context Files',
+      // 修改人:祝奔；时间：2026-11-16T14:09:29.021Z；修改原因/内容：新增专家编辑页数据源多选绑定相关文案；代码来源：AI生成
+      datasourceKicker: 'Queryable Datasources',
+      datasourceTagline: 'Tick the datasources this agent may query. SQL tools will only run against the selected ones.',
+      datasourceHint: 'Datasources come from the system Datasources page. Leave empty for no restriction (tool default).',
+      searchDatasources: 'Search datasource name, description, or type',
+      noDatasources: 'No datasources available — add one under Datasources first',
+      noMatchingDatasources: 'No matching datasources',
+      datasourceLoadFailed: 'Failed to load datasources',
+      datasourceType: 'Type',
+      datasourceDisabled: 'Disabled',
     },
     wizard: {
       entry: 'AI Create',
@@ -2640,6 +2654,46 @@ export default {
       toggleFailed: 'Failed to toggle datasource status',
       testSuccess: 'Connection successful',
       testFailed: 'Connection failed. Please check configuration.',
+    },
+    // 修改人:祝奔；时间：2026-11-19T08:10:28.021Z；修改原因/内容：新增数据源表字段维护弹框相关文案；代码来源：AI生成
+    schema: {
+      action: 'Table Fields',
+      // 修改人:祝奔；时间：2026-11-19T08:22:08.586Z；修改原因/内容：新增连接未成功时表字段维护按钮的禁用提示文案；代码来源：AI生成
+      actionDisabledTip: 'Test the connection successfully first',
+      // 修改人:祝奔；时间：2026-11-19T08:24:55.722Z；修改原因/内容：新增数据源未启用时的禁用提示文案；代码来源：AI生成
+      actionDisabledByEnabledTip: 'Enable the datasource first',
+      title: 'Table Field Maintenance',
+      searchPlaceholder: 'Search tables',
+      tableList: 'Tables',
+      useTable: 'Use this table',
+      // 修改人:祝奔；时间：2026-11-19T08:15:31.042Z；修改原因/内容：新增表使用状态展示文案；代码来源：AI生成
+      tableUsed: 'In use',
+      tableUnused: 'Not used',
+      tableName: 'Table Name',
+      // 修改人:祝奔；时间：2026-11-19T08:49:01.621Z；修改原因/内容：新增来源库展示文案；代码来源：AI生成
+      sourceSchema: 'Source',
+      tableComment: 'Table Description',
+      tableCommentPlaceholder: 'Enter table description',
+      columns: 'Columns',
+      colName: 'Column',
+      colType: 'Type',
+      colComment: 'Description',
+      colCustomComment: 'Custom Description',
+      colUse: 'Use',
+      customCommentPlaceholder: 'Enter custom description',
+      selectTableHint: 'Select a table from the left',
+      noTables: 'No matching tables',
+      save: 'Save',
+      cancel: 'Cancel',
+      saved: 'Table field configuration saved',
+      // 修改人:祝奔；时间：2026-11-19T08:34:53.175Z；修改原因/内容：新增表集合加载状态文案；代码来源：AI生成
+      loading: 'Loading…',
+      loadFailed: 'Failed to load tables',
+      // 修改人:祝奔；时间：2026-11-19T09:02:06.584Z；修改原因/内容：新增字段集合加载状态文案；代码来源：AI生成
+      columnsLoading: 'Loading columns…',
+      columnsLoadFailed: 'Failed to load columns',
+      // 修改人:祝奔；时间：2026-11-19T09:18:14.021Z；修改原因/内容：新增表字段配置保存失败文案；代码来源：AI生成
+      saveFailed: 'Failed to save table field configuration',
     },
   },
   wiki: {
@@ -3642,19 +3696,8 @@ export default {
     signIn: 'Sign In',
     hint: 'Default: {username} / {password}',
     failed: 'Login failed. Please check your credentials.',
-    brand: {
-      titleRest1: '-Powered Synergy',
-      titleLine2: 'Agent Platform',
-      subtitle: 'Less burden for caregivers, more care for families',
-      tags: {
-        medical: 'Care-Team Synergy',
-        nursePatient: 'Nurse-Patient Synergy',
-        nurseManage: 'Nurse-Management Synergy',
-        nurseRehab: 'Nurse-Rehab Synergy',
-        performance: 'Performance Synergy',
-        quality: 'Quality-Control Synergy',
-      },
-    },
+    // 修改人:祝奔；时间：2026-11-26T17:56:28+08:00；修改原因/内容：统一登录框产品定位英文副标文案；代码来源：AI生成
+    tagline: 'An AI Assistant Empowering Healthcare',
   },
   enterprise: {
     eyebrow: 'Enterprise',
@@ -4537,6 +4580,19 @@ export default {
       title: 'Your Week',
       subtitle: 'How often you and your AI have been working together.',
     },
+    // 修改人:祝奔；时间：2026-11-23T08:14:04.710Z；修改原因/内容：新增用户维度趋势图的英文文案；代码来源：AI生成
+    // 修改人:祝奔；时间：2026-11-23T08:18:54.964Z；修改原因/内容：趋势图筛选维度由模型改为专家，更新对应英文文案；代码来源：AI生成
+    userTrend: {
+      title: 'User Usage Trend',
+      // 修改人:祝奔；时间：2026-11-23T08:32:58.413Z；修改原因/内容：趋势指标由会话数改为消息数，更新副标题；代码来源：AI生成
+      subtitle: 'Daily messages and token usage by date, user and expert.',
+      startDate: 'Start date',
+      endDate: 'End date',
+      allAgents: 'All experts',
+      // 修改人:祝奔；时间：2026-11-23T08:23:34.674Z；修改原因/内容：图表改为接口回显，更新提示文案；代码来源：AI生成
+      // 修改人:祝奔；时间：2026-11-23T08:32:58.413Z；修改原因/内容：趋势指标由会话数改为消息数，更新提示文案；代码来源：AI生成
+      dataHint: 'Live database stats: messages and tokens by message date.',
+    },
     periodComparison: 'Period Comparison',
     periods: {
       today: 'Today',
@@ -4842,6 +4898,54 @@ export default {
     },
     forceHuman: {
       banner: 'This command requires manual approval; auto-approve rules do not apply.',
+    },
+  },
+  // 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：新增皮肤与自定义背景英文词条；代码来源：AI生成
+  appearance: {
+    title: 'Appearance & Skins',
+    subtitle: 'Customize overall color theme and workspace wallpaper live',
+    close: 'Close appearance drawer',
+    customizeAction: 'Customize Skin & Wallpaper',
+    sectionSkin: 'Theme Skin',
+    sectionMode: 'Color Mode',
+    sectionWallpaper: 'Workspace Wallpaper',
+    sectionTuning: 'Glass & Surface Tuning',
+    wallpaperNone: 'Minimal Solid',
+    wallpaperCountHint: '{count}/8 uploaded',
+    deleteWallpaper: 'Delete wallpaper',
+    uploadTitle: 'Upload Local Image',
+    uploadHint: 'JPG / PNG / WebP up to 15MB, compressed locally',
+    uploading: 'Processing image…',
+    uploadSuccess: 'Custom wallpaper applied',
+    errorUnsupportedType: 'Only JPG, PNG, or WebP images are supported',
+    errorFileTooLarge: 'Image file size must not exceed 15MB',
+    errorUploadFailed: 'Failed to load image, please try another file',
+    glassCrystal: 'Crystal',
+    glassFrosted: 'Frosted',
+    glassSolid: 'Solid',
+    surfaceOpacity: 'Panel Opacity',
+    wallpaperBlur: 'Wallpaper Blur',
+    scrimOpacity: 'Scrim Overlay',
+    tuningNoWallpaperHint: 'Pick a wallpaper above to tune backdrop blur and scrim contrast.',
+    resetDefault: 'Reset Default',
+    resetSuccess: 'Restored default Medical Ice skin',
+    done: 'Done',
+    currentWallpaperBuiltin: 'Built-in Wallpaper',
+    currentWallpaperCustom: 'Custom Wallpaper',
+    currentWallpaperNone: 'No Wallpaper',
+    skins: {
+      medicalIce: { name: 'Medical Ice', desc: 'Ice-blue glass · Default' },
+      warmSand: { name: 'Warm Sand', desc: 'Warm ivory · Classic' },
+      deepOcean: { name: 'Deep Ocean', desc: 'Deep navy · Night shift' },
+      mintClinic: { name: 'Mint Clinic', desc: 'Soft teal · Reading focus' },
+      slateInk: { name: 'Slate Ink', desc: 'Minimal dark · High contrast' },
+    },
+    wallpapers: {
+      medicalDesk: 'Medical Desk',
+      iceAurora: 'Ice Aurora',
+      mintBreeze: 'Mint Breeze',
+      deepHorizon: 'Deep Horizon',
+      warmSilk: 'Warm Silk',
     },
   },
 } as const

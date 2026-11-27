@@ -5,26 +5,37 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class MinioProperties {
-    @Value("${minio.ip}")
+    @Value(value = "${minio.enabled:false}")
+    private boolean enabled;
+
+    @Value("${minio.ip:}")
     private String ip;
 
-    @Value("${minio.port}")
+    @Value("${minio.port:0}")
     private int port;
 
-    @Value("${minio.accessKey}")
+    @Value("${minio.accessKey:}")
     private String accessKey;
 
-    @Value("${minio.secretKey}")
+    @Value("${minio.secretKey:}")
     private String secretKey;
 
-    @Value("${minio.bucket}")
+    @Value("${minio.bucket:}")
     private String bucket;
 
-    @Value("${minio.urlExpireTime}")
+    @Value("${minio.urlExpireTime:0}")
     private int urlExpireTime;
 
-    @Value("${minio.maxParts}")
+    @Value("${minio.maxParts:0}")
     private int maxParts;
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
 
     public String getIp() {
         return ip;

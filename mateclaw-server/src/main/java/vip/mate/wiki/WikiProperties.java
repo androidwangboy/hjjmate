@@ -264,7 +264,7 @@ public class WikiProperties {
      * Larger values improve coverage but increase prompt tokens.
      * Default 15000 covers most documents while staying well within model limits.
      */
-    private int documentAnalysisSampleChars = 15000;
+    private int documentAnalysisSampleChars = 30000;
 
     /**
      * RFC-051 PR-6b: route-phase output binding. When {@code true}, the route

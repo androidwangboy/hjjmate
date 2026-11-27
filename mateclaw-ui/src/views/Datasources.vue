@@ -68,6 +68,10 @@
                 <button class="row-btn" @click="openEditModal(ds)" :title="t('common.edit')">
                   <el-icon><EditPen /></el-icon>
                 </button>
+                <!-- 修改人:祝奔；时间：2026-11-19T08:24:55.722Z；修改原因/内容：数据源未启用或连接未成功时均禁用表字段维护按钮；代码来源：AI生成 -->
+                <button class="row-btn schema-btn" @click="openSchemaModal(ds)" :disabled="isSchemaDisabled(ds)" :title="schemaButtonTitle(ds)">
+                  <el-icon><Grid /></el-icon>
+                </button>
                 <button class="row-btn danger" @click="deleteDs(ds.id)" :title="t('common.delete')">
                   <el-icon><Delete /></el-icon>
                 </button>
@@ -230,6 +234,116 @@
         </div>
       </div>
     </div>
+
+    <!-- 修改人:祝奔；时间：2026-11-19T08:10:28.021Z；修改原因/内容：新增表字段维护弹框，左侧为表搜索列表与是否使用，右侧维护表描述及字段信息；代码来源：AI生成 -->
+    <div v-if="showSchemaModal" class="modal-overlay">
+      <div class="modal schema-modal">
+        <div class="modal-header">
+          <h2>{{ t('datasources.schema.title') }}<span v-if="schemaDs" class="schema-ds-name"> · {{ schemaDs.name }}</span></h2>
+          <button class="modal-close" @click="closeSchemaModal">
+            <el-icon><CloseBold /></el-icon>
+          </button>
+        </div>
+        <div class="schema-body">
+          <div class="schema-left">
+            <div class="schema-search">
+              <el-icon><Search /></el-icon>
+              <input v-model="schemaKeyword" class="form-input" :placeholder="t('datasources.schema.searchPlaceholder')" />
+            </div>
+            <div class="schema-list-label">{{ t('datasources.schema.tableList') }}</div>
+            <div class="schema-table-list">
+              <!-- 修改人:祝奔；时间：2026-11-19T08:34:53.175Z；修改原因/内容：表集合改为接口数据后增加加载中提示；代码来源：AI生成 -->
+              <div v-if="schemaLoading" class="schema-loading">
+                <span class="spinner"></span> {{ t('datasources.schema.loading') }}
+              </div>
+              <div
+                v-for="table in filteredSchemaTables"
+                :key="table.name"
+                class="schema-table-item"
+                :class="{ active: table.name === selectedTableName }"
+                :title="table.enabled ? t('datasources.schema.tableUsed') : t('datasources.schema.tableUnused')"
+                @click="selectSchemaTable(table)"
+              >
+                <div class="schema-table-main">
+                  <span class="schema-table-name">{{ table.name }}</span>
+                  <span class="schema-table-comment">{{ table.comment }}</span>
+                </div>
+                <!-- 修改人:祝奔；时间：2026-11-19T08:15:31.042Z；修改原因/内容：列表项仅保留使用状态展示，避免开关与选中操作相互误触；代码来源：AI生成 -->
+                <span class="schema-used-dot" :class="{ used: table.enabled }"></span>
+              </div>
+              <div v-if="!schemaLoading && filteredSchemaTables.length === 0" class="schema-empty">
+                {{ t('datasources.schema.noTables') }}
+              </div>
+            </div>
+          </div>
+
+          <div class="schema-right">
+            <template v-if="selectedTable">
+              <div class="schema-right-top">
+                <div class="schema-table-head">
+                  <div>
+                    <div class="schema-section-label">{{ t('datasources.schema.tableName') }}</div>
+                    <div class="schema-table-title">{{ selectedTable.name }}</div>
+                    <!-- 修改人:祝奔；时间：2026-11-19T08:49:01.621Z；修改原因/内容：展示接口返回的来源库与表类型；代码来源：AI生成 -->
+                    <div class="schema-table-meta" v-if="selectedTable.schema">{{ t('datasources.schema.sourceSchema') }}: {{ selectedTable.schema }} · {{ selectedTable.type }}</div>
+                  </div>
+                  <!-- 修改人:祝奔；时间：2026-11-19T08:15:31.042Z；修改原因/内容：将表使用开关独立到右侧详情区，与列表选中操作分离；代码来源：AI生成 -->
+                  <label class="schema-use-toggle">
+                    <span class="schema-use-text">{{ selectedTable.enabled ? t('datasources.schema.tableUsed') : t('datasources.schema.tableUnused') }}</span>
+                    <span class="toggle-switch">
+                      <input type="checkbox" v-model="selectedTable.enabled" />
+                      <span class="toggle-slider"></span>
+                    </span>
+                  </label>
+                </div>
+                <div class="schema-section-label">{{ t('datasources.schema.tableComment') }}</div>
+                <input v-model="selectedTable.comment" class="form-input" :placeholder="t('datasources.schema.tableCommentPlaceholder')" />
+              </div>
+              <div class="schema-right-bottom">
+                <div class="schema-section-label">{{ t('datasources.schema.columns') }}</div>
+                <div class="schema-columns-wrap">
+                  <!-- 修改人:祝奔；时间：2026-11-19T09:02:06.584Z；修改原因/内容：字段加载中提示；代码来源：AI生成 -->
+                  <div v-if="columnsLoading" class="schema-columns-loading">
+                    <span class="spinner"></span> {{ t('datasources.schema.columnsLoading') }}
+                  </div>
+                  <table class="schema-columns-table" v-show="!columnsLoading">
+                    <thead>
+                      <tr>
+                        <th>{{ t('datasources.schema.colName') }}</th>
+                        <th>{{ t('datasources.schema.colType') }}</th>
+                        <th>{{ t('datasources.schema.colComment') }}</th>
+                        <th>{{ t('datasources.schema.colCustomComment') }}</th>
+                        <th>{{ t('datasources.schema.colUse') }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="col in selectedTable.columns" :key="col.name">
+                        <td class="col-name">{{ col.name }}</td>
+                        <td><span class="col-type">{{ col.type }}</span></td>
+                        <!-- 修改人:祝奔；时间：2026-11-19T09:18:14.021Z；修改原因/内容：字段描述来自数据库只读展示，仅自定义描述可修改；代码来源：AI生成 -->
+                        <td class="col-comment">{{ col.comment }}</td>
+                        <td>
+                          <input v-model="col.customComment" class="form-input col-input" :placeholder="t('datasources.schema.customCommentPlaceholder')" />
+                        </td>
+                        <td class="col-use">
+                          <input type="checkbox" v-model="col.enabled" />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </template>
+            <div v-else class="schema-placeholder">{{ schemaLoading ? t('datasources.schema.loading') : t('datasources.schema.selectTableHint') }}</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <div style="flex: 1"></div>
+          <button class="btn-secondary" @click="closeSchemaModal">{{ t('datasources.schema.cancel') }}</button>
+          <button class="btn-primary" @click="saveSchema">{{ t('datasources.schema.save') }}</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -246,8 +360,11 @@ import {
   Coin,
   Delete,
   EditPen,
+  // 修改人:祝奔；时间：2026-11-19T08:10:28.021Z；修改原因/内容：新增表字段维护入口与表搜索所需图标；代码来源：AI生成
+  Grid,
   Hide,
   Plus,
+  Search,
   Select,
   View,
 } from '@element-plus/icons-vue'
@@ -281,6 +398,66 @@ const showPassword = ref(false)
 const showAdvanced = ref(false)
 const modalTesting = ref(false)
 const modalTestResult = ref<boolean | null>(null)
+
+// 修改人:祝奔；时间：2026-11-19T08:10:28.021Z；修改原因/内容：新增表字段维护弹框的接口类型、状态、模拟表数据及搜索/选中计算属性；代码来源：AI生成
+interface DbColumn {
+  name: string
+  type: string
+  comment: string
+  customComment: string
+  enabled: boolean
+}
+
+interface DbTable {
+  name: string
+  comment: string
+  // 修改人:祝奔；时间：2026-11-19T08:49:01.621Z；修改原因/内容：表集合增加来源库与表类型展示字段；代码来源：AI生成
+  schema: string
+  type: string
+  enabled: boolean
+  columns: DbColumn[]
+}
+
+const showSchemaModal = ref(false)
+const schemaDs = ref<Datasource | null>(null)
+const schemaTables = ref<DbTable[]>([])
+const schemaKeyword = ref('')
+const selectedTableName = ref('')
+
+// 修改人:祝奔；时间：2026-11-19T08:34:53.175Z；修改原因/内容：新增表集合接口返回类型与加载状态；代码来源：AI生成
+interface DatasourceTableVO {
+  tableName: string
+  tableComment: string | null
+  tableSchema: string | null
+  tableType: string
+  databaseName: string | null
+  dbType: string | null
+  // 修改人:祝奔；时间：2026-11-19T08:49:01.621Z；修改原因/内容：接口返回落库的表启用状态；代码来源：AI生成
+  enabled: boolean
+}
+
+const schemaLoading = ref(false)
+
+// 修改人:祝奔；时间：2026-11-19T09:02:06.584Z；修改原因/内容：新增字段集合接口返回类型与加载状态；代码来源：AI生成
+interface DatasourceColumnVO {
+  columnName: string
+  columnType: string | null
+  columnComment: string | null
+  customComment: string | null
+  enabled: boolean
+}
+
+const columnsLoading = ref(false)
+
+const filteredSchemaTables = computed(() => {
+  const kw = schemaKeyword.value.trim().toLowerCase()
+  if (!kw) return schemaTables.value
+  return schemaTables.value.filter(t =>
+    t.name.toLowerCase().includes(kw) || (t.comment || '').toLowerCase().includes(kw))
+})
+
+const selectedTable = computed(() =>
+  schemaTables.value.find(t => t.name === selectedTableName.value) || null)
 
 const PORT_MAP: Record<string, number> = {
   mysql: 3306, mariadb: 3306, postgresql: 5432, clickhouse: 8123, oracle: 1521,
@@ -454,6 +631,114 @@ async function testConnection(ds: Datasource) {
     mcToast.error(e?.message || t('datasources.messages.testFailed'))
   } finally { testing.value = null }
 }
+
+// 修改人:祝奔；时间：2026-11-19T08:24:55.722Z；修改原因/内容：表字段维护按钮需同时满足数据源已启用且连接成功；代码来源：AI生成
+function isSchemaDisabled(ds: Datasource) {
+  return !ds.enabled || ds.lastTestOk !== true
+}
+
+function schemaButtonTitle(ds: Datasource) {
+  if (!ds.enabled) return t('datasources.schema.actionDisabledByEnabledTip')
+  if (ds.lastTestOk !== true) return t('datasources.schema.actionDisabledTip')
+  return t('datasources.schema.action')
+}
+
+// 修改人:祝奔；时间：2026-11-19T08:34:53.175Z；修改原因/内容：打开弹框时调用接口加载真实表集合；代码来源：AI生成
+async function openSchemaModal(ds: Datasource) {
+  schemaDs.value = ds
+  schemaKeyword.value = ''
+  selectedTableName.value = ''
+  schemaTables.value = []
+  showSchemaModal.value = true
+  schemaLoading.value = true
+  try {
+    const res: any = await datasourceApi.tables(ds.id)
+    const list: DatasourceTableVO[] = res.data || []
+    // 修改人:祝奔；时间：2026-11-19T08:49:01.621Z；修改原因/内容：表启用状态以接口落库配置为准，未匹配则不启用；代码来源：AI生成
+    schemaTables.value = list.map(vo => {
+      return {
+        name: vo.tableName,
+        comment: vo.tableComment || '',
+        schema: vo.tableSchema || '',
+        type: vo.tableType || 'TABLE',
+        enabled: vo.enabled === true,
+        // 修改人:祝奔；时间：2026-11-19T09:02:06.584Z；修改原因/内容：字段改为点击表时按接口加载；代码来源：AI生成
+        columns: [],
+      }
+    })
+    // 修改人:祝奔；时间：2026-11-19T09:02:06.584Z；修改原因/内容：打开弹框后自动加载首张表的字段；代码来源：AI生成
+    if (schemaTables.value.length > 0) {
+      await selectSchemaTable(schemaTables.value[0])
+    } else {
+      selectedTableName.value = ''
+    }
+  } catch (e: any) {
+    mcToast.error(e?.message || t('datasources.schema.loadFailed'))
+  } finally {
+    schemaLoading.value = false
+  }
+}
+
+function closeSchemaModal() {
+  showSchemaModal.value = false
+  schemaDs.value = null
+}
+
+// 修改人:祝奔；时间：2026-11-19T09:02:06.584Z；修改原因/内容：点击表时调用接口加载字段并渲染；代码来源：AI生成
+async function selectSchemaTable(table: DbTable) {
+  selectedTableName.value = table.name
+  if (!schemaDs.value) return
+  table.columns = []
+  columnsLoading.value = true
+  try {
+    const res: any = await datasourceApi.tableColumns(schemaDs.value.id, table.name)
+    const list: DatasourceColumnVO[] = res.data || []
+    table.columns = list.map(col => ({
+      name: col.columnName,
+      type: col.columnType || '',
+      comment: col.columnComment || '',
+      customComment: col.customComment || '',
+      enabled: col.enabled === true,
+    }))
+  } catch (e: any) {
+    mcToast.error(e?.message || t('datasources.schema.columnsLoadFailed'))
+    table.columns = []
+  } finally {
+    columnsLoading.value = false
+  }
+}
+
+// 修改人:祝奔；时间：2026-11-19T09:18:14.021Z；修改原因/内容：保存时仅提交启用的表与字段全量配置；代码来源：AI生成
+async function saveSchema() {
+  if (!schemaDs.value) return
+  const request = {
+    datasourceId: String(schemaDs.value.id),
+    tables: schemaTables.value
+      .filter(table => table.enabled)
+      .map(table => ({
+        tableId: '',
+        tableName: table.name,
+        tableComment: table.comment,
+        tableSchema: table.schema,
+        tableType: table.type,
+        enabled: true,
+        columns: table.columns.map(col => ({
+          columnName: col.name,
+          columnType: col.type,
+          columnComment: col.comment,
+          customComment: col.customComment,
+          enabled: col.enabled,
+        })),
+      })),
+  }
+  try {
+    await datasourceApi.saveSchema(request)
+    mcToast.success(t('datasources.schema.saved'))
+    closeSchemaModal()
+  } catch (e: any) {
+    mcToast.error(e?.message || t('datasources.schema.saveFailed'))
+  }
+}
 </script>
 
 <style scoped>
@@ -601,10 +886,65 @@ async function testConnection(ds: Datasource) {
 .test-ok { background: color-mix(in srgb, #2e7d32 10%, transparent); color: #2e7d32; }
 .test-fail { background: color-mix(in srgb, var(--mc-danger, #ef4444) 10%, transparent); color: var(--mc-danger, #ef4444); }
 
+/* 修改人:祝奔；时间：2026-11-19T08:10:28.021Z；修改原因/内容：新增表字段维护弹框的左右分栏布局、表列表与字段表格样式；代码来源：AI生成 */
+/* ===== Table schema modal ===== */
+.schema-modal { max-width: 1040px; height: min(80vh, 720px); }
+.schema-ds-name { margin-left: 4px; font-weight: 400; color: var(--mc-text-tertiary); }
+/* 修改人:祝奔；时间：2026-11-19T08:22:08.586Z；修改原因/内容：禁用状态下的表字段维护按钮不显示悬停高亮；代码来源：AI生成 */
+.schema-btn:not(:disabled):hover { border-color: var(--mc-primary); color: var(--mc-primary); }
+.schema-body { flex: 1; display: flex; min-height: 0; }
+.schema-left { width: 300px; flex-shrink: 0; display: flex; flex-direction: column; gap: 10px; padding: 16px; border-right: 1px solid var(--mc-border-light); }
+.schema-search { position: relative; }
+.schema-search .el-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--mc-text-tertiary); }
+.schema-search .form-input { padding-left: 32px; }
+.schema-list-label { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--mc-text-tertiary); }
+.schema-table-list { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+.schema-table-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px; border: 1px solid var(--mc-border-light); border-radius: 8px; cursor: pointer; transition: all .12s; }
+.schema-table-item:hover { background: var(--mc-bg-sunken); }
+.schema-table-item.active { border-color: var(--mc-primary); background: var(--mc-primary-bg); }
+.schema-table-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.schema-table-name { font-size: 13px; font-weight: 600; color: var(--mc-text-primary); }
+.schema-table-comment { font-size: 11px; color: var(--mc-text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* 修改人:祝奔；时间：2026-11-19T08:15:31.042Z；修改原因/内容：新增表使用状态圆点样式并移除原列表复选框样式；代码来源：AI生成 */
+.schema-used-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--mc-border); }
+.schema-used-dot.used { background: #34d399; box-shadow: 0 0 4px rgba(52,211,153,.45); }
+.col-use input { accent-color: var(--mc-primary); cursor: pointer; }
+.schema-empty { padding: 24px 0; text-align: center; font-size: 13px; color: var(--mc-text-tertiary); }
+/* 修改人:祝奔；时间：2026-11-19T08:34:53.175Z；修改原因/内容：新增表集合加载中样式；代码来源：AI生成 */
+.schema-loading { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 24px 0; font-size: 13px; color: var(--mc-text-tertiary); }
+.schema-right { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.schema-right-top { display: flex; flex-direction: column; gap: 6px; padding: 16px 20px; border-bottom: 1px solid var(--mc-border-light); }
+/* 修改人:祝奔；时间：2026-11-19T08:15:31.042Z；修改原因/内容：新增右侧表详情区的使用开关布局样式；代码来源：AI生成 */
+.schema-table-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 8px; }
+.schema-use-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+.schema-use-text { font-size: 12px; color: var(--mc-text-secondary); }
+.schema-section-label { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--mc-text-tertiary); }
+.schema-table-title { font-size: 16px; font-weight: 700; color: var(--mc-text-primary); margin-bottom: 4px; }
+/* 修改人:祝奔；时间：2026-11-19T08:49:01.621Z；修改原因/内容：新增来源库信息样式；代码来源：AI生成 */
+.schema-table-meta { margin-bottom: 4px; font-size: 11px; color: var(--mc-text-tertiary); }
+.schema-right-top .form-input { max-width: 420px; }
+.schema-right-bottom { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: 14px 20px 16px; }
+.schema-columns-wrap { flex: 1; min-height: 0; overflow: auto; border: 1px solid var(--mc-border-light); border-radius: 8px; }
+/* 修改人:祝奔；时间：2026-11-19T09:02:06.584Z；修改原因/内容：新增字段加载中样式；代码来源：AI生成 */
+.schema-columns-loading { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 24px 0; font-size: 13px; color: var(--mc-text-tertiary); }
+.schema-columns-table { width: 100%; border-collapse: collapse; }
+.schema-columns-table th { position: sticky; top: 0; padding: 8px 10px; text-align: left; font-size: 11px; font-weight: 600; color: var(--mc-text-tertiary); background: var(--mc-bg-sunken); border-bottom: 1px solid var(--mc-border-light); white-space: nowrap; }
+.schema-columns-table td { padding: 6px 10px; font-size: 13px; color: var(--mc-text-primary); border-bottom: 1px solid var(--mc-border-light); }
+.schema-columns-table tr:last-child td { border-bottom: none; }
+.col-name { font-weight: 600; font-family: 'SF Mono', 'Fira Code', monospace; }
+.col-type { padding: 2px 6px; border-radius: 4px; font-size: 11px; color: var(--mc-text-secondary); background: var(--mc-bg-sunken); white-space: nowrap; }
+.col-comment { color: var(--mc-text-secondary); }
+.col-input { min-width: 160px; padding: 5px 8px; font-size: 12px; }
+.col-use { text-align: center; }
+.schema-placeholder { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--mc-text-tertiary); }
+
 /* Responsive */
 @media (max-width: 900px) {
   .page-header { flex-direction: column; }
   .btn-primary { width: 100%; justify-content: center; }
   .detail-grid { grid-template-columns: 1fr; }
+  .schema-modal { height: 88vh; }
+  .schema-body { flex-direction: column; }
+  .schema-left { width: 100%; max-height: 220px; border-right: none; border-bottom: 1px solid var(--mc-border-light); }
 }
 </style>

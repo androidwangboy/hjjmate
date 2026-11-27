@@ -723,7 +723,8 @@ defineExpose({
   height: 22px;
   border: 0;
   border-radius: 999px;
-  background: rgba(217, 119, 87, 0.16);
+  /* 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：将附件删除按钮背景替换为皮肤RGB通道变量；代码来源：AI生成 */
+  background: rgba(var(--mc-primary-rgb), 0.16);
   color: var(--mc-primary-hover, #C1572B);
   cursor: pointer;
   font-size: 16px;
@@ -734,7 +735,7 @@ defineExpose({
 }
 
 .attachment-chip__remove:hover {
-  background: rgba(217, 119, 87, 0.24);
+  background: rgba(var(--mc-primary-rgb), 0.24);
 }
 
 .attachment-chip--dir {
@@ -765,7 +766,8 @@ defineExpose({
 }
 
 .chat-input-wrapper.is-focused .input-area {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1), 0 0 0 2px rgba(217, 119, 87, 0.25);
+  /* 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：将输入框聚焦描边与审批栏边框替换为皮肤RGB通道变量；代码来源：AI生成 */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1), 0 0 0 2px rgba(var(--mc-primary-rgb), 0.25);
 }
 
 .chat-textarea {
@@ -976,7 +978,7 @@ defineExpose({
   background: var(--mc-input-bg, #ffffff);
   border-radius: 16px;
   padding: 8px 8px 8px 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(217, 119, 87, 0.3);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(var(--mc-primary-rgb), 0.30);
   min-height: 50px;
 }
 
@@ -986,7 +988,7 @@ defineExpose({
   margin: 0;
   padding: 6px 10px;
   border-radius: 8px;
-  background: var(--mc-code-bg, rgba(217, 119, 87, 0.08));
+  background: var(--mc-code-bg, rgba(var(--mc-primary-rgb), 0.08));
   color: var(--mc-text-primary, #1e293b);
   font-family: var(--mc-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
   font-size: 12px;

@@ -471,6 +471,23 @@ const customRenderer = {
 
     return `<a href="${escapeHtml(safeHref)}"${titleAttr}${extra}>${innerHtml}</a>`
   },
+
+  // 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：识别 /wiki-images/ 内嵌图片引用，
+  // 输出带 data-wiki-image 标记的 <img>，由 useWikiImageBlob 换成带鉴权的 blob URL 显示；代码来源：AI生成
+  image({ href, title, text }: Tokens.Image): string {
+    const rawHref = href || ''
+    const isWikiImage = /^\/hjjmate\/wiki-images\/\d+\.[a-zA-Z0-9]+$/.test(rawHref)
+      || /^\/wiki-images\/\d+\.[a-zA-Z0-9]+$/.test(rawHref)
+    const alt = escapeHtml(text || '')
+    const titleAttr = title ? ` title="${escapeHtml(title)}"` : ''
+    if (isWikiImage) {
+      // data 属性保存原始引用（去掉 context 前缀后的 API 路径由 composable 推导）
+      return `<img src="${escapeHtml(rawHref)}" alt="${alt}"`
+        + ` class="markdown-wiki-image" data-wiki-image="1"${titleAttr} />`
+    }
+    // 其他图片维持 marked 默认语义（含 withCtx 归一）
+    return `<img src="${escapeHtml(withCtx(rawHref))}" alt="${alt}"${titleAttr} />`
+  },
 }
 
 // ---------------------------------------------------------------------------
@@ -490,6 +507,8 @@ const purifyConfig = {
   ADD_ATTR: [
     'target', 'rel', 'class',
     'data-code', 'data-echarts-option', 'data-wiki-title', 'data-slug',
+    // 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：DOMPurify 放行 Wiki 鉴权图片标记属性；代码来源：AI生成
+    'data-wiki-image', 'data-wiki-image-loaded', 'data-wiki-image-loading', 'data-wiki-image-src',
     'data-citation-index', 'data-citation-title',
     'data-tex', 'data-mermaid', 'data-mermaid-download',
     'x1', 'y1', 'x2', 'y2',

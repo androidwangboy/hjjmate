@@ -1,6 +1,8 @@
 export default {
   app: {
     title: 'HUJIA Mate - AI 助手',
+    // 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：新增侧边栏产品定位文案“医护AI助手”；代码来源：AI生成
+    tagline: '医护AI助手',
   },
   router: {
     chunkLoadFailed: '页面资源加载失败，请检查网络后重试',
@@ -1498,6 +1500,7 @@ export default {
       wiki: '知识库',
       context: '上下文',
       api: 'API 调用',
+      datasource: '数据源',
     },
     api: {
       open: 'API 管理',
@@ -1688,6 +1691,16 @@ export default {
       wikiLoadFailed: '加载知识库列表失败',
       contextHint: '管理此智能体的上下文文件（如 AGENT.md），定义智能体的行为、知识和指令。',
       goToContext: '前往编辑上下文',
+      // 修改人:祝奔；时间：2026-11-16T14:09:29.021Z；修改原因/内容：新增专家编辑页数据源多选绑定相关文案；代码来源：AI生成
+      datasourceKicker: '可查询的数据源',
+      datasourceTagline: '勾选此专家允许查询的数据源，可多选。SQL 查询工具将只在这些数据源上执行。',
+      datasourceHint: '数据源来自系统「数据源管理」中已配置的连接；留空表示不限制（沿用工具自身默认行为）。',
+      searchDatasources: '搜索数据源名称、描述或类型',
+      noDatasources: '暂无可用数据源，请先在「数据源管理」中添加',
+      noMatchingDatasources: '没有匹配的数据源',
+      datasourceLoadFailed: '加载数据源列表失败',
+      datasourceType: '类型',
+      datasourceDisabled: '已停用',
     },
     wizard: {
       entry: 'AI 创建',
@@ -2484,6 +2497,46 @@ export default {
       toggleFailed: '切换数据源状态失败',
       testSuccess: '连接成功',
       testFailed: '连接失败，请检查配置',
+    },
+    // 修改人:祝奔；时间：2026-11-19T08:10:28.021Z；修改原因/内容：新增数据源表字段维护弹框相关文案；代码来源：AI生成
+    schema: {
+      action: '表字段维护',
+      // 修改人:祝奔；时间：2026-11-19T08:22:08.586Z；修改原因/内容：新增连接未成功时表字段维护按钮的禁用提示文案；代码来源：AI生成
+      actionDisabledTip: '请先测试连接成功后再维护表字段',
+      // 修改人:祝奔；时间：2026-11-19T08:24:55.722Z；修改原因/内容：新增数据源未启用时的禁用提示文案；代码来源：AI生成
+      actionDisabledByEnabledTip: '请先启用数据源后再维护表字段',
+      title: '表字段维护',
+      searchPlaceholder: '搜索表名',
+      tableList: '数据表',
+      useTable: '使用该表',
+      // 修改人:祝奔；时间：2026-11-19T08:15:31.042Z；修改原因/内容：新增表使用状态展示文案；代码来源：AI生成
+      tableUsed: '已使用',
+      tableUnused: '未使用',
+      tableName: '表名',
+      // 修改人:祝奔；时间：2026-11-19T08:49:01.621Z；修改原因/内容：新增来源库展示文案；代码来源：AI生成
+      sourceSchema: '来源库',
+      tableComment: '表描述',
+      tableCommentPlaceholder: '请输入表描述',
+      columns: '字段列表',
+      colName: '字段名',
+      colType: '类型',
+      colComment: '字段描述',
+      colCustomComment: '自定义描述',
+      colUse: '是否使用',
+      customCommentPlaceholder: '请输入自定义描述',
+      selectTableHint: '请从左侧选择一个数据表',
+      noTables: '没有匹配的数据表',
+      save: '保存',
+      cancel: '取消',
+      saved: '表字段配置已保存',
+      // 修改人:祝奔；时间：2026-11-19T08:34:53.175Z；修改原因/内容：新增表集合加载状态文案；代码来源：AI生成
+      loading: '加载中…',
+      loadFailed: '加载表集合失败',
+      // 修改人:祝奔；时间：2026-11-19T09:02:06.584Z；修改原因/内容：新增字段集合加载状态文案；代码来源：AI生成
+      columnsLoading: '字段加载中…',
+      columnsLoadFailed: '加载字段失败',
+      // 修改人:祝奔；时间：2026-11-19T09:18:14.021Z；修改原因/内容：新增表字段配置保存失败文案；代码来源：AI生成
+      saveFailed: '保存表字段配置失败',
     },
   },
   notifications: {
@@ -3653,19 +3706,8 @@ export default {
     signIn: '登录',
     hint: '默认账号: {username} / {password}',
     failed: '登录失败，请检查账号密码',
-    brand: {
-      titleRest1: '数智协同',
-      titleLine2: '智能体平台',
-      subtitle: '为医护减负增效，为家庭加护增康',
-      tags: {
-        medical: '医护协同',
-        nursePatient: '护患协同',
-        nurseManage: '护管协同',
-        nurseRehab: '护康协同',
-        performance: '业考协同',
-        quality: '质控协同',
-      },
-    },
+    // 修改人:祝奔；时间：2026-11-26T17:56:28+08:00；修改原因/内容：统一登录框产品定位副标文案为简洁无衬线单行文案；代码来源：AI生成
+    tagline: '专注于为医护赋能的 AI 助手',
   },
   enterprise: {
     eyebrow: '企业场景',
@@ -4628,6 +4670,19 @@ export default {
       title: '本周活跃度',
       subtitle: '你和 AI 的互动频率。',
     },
+    // 修改人:祝奔；时间：2026-11-23T08:14:04.710Z；修改原因/内容：新增用户维度趋势图的中文文案；代码来源：AI生成
+    // 修改人:祝奔；时间：2026-11-23T08:18:54.964Z；修改原因/内容：趋势图筛选维度由模型改为专家，更新对应中文文案；代码来源：AI生成
+    userTrend: {
+      title: '用户使用趋势',
+      // 修改人:祝奔；时间：2026-11-23T08:32:58.413Z；修改原因/内容：趋势指标由会话数改为消息数，更新副标题；代码来源：AI生成
+      subtitle: '按日期、用户与专家查看每日消息数和 Token 消耗。',
+      startDate: '开始日期',
+      endDate: '结束日期',
+      allAgents: '全部专家',
+      // 修改人:祝奔；时间：2026-11-23T08:23:34.674Z；修改原因/内容：图表改为接口回显，更新提示文案；代码来源：AI生成
+      // 修改人:祝奔；时间：2026-11-23T08:32:58.413Z；修改原因/内容：趋势指标由会话数改为消息数，更新提示文案；代码来源：AI生成
+      dataHint: '数据来自数据库实时统计：消息数与 Token 均按消息发生日统计。',
+    },
     periodComparison: '周期对比',
     periods: {
       today: '今日',
@@ -4933,6 +4988,54 @@ export default {
     },
     forceHuman: {
       banner: '此命令需要人工审批，自动批准策略对其不生效。',
+    },
+  },
+  // 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：新增皮肤与自定义背景词条；代码来源：AI生成
+  appearance: {
+    title: '外观与皮肤',
+    subtitle: '自由切换整体风格与底部背景图，实时生效',
+    close: '关闭外观设置',
+    customizeAction: '自定义皮肤与背景',
+    sectionSkin: '整体风格',
+    sectionMode: '明暗模式',
+    sectionWallpaper: '底部背景图',
+    sectionTuning: '玻璃通透与融合微调',
+    wallpaperNone: '纯色极简',
+    wallpaperCountHint: '已上传 {count}/8 张',
+    deleteWallpaper: '删除此壁纸',
+    uploadTitle: '上传本地背景图',
+    uploadHint: '支持 JPG / PNG / WebP（≤15MB），自动压缩保存',
+    uploading: '正在处理图片…',
+    uploadSuccess: '已应用自定义背景图',
+    errorUnsupportedType: '仅支持 JPG、PNG 或 WebP 格式图片',
+    errorFileTooLarge: '图片大小不能超过 15MB',
+    errorUploadFailed: '图片加载失败，请更换其他图片重试',
+    glassCrystal: '晶透玻璃',
+    glassFrosted: '轻盈磨砂',
+    glassSolid: '经典实底',
+    surfaceOpacity: '面板不透明度',
+    wallpaperBlur: '背景柔化度',
+    scrimOpacity: '背景遮罩浓度',
+    tuningNoWallpaperHint: '选择任意底部背景图后，可调节背景柔化度与遮罩浓度。',
+    resetDefault: '恢复默认',
+    resetSuccess: '已恢复为默认医疗冰蓝皮肤',
+    done: '完成',
+    currentWallpaperBuiltin: '内置壁纸',
+    currentWallpaperCustom: '自定义壁纸',
+    currentWallpaperNone: '无背景图',
+    skins: {
+      medicalIce: { name: '医疗冰蓝', desc: '蓝白通透 · 默认推荐' },
+      warmSand: { name: '暖沙晨光', desc: '温润米白 · 经典样式' },
+      deepOcean: { name: '深海科技', desc: '深海青蓝 · 夜班护眼' },
+      mintClinic: { name: '清风杏林', desc: '柔和青白 · 专注阅览' },
+      slateInk: { name: '松烟墨影', desc: '极简灰黑 · 高对比度' },
+    },
+    wallpapers: {
+      medicalDesk: '医疗桌面',
+      iceAurora: '冰蓝光波',
+      mintBreeze: '杏林晨雾',
+      deepHorizon: '深海地平线',
+      warmSilk: '暖沙丝韵',
     },
   },
 } as const

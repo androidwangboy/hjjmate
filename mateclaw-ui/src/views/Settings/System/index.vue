@@ -10,8 +10,15 @@
         <div class="setting-info">
           <div class="setting-label">{{ t('settings.fields.theme') }}</div>
           <div class="setting-hint">{{ t('settings.hints.theme') }}</div>
+          <!-- 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：在系统设置外观项中展示当前皮肤与壁纸摘要并提供快捷抽屉入口；代码来源：AI生成 -->
+          <div class="appearance-summary-chip">
+            <span class="appearance-summary-dot" :style="{ background: themeStore.activeSkin.preview.primary }"></span>
+            <span>{{ t(themeStore.activeSkin.nameKey) }}</span>
+            <span class="appearance-summary-sep">·</span>
+            <span>{{ wallpaperSummaryLabel }}</span>
+          </div>
         </div>
-        <div class="setting-control">
+        <div class="setting-control setting-control--appearance">
           <select
             :value="themeStore.mode"
             class="form-input"
@@ -21,6 +28,9 @@
             <option value="dark">{{ t('nav.themeDark') }}</option>
             <option value="system">{{ t('nav.themeSystem') }}</option>
           </select>
+          <button type="button" class="btn-secondary btn-customize-skin" @click="themeStore.openDrawer()">
+            {{ t('appearance.customizeAction') }}
+          </button>
         </div>
       </div>
 
@@ -364,6 +374,13 @@ const catalogError = ref(false)
 const providerOptions = computed(() =>
   buildProviderOptions(providerCatalog.value, t('settings.fields.searchProviderAuto'), settings.searchProvider))
 
+// 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：计算系统设置页中当前壁纸摘要文案；代码来源：AI生成
+const wallpaperSummaryLabel = computed(() => {
+  if (themeStore.wallpaperType === 'builtin') return t('appearance.currentWallpaperBuiltin')
+  if (themeStore.wallpaperType === 'custom') return t('appearance.currentWallpaperCustom')
+  return t('appearance.currentWallpaperNone')
+})
+
 function isExpanded(id: string) {
   return expandedProviderId.value === id
 }
@@ -457,17 +474,24 @@ function showSavedTip(message: string) {
 .section-title { margin: 0; font-size: 22px; font-weight: 700; color: var(--mc-text-primary); }
 .section-desc { margin: 0; font-size: 14px; color: var(--mc-text-secondary); }
 
-.settings-card { background: var(--mc-bg-elevated); border: 1px solid var(--mc-border); border-radius: 16px; padding: 18px; box-shadow: 0 8px 24px rgba(124, 63, 30, 0.04); width: 100%; }
+/* 修改人:祝奔；时间：2026-11-26T18:10:47+08:00；修改原因/内容：补充外观摘要样式并清理硬编码暖棕/暖橙阴影与边框；代码来源：AI生成 */
+.settings-card { background: var(--mc-bg-elevated); border: 1px solid var(--mc-border); border-radius: 16px; padding: 18px; box-shadow: var(--mc-shadow-soft); width: 100%; }
 .setting-item { display: flex; justify-content: space-between; gap: 20px; padding: 16px 0; border-bottom: 1px solid var(--mc-border-light); }
 .setting-item:last-child { border-bottom: none; }
 .setting-item-vertical { flex-direction: column; gap: 10px; }
 .setting-info { flex: 1; }
 .setting-label { font-size: 15px; font-weight: 600; color: var(--mc-text-primary); margin-bottom: 4px; }
 .setting-hint { font-size: 13px; color: var(--mc-text-secondary); }
+.appearance-summary-chip { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 4px 10px; border-radius: 999px; background: var(--mc-bg-muted); border: 1px solid var(--mc-border-light); font-size: 12px; color: var(--mc-text-secondary); }
+.appearance-summary-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.appearance-summary-sep { color: var(--mc-text-tertiary); }
 .setting-control { width: 220px; display: flex; align-items: center; justify-content: flex-end; }
+.setting-control--appearance { width: auto; flex-wrap: wrap; gap: 8px; }
+.setting-control--appearance .form-input { width: 140px; }
+.btn-customize-skin { white-space: nowrap; }
 .setting-control-full { width: 100%; }
 .form-input { width: 100%; border: 1px solid var(--mc-border); border-radius: 10px; padding: 10px 12px; font-size: 14px; background: var(--mc-bg-sunken); color: var(--mc-text-primary); }
-.form-input:focus { outline: none; border-color: var(--mc-primary); box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.1); }
+.form-input:focus { outline: none; border-color: var(--mc-primary); box-shadow: 0 0 0 2px rgba(var(--mc-primary-rgb), 0.14); }
 .form-input:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .toggle-switch { position: relative; display: inline-flex; width: 44px; height: 24px; }
@@ -485,7 +509,7 @@ function showSavedTip(message: string) {
 .btn-secondary { background: var(--mc-bg-elevated); color: var(--mc-text-primary); border: 1px solid var(--mc-border); }
 .btn-secondary:hover { background: var(--mc-bg-sunken); }
 
-.save-tip { position: fixed; right: 24px; bottom: 24px; background: var(--mc-text-primary); color: var(--mc-text-inverse); padding: 10px 14px; border-radius: 10px; box-shadow: 0 10px 30px rgba(124, 63, 30, 0.22); }
+.save-tip { position: fixed; right: 24px; bottom: 24px; background: var(--mc-text-primary); color: var(--mc-text-inverse); padding: 10px 14px; border-radius: 10px; box-shadow: var(--mc-shadow-medium); }
 
 .provider-card { border: 1px solid var(--mc-border); border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
 .provider-card-header { display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px 16px; border: none; background: var(--mc-bg-elevated); color: inherit; font: inherit; text-align: left; cursor: pointer; }

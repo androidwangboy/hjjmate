@@ -3,6 +3,7 @@ package vip.mate.dashboard.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 import vip.mate.common.result.R;
 import vip.mate.cron.model.CronJobEntity;
@@ -13,6 +14,7 @@ import vip.mate.dashboard.service.DashboardService;
 import vip.mate.exception.MateClawException;
 import vip.mate.workspace.core.annotation.RequireWorkspaceRole;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -46,6 +48,20 @@ public class DashboardController {
             @RequestHeader(value = "X-Workspace-Id", required = false) Long workspaceId,
             @RequestParam(defaultValue = "30") int days) {
         return R.ok(dashboardService.getTrend(workspaceId, Math.min(days, 90)));
+    }
+
+    // 修改人:祝奔；时间：2026-11-23T08:23:34.674Z；修改原因/内容：新增用户维度使用趋势接口，按日期/用户/专家返回会话次数与 Token 统计；代码来源：AI生成
+    // 修改人:祝奔；时间：2026-11-23T08:32:58.413Z；修改原因/内容：趋势指标由会话数改为消息数；代码来源：AI生成
+    @Operation(summary = "获取用户维度使用趋势（按日期/用户/专家统计消息数与 Token）")
+    @GetMapping("/user-trend")
+    @RequireWorkspaceRole("member")
+    public R<Map<String, Object>> userTrend(
+            @RequestHeader(value = "X-Workspace-Id", required = false) Long workspaceId,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+            @RequestParam(required = false) Long agentId) {
+        long wsId = workspaceId != null ? workspaceId : 1L;
+        return R.ok(dashboardService.getUserTrend(wsId, startDate, endDate, agentId));
     }
 
     @Operation(summary = "获取 CronJob 执行历史")

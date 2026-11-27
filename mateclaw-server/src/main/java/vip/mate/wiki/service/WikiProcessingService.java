@@ -51,10 +51,13 @@ import vip.mate.wiki.sse.WikiProgressBus;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -74,6 +77,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Service
 @RequiredArgsConstructor
 public class WikiProcessingService {
+
+    /** 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：匹配正文中已落盘的图片引用；代码来源：AI生成 */
+    private static final Pattern WIKI_IMAGE_URL_RE =
+            Pattern.compile("/wiki-images/\\d+\\.[a-zA-Z0-9]+");
+
+    /**
+     * 修改人:祝奔；时间：2026-11-18T11:29:06.231Z；修改原因/内容：保存当前切片内的图片引用，供 backfill 只回填本切片的图片，避免跨切片串图；
+     * 每个 chunk 在独立 virtual thread 内走完 processChunk→savePageContent，ThreadLocal 隔离成立；代码来源：AI生成
+     */
+    private static final ThreadLocal<Set<String>> CURRENT_CHUNK_IMAGES = new ThreadLocal<>();
 
     private final WikiKnowledgeBaseService kbService;
     private final WikiRawMaterialService rawService;
@@ -993,6 +1006,17 @@ public class WikiProcessingService {
      */
     private int processChunk(WikiKnowledgeBaseEntity kb, WikiRawMaterialEntity raw, String textContent,
                                String existingPagesIndex, String documentMap) {
+        // 修改人:祝奔；时间：2026-11-18T11:29:06.231Z；修改原因/内容：进入切片时记录该切片包含的图片引用，退出时清理，确保图片回填只发生在当前切片；代码来源：AI生成
+        CURRENT_CHUNK_IMAGES.set(collectImageUrls(textContent));
+        try {
+            return processChunkInternal(kb, raw, textContent, existingPagesIndex, documentMap);
+        } finally {
+            CURRENT_CHUNK_IMAGES.remove();
+        }
+    }
+
+    private int processChunkInternal(WikiKnowledgeBaseEntity kb, WikiRawMaterialEntity raw, String textContent,
+                                     String existingPagesIndex, String documentMap) {
         // RFC-012 M2：两阶段消化（路由 → 逐页 merge），单次 LLM 调用输出量大幅缩减，避免 nginx 60s 网关超时
         if (properties.isUseTwoPhaseDigest()) {
             return processChunkTwoPhase(kb, raw, textContent, existingPagesIndex, documentMap);
@@ -1660,6 +1684,57 @@ public class WikiProcessingService {
         return savePageContent(kb, raw, slug, title, content, pageSummary, pageType, null, null);
     }
 
+    /**
+     * 提取文本中的图片引用 URL（保留出现顺序）。
+     */
+    private Set<String> collectImageUrls(String text) {
+        Set<String> urls = new LinkedHashSet<>();
+        if (text == null) return urls;
+        Matcher m = WIKI_IMAGE_URL_RE.matcher(text);
+        while (m.find()) {
+            urls.add(m.group());
+        }
+        return urls;
+    }
+
+    /**
+     * 修改人:祝奔；时间：2026-11-18T11:29:06.231Z；修改原因/内容：只从当前切片图片集合回填 LLM 生成正文遗漏的图片，
+     * 不再读取整篇原文，避免把全文所有图片堆到每个页面（跨切片串图）；代码来源：AI生成
+     */
+    private String backfillWikiImages(String content, WikiRawMaterialEntity raw) {
+        if (content == null) {
+            return content;
+        }
+        try {
+            Set<String> chunkImages = CURRENT_CHUNK_IMAGES.get();
+            if (chunkImages == null || chunkImages.isEmpty()) {
+                return content;
+            }
+            Set<String> present = collectImageUrls(content);
+            Set<String> missing = new LinkedHashSet<>();
+            for (String url : chunkImages) {
+                if (!present.contains(url)) {
+                    missing.add(url);
+                }
+            }
+            if (missing.isEmpty()) {
+                return content;
+            }
+            StringBuilder sb = new StringBuilder(content);
+            sb.append("\n\n--- 附图 ---\n");
+            int idx = 1;
+            for (String url : missing) {
+                sb.append("![图 ").append(idx++).append("](").append(url).append(")\n");
+            }
+            log.info("[Wiki] Backfilled {} image reference(s) from current chunk for raw={}",
+                    missing.size(), raw != null ? raw.getId() : null);
+            return sb.toString();
+        } catch (Exception e) {
+            log.warn("[Wiki] Backfill images failed for raw={}: {}", raw != null ? raw.getId() : null, e.getMessage());
+            return content;
+        }
+    }
+
     private boolean savePageContent(WikiKnowledgeBaseEntity kb, WikiRawMaterialEntity raw,
                                      String slug, String title, String content, String pageSummary,
                                      String pageType, JsonNode metadataNode) {
@@ -1671,6 +1746,9 @@ public class WikiProcessingService {
                                      String pageType, JsonNode metadataNode, JsonNode dependsOnNode) {
         Long kbId = kb.getId();
         Long rawId = raw.getId();
+
+        // 修改人:祝奔；时间：2026-11-18T09:27:23.022Z；修改原因/内容：把原始材料中的图片引用回填到 LLM 生成的页面正文，防止模型丢弃图片；代码来源：AI生成
+        //content = backfillWikiImages(content, raw);
 
         // Derive the slug deterministically from the title rather than trusting
         // the model-supplied one. A model-minted slug romanizes inconsistently

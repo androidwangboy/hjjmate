@@ -12,6 +12,7 @@ import vip.mate.agent.service.AgentGenerationService;
 import vip.mate.agent.service.PromptOptimizeService;
 import vip.mate.audit.service.AuditEventService;
 import vip.mate.auth.service.AuthService;
+import vip.mate.datasource.service.AgentDatasourceRelationService;
 import vip.mate.llm.service.ModelCapabilityService;
 import vip.mate.llm.service.ModelConfigService;
 import vip.mate.system.service.SystemSettingService;
@@ -40,6 +41,7 @@ class AgentControllerOriginTest {
     private ConversationService conversations;
     private AgentController controller;
 
+    //// 修改人:祝奔；时间：2026-11-16T14:09:29.021Z；修改原因/内容：新增查询 Agent 已绑定数据源关系列表接口；代码来源：AI生成
     @BeforeEach
     void setUp() {
         agentService = mock(AgentService.class);
@@ -48,7 +50,7 @@ class AgentControllerOriginTest {
                 mock(AuditEventService.class), mock(AuthService.class), mock(WorkspaceService.class),
                 mock(ModelConfigService.class), mock(ModelCapabilityService.class),
                 mock(SystemSettingService.class), mock(AgentGenerationService.class),
-                mock(PromptOptimizeService.class),
+                mock(PromptOptimizeService.class),mock(AgentDatasourceRelationService.class),
                 new ObjectMapper());
         AgentEntity agent = new AgentEntity();
         agent.setId(AGENT_ID);

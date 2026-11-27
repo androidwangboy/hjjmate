@@ -5,6 +5,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import vip.mate.datasource.model.DatasourceEntity;
+import vip.mate.datasource.repository.DatasourceTableColMapper;
+import vip.mate.datasource.repository.DatasourceTableMapper;
 import vip.mate.datasource.service.DatasourceConnectionManager;
 import vip.mate.datasource.service.DatasourceService;
 
@@ -49,7 +51,8 @@ class DatasourceToolPostgresqlViewDiscoveryTest {
         when(resultSet.getString(1)).thenReturn("v_plan_enriched");
         when(resultSet.getString(2)).thenReturn("read-only serving view");
 
-        DatasourceTool tool = new DatasourceTool(service, connectionManager, JsonMapper.builder().build());
+        DatasourceTool tool = new DatasourceTool(service, connectionManager,  mock(DatasourceTableMapper.class),
+                mock(DatasourceTableColMapper.class), JsonMapper.builder().build());
 
         // When the agent asks MateClaw to discover available relations.
         String output = tool.query_datasource("list_tables", "1", null);

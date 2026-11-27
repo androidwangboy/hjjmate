@@ -76,6 +76,9 @@ function elementPlusSubpathIncludes(): string[] {
 
 // 判断是否是生产构建
 const isBuild = process.env.NODE_ENV === 'production'
+// 后端 Spring Boot 的 server.servlet.context-path（默认 /hjjmate），
+// 开发模式下 base='/' 时将 /api 与 /skill-assets 代理自动补齐前缀。
+const backendCtxPath = (process.env.VITE_BACKEND_CONTEXT_PATH ?? '/hjjmate').replace(/\/+$/, '')
 
 export default defineConfig({
   // 部署 context path：与后端 server.servlet.context-path=/hjjmate 对齐，
@@ -153,10 +156,11 @@ export default defineConfig({
         changeOrigin: true,
         ws: true,
       },
-      // 传统根路径部署（VITE_BASE_URL=/）时才命中的规则：
+      // 开发模式（base='/'）下前端请求 /api/...，自动补齐后端 context-path（默认 /hjjmate）：
       '/api': {
         target: 'http://localhost:18088',
         changeOrigin: true,
+        rewrite: (path) => `${backendCtxPath}${path}`,
         // ws:true forwards WebSocket Upgrade requests through to the backend.
         // Without it Vite serves the GET /api/v1/talk/ws as a regular HTTP
         // proxy, the Upgrade header gets dropped, and the WS handshake
@@ -173,6 +177,7 @@ export default defineConfig({
       '/skill-assets': {
         target: 'http://localhost:18088',
         changeOrigin: true,
+        rewrite: (path) => `${backendCtxPath}${path}`,
       },
     },
   },
