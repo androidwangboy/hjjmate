@@ -276,6 +276,17 @@
             <artifactId>jsoup</artifactId>
         </dependency>
 
+        <!-- ===== Mammoth (DOCX -> semantic HTML, JVM port) ===== -->
+        <!--
+            Used by DocumentExtractTool#extract_docx_tables to turn a .docx into
+            clean HTML in-process, then reconstruct table grids (rowspan/colspan)
+            from that HTML with jsoup. Pure JVM: no Node.js / npx cold install.
+        -->
+        <dependency>
+            <groupId>org.zwobble.mammoth</groupId>
+            <artifactId>mammoth</artifactId>
+        </dependency>
+
         <!-- ===== WxJava (WeChat Official Account SDK) ===== -->
         <!--
             Used by GzhPublishTool to push generated 图文 articles into the

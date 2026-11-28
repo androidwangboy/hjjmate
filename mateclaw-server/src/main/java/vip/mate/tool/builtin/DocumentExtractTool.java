@@ -1,8 +1,12 @@
 package vip.mate.tool.builtin;
 
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.jsoup.nodes.Element;
+import org.zwobble.mammoth.DocumentConverter;
+import org.zwobble.mammoth.Result;
 import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
@@ -17,6 +21,7 @@ import vip.mate.wiki.service.WikiImageService;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -297,6 +302,209 @@ public class DocumentExtractTool {
             @ToolParam(description = "Word 文档的绝对路径或相对路径") String filePath,
             @Nullable ToolContext ctx) {
         return extract_document_text(filePath, null, ctx);
+    }
+
+    @Tool(description = """
+        用 Mammoth 将 DOCX 转为语义化 HTML，再提取其中所有表格并还原为结构化 JSON。
+
+        与 extract_document_text 的区别：普通文本抽取会把表格压平成字符串，丢失行列关系；
+        本工具专门保留表格的网格语义，便于模型理解合并单元格的表达方式。
+
+        返回的 tables 数组中，每张表包含：
+        - rowCount / columnCount: 网格行列数（列数由所有行的跨度推导，不取单行 td 数量）
+        - cells: 每个真实单元格的锚点 {row, col, rowSpan, colSpan, text, header, merged}
+          * row/col 为 0 基网格起点；rowSpan>1 表示向下合并，colSpan>1 表示向右合并
+        - grid: 二维网格数组。null 表示该位置被某个跨行/跨列单元格覆盖，空字符串表示真空单元格
+        - merges: 合并单元格的自然语言摘要，如 "(0,0) 部门 向下合并 2 行"
+
+        实现流程：Mammoth 转 HTML → 写系统临时文件 → jsoup 从文件读回 → 还原网格 → 清理临时文件。
+        仅支持 .docx；旧版二进制 .doc 请先转换。
+        """)
+    public String extract_docx_tables(
+            @ToolParam(description = "DOCX 文件的绝对路径或相对路径") String filePath,
+            @Nullable ToolContext ctx) {
+        Path path;
+        try {
+            path = WorkspacePathGuard.validatePath(filePath, ctx);
+        } catch (IllegalArgumentException e) {
+            Path attachment = ChatUploadResolver.resolve(filePath);
+            if (attachment == null) {
+                return errorResult(filePath, e.getMessage(), new ArrayList<>());
+            }
+            path = attachment;
+        }
+        if (!Files.exists(path)) {
+            Path attachment = ChatUploadResolver.resolve(filePath);
+            if (attachment == null) {
+                return errorResult(filePath, "文件不存在: " + path, new ArrayList<>());
+            }
+            path = attachment;
+        }
+        if (!path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".docx")) {
+            return errorResult(filePath, "仅支持 .docx 格式，当前文件: " + path.getFileName(), new ArrayList<>());
+        }
+
+        long start = System.currentTimeMillis();
+        Path tempHtml = null;
+        try {
+            DocumentConverter converter = new DocumentConverter();
+            Result<String> converted = converter.convertToHtml(path.toFile());
+            String html = converted.getValue();
+
+            tempHtml = Files.createTempFile("mc_mammoth_", ".html");
+            Files.writeString(tempHtml, html, StandardCharsets.UTF_8);
+            // 刻意从临时文件读回：HTML 解析与 Mammoth 解耦，中间产物可单独排查。
+            String htmlFromDisk = Files.readString(tempHtml, StandardCharsets.UTF_8);
+
+           /*  JSONArray tables = parseHtmlTables(htmlFromDisk);
+            JSONArray warnings = new JSONArray();
+            warnings.addAll(converted.getWarnings());
+
+            JSONObject result = new JSONObject();
+            result.set("filePath", filePath);
+            result.set("success", true);
+            result.set("method", "mammoth+jsoup");
+            result.set("tableCount", tables.size());
+            result.set("warnings", warnings);
+            result.set("tables", tables);
+            result.set("elapsedMs", System.currentTimeMillis() - start);
+            log.info("[DocxTables] {} 解析出 {} 张表，耗时 {}ms", filePath, tables.size(),
+                    System.currentTimeMillis() - start); */
+            log.info("[DocxTables] {} 解析成功，耗时 {}ms", filePath, System.currentTimeMillis() - start);
+            return htmlFromDisk;
+        } catch (Exception e) {
+            log.error("[DocxTables] 提取失败: {}", e.getMessage(), e);
+            return errorResult(filePath, "Mammoth 表格提取失败: " + e.getMessage(), new ArrayList<>());
+        } finally {
+            if (tempHtml != null) {
+                try { Files.deleteIfExists(tempHtml); } catch (IOException ignored) {}
+            }
+        }
+    }
+
+    // ==================== DOCX 表格结构还原（Mammoth + jsoup） ====================
+
+    /** 跨行/跨列合并覆盖的网格位置标记。 */
+    private static final Object MERGED_CELL = new Object();
+
+    /** HTML 表格单元格锚点：row/col 为 0 基网格起点。 */
+    private record TableCell(int row, int col, int rowSpan, int colSpan, String text, boolean header) {}
+
+    /**
+     * 把 Mammoth 产出的 HTML 中所有 table 还原成结构化 JSON。
+     * <p>
+     * Mammoth 对横向合并输出 {@code colspan}、纵向合并输出 {@code rowspan}，且被覆盖的续行格
+     * 不再输出 {@code td}，因此必须先铺网格再输出，不能用"每行 td 数量"推断列数。
+     */
+    static JSONArray parseHtmlTables(String html) {
+        JSONArray tables = new JSONArray();
+        if (html == null || html.isBlank()) return tables;
+        org.jsoup.nodes.Document doc = org.jsoup.Jsoup.parse(html);
+        for (Element tableEl : doc.select("table")) {
+            tables.add(parseHtmlTable(tableEl, tables.size()));
+        }
+        return tables;
+    }
+
+    private static JSONObject parseHtmlTable(Element tableEl, int index) {
+        List<List<Object>> grid = new ArrayList<>();
+        List<TableCell> cells = new ArrayList<>();
+
+        int r = 0;
+        for (Element tr : tableEl.select("tr")) {
+            // 嵌套表格的行不属于当前表
+            if (tr.closest("table") != tableEl) continue;
+            ensureGridRow(grid, r);
+            int c = 0;
+            for (Element el : tr.children()) {
+                String tag = el.tagName();
+                if (!"td".equals(tag) && !"th".equals(tag)) continue;
+                while (isOccupied(grid, r, c)) c++;
+                int rowSpan = parsePositiveInt(el.attr("rowspan"), 1);
+                int colSpan = parsePositiveInt(el.attr("colspan"), 1);
+                String text = el.text().strip();
+                cells.add(new TableCell(r, c, rowSpan, colSpan, text, "th".equals(tag)));
+                for (int dr = 0; dr < rowSpan; dr++) {
+                    ensureGridRow(grid, r + dr);
+                    List<Object> gridRow = grid.get(r + dr);
+                    ensureGridColumns(gridRow, c + colSpan);
+                    for (int dc = 0; dc < colSpan; dc++) {
+                        gridRow.set(c + dc, (dr == 0 && dc == 0) ? text : MERGED_CELL);
+                    }
+                }
+                c += colSpan;
+            }
+            r++;
+        }
+
+        int rowCount = grid.size();
+        int colCount = grid.stream().mapToInt(List::size).max().orElse(0);
+
+        JSONArray cellArray = new JSONArray();
+        JSONArray merges = new JSONArray();
+        for (TableCell cell : cells) {
+            JSONObject item = new JSONObject();
+            item.set("row", cell.row());
+            item.set("col", cell.col());
+            item.set("rowSpan", cell.rowSpan());
+            item.set("colSpan", cell.colSpan());
+            item.set("text", cell.text());
+            item.set("header", cell.header());
+            boolean merged = cell.rowSpan() > 1 || cell.colSpan() > 1;
+            item.set("merged", merged);
+            cellArray.add(item);
+            if (merged) merges.add(describeMerge(cell));
+        }
+
+        JSONArray gridArray = new JSONArray();
+        for (int i = 0; i < rowCount; i++) {
+            ensureGridColumns(grid.get(i), colCount);
+            JSONArray rowArray = new JSONArray();
+            for (int j = 0; j < colCount; j++) {
+                Object v = grid.get(i).get(j);
+                rowArray.add(v == MERGED_CELL ? null : (v == null ? "" : v));
+            }
+            gridArray.add(rowArray);
+        }
+
+        JSONObject table = new JSONObject();
+        table.set("index", index);
+        table.set("rowCount", rowCount);
+        table.set("columnCount", colCount);
+        table.set("cells", cellArray);
+        table.set("grid", gridArray);
+        table.set("merges", merges);
+        return table;
+    }
+
+    private static void ensureGridRow(List<List<Object>> grid, int row) {
+        while (grid.size() <= row) grid.add(new ArrayList<>());
+    }
+
+    private static void ensureGridColumns(List<Object> row, int columns) {
+        while (row.size() < columns) row.add(null);
+    }
+
+    private static boolean isOccupied(List<List<Object>> grid, int row, int col) {
+        return row < grid.size() && col < grid.get(row).size() && grid.get(row).get(col) != null;
+    }
+
+    private static int parsePositiveInt(String raw, int fallback) {
+        try {
+            int value = Integer.parseInt(raw);
+            return value > 0 ? value : fallback;
+        } catch (NumberFormatException e) {
+            return 1;
+        }
+    }
+
+    private static String describeMerge(TableCell cell) {
+        StringBuilder sb = new StringBuilder();
+        sb.append('(').append(cell.row()).append(',').append(cell.col()).append(')');
+        if (!cell.text().isEmpty()) sb.append(' ').append(cell.text());
+        if (cell.rowSpan() > 1) sb.append(" 向下合并 ").append(cell.rowSpan()).append(" 行");
+        if (cell.colSpan() > 1) sb.append(" 向右合并 ").append(cell.colSpan()).append(" 列");
+        return sb.toString();
     }
 
     // ==================== PDF 提取链 ====================

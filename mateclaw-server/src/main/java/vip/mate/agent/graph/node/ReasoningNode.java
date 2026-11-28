@@ -137,7 +137,7 @@ public class ReasoningNode implements NodeAction {
      * content is history and re-call (or read_file on the spill path) is
      * cheaper than carrying every previous body forward across iterations.
      */
-    private static final int KEEP_RECENT_TOOL_RESPONSES = 3;
+    private static final int KEEP_RECENT_TOOL_RESPONSES = 1;
 
     private static final int LONG_FORM_MIN_REQUEST_CHARS = 3_000;
     private static final Pattern ARABIC_CHAR_COUNT_PATTERN = Pattern.compile(
